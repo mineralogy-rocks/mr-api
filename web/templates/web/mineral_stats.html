@@ -1,0 +1,30 @@
+{% extends "web/base.html" %}
+{% load web_filters %}
+{% load static %}
+{% block main %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Mineral Statuses Counts</li>
+  </ol>
+</nav>
+<h1 class="cover-heading text-center">Mineral Statuses Counts</h1>
+<div class="container">
+  <div class="row justify-content-center">
+      <div class="col-md-10 col-sm-12">
+          <div>
+              <ul>
+                {% for group in counts %}
+                    <li>{{ group|dict_filter:'group' }}</li>
+                      {% for status in group|dict_filter:'statuses'%}
+                      <ul>
+                        <li>{{ status|dict_filter:'description_short' }}s - <span class="badge badge-pill badge-info border border-dark">{{ status|dict_filter:'mineral_counts' }}</span></li>
+                      </ul>
+                      {% endfor %}
+                {% endfor %}
+            </ul>
+          </div>
+        </div>
+    </div>
+  </div>
+{% endblock %}

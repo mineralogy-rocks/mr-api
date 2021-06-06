@@ -1,0 +1,32 @@
+    {% extends "web/base.html" %}
+        {% block main %}
+        <div class="container mt-4 mb-4">
+          <div class="row justify-content-center mt-auto">
+              <div class="col-md-10 col-sm-12">
+                <div class="jumbotron bg-dark p-3 mb-5 border border-dark rounded shadow-lg ">
+                  <div class='container'>
+                    <div class='row'>
+                      <div class='col'>
+                        <h1 class="display-6 text-white">Welcome to GP&lt;minerals/&gt;</h1>
+                        <p class="lead text-white">Explore minerals in all dimensions.</p>
+                        <hr class="my-4">
+                        <p class='text-white'>This is our main website, which hosts the back-end service to speak nicely with the database. <br>
+                          Check out our web application for searching the minerals.
+                        </p>
+                        <a class="btn btn-primary btn-lg" href="https://data.gpminerals.org/" target="blank" role="button">Search minerals</a>
+                      </div>
+                  </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+              <div class='row justify-content-center'>
+                <div class='col-md-8 col-sm-10'>
+                  <div class='card-deck'> 
+                    {% include 'web/parts/mineral_stats.html' %}
+                    {% include 'web/parts/discovery_bar_chart.html' %}
+                  </div>  
+                </div>
+              </div>  
+          </div>
+        {% endblock %}

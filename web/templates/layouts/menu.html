@@ -1,0 +1,16 @@
+<div class="ui large top fixed menu transition hidden">
+    <div class="ui container">
+        <a class="item {% if request.path == '/' %} active {% endif %}" href="{% url 'home' %}">home</a>
+        <a class="item {% if request.path == '/search' %} active{% endif %}" href="{% url 'search' %}">search</a>
+        <a class="item {% if request.path == '/about' %} active{% endif %}" href="{% url 'about' %}">about</a>
+        <a class="item {% if request.path == '/contact' %} active{% endif %}" href="{% url 'contact' %}">contact</a>
+        <a class="item {% if request.path == '/api' %} active{% endif %}" href="{% url 'api' %}">api</a>
+    </div>
+  </div>
+  <div class="ui vertical inverted sidebar menu left">
+    <a class="item {% if request.path == '/' %} active {% endif %}" href="{% url 'home' %}">home</a>
+        <a class="item {% if request.path == '/search' %} active{% endif %}" href="{% url 'search' %}">search</a>
+        <a class="item {% if request.path == '/about' %} active{% endif %}" href="{% url 'about' %}">about</a>
+        <a class="item {% if request.path == '/contact' %} active{% endif %}" href="{% url 'contact' %}">contact</a>
+        <a class="item {% if request.path == '/api' %} active{% endif %}" href="{% url 'api' %}">api</a>
+  </div>

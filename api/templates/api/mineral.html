@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ mineral.mineral_name }}</title>
+</head>
+<body>
+    {% if mineral %}
+        <p>Mineral Name: {{ mineral.mineral_name }}</p>
+        <p>Mineral id: {{ mineral.mineral_id }}</p>
+        <p>Mineral formula: {{ mineral.formula }}</p>
+        <p>Mineral Status: {{ mineral.msspeciesstatus.status.id }}</p>
+        <p>Status description: {{ mineral.msspeciesstatus.status.description_short }}</p>
+    {% else %}
+        <p>No minerals are available under this uuid.</p>
+    {% endif %}
+</body>
+</html>

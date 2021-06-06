@@ -1,0 +1,91 @@
+{% load static %}
+<script src="https://d3js.org/d3.v6.min.js"></script>
+<!-- <script src="{% static 'js/d3.js/bar_chart.js' %}"></script>    -->
+        <div class="card border border-secondary" id="stats">
+          <div class="card-header">
+            <div class='float-right'>
+              <img src="{% static 'svgs/gear.svg' %}" width='30px' alt="gear" id="gear">
+            </div>
+            <h6 class="card-title">Mineral History</h6>
+            <small class="text-muted">a discovery rate since XXXX</small>
+          </div>
+          <div class="card-body">
+                <div id="discovery_counts" class="svg-container">
+                </div>
+                <a href="/discovery_rate" class="btn btn-primary btn-block">Explore chart</a>
+          </div>
+        </div>
+    <script>
+      var margin = {
+            top: 10, 
+            right: 20, 
+            bottom: 30, 
+            left: 30
+        },
+          width = 600 - margin.left - margin.right,
+          height = 320 - margin.top - margin.bottom;
+
+      // Parse the date
+      var	parseDate = d3.timeFormat("%Y").parse;
+
+      var x = d3.scaleBand()
+                  .range([0, width])
+                  .paddingInner(0)
+                  .paddingOuter(0);
+
+      var y = d3.scaleLinear()
+                  .range([height, 0]);
+
+      var xAxis = d3.axisBottom(x) 
+          .tickFormat(d3.timeFormat("%Y"));
+
+      var yAxis = d3.axisLeft(y)
+          .ticks(7);
+
+      var svg = d3.select("#discovery_counts").append("svg")
+          .attr("preserveAspectRatio", "xMinYMin meet")
+          .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+          .classed("svg-content", true)
+        .append("g")
+          .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      d3.json("{% url "api:stats:discovery_year_counts" %}")
+        .then(data =>  {
+          console.log(data)
+          x.domain(data.map(d => d.discovery_year));
+          y.domain([0, d3.max(data, d => d.mineral_counts)]);
+
+
+          svg.append("g")
+              .attr("class", "x axis")
+              .attr("transform", `translate(0,${height})`)
+              .call(xAxis.tickFormat((interval,i) => {
+                  return i%10 !== 0 ? " ": interval;
+                 }))
+              .selectAll("text")
+              .style("text-anchor", "center")
+              .attr("dx", "-1.8em")
+              .attr("dy", "-.1em")
+              .attr("transform", "rotate(-45)" );
+
+          svg.append("g")
+              .attr("class", "y axis")
+              .call(yAxis)
+            .append("text")
+              .attr("transform", "rotate(-90)")
+              .attr("y", 6)
+              .attr("dy", ".71em")
+              .style("text-anchor", "end")
+              .text("Value ($)");
+
+          svg.selectAll("bar")
+              .data(data)
+              .enter()
+            .append("rect")
+              .style("fill", "darkred")
+              .attr("x", d => x(d.discovery_year))
+              .attr("width", x.bandwidth())
+              .attr("y", d => y(d.mineral_counts))
+              .attr("height", d => height - y(d.mineral_counts));
+        }).catch(err => err)
+    </script>

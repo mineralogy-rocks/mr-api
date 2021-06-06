@@ -1,0 +1,77 @@
+version: '3.8'
+services:
+  database:
+    container_name: db
+    image: postgres:latest
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    volumes:
+      - database-data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=gpminerals
+      - POSTGRES_PASSWORD=gpmineralsDB
+      - POSTGRES_DB=postgres
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python manage.py runserver 0.0.0.0:8000
+    restart: unless-stopped
+    volumes:
+      - .:/usr/src/app/
+    env_file:
+      - .env.dev
+    ports:
+      - "8000:8000"
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend:/app/
+      - /app/node_modules
+    depends_on:
+      - app
+    ports:
+      - "3000:3000"
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.0
+    environment:
+      - discovery.type=single-node
+      - http.cors.allow-origin="*"
+      - "http.cors.enabled=true"
+      - "http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization"
+      - "http.cors.allow-credentials=true"
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+  redis:
+    container_name: redis
+    restart: always
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+  nginx:
+    container_name: nginx
+    restart: unless-stopped
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+      - frontend
+    volumes:
+      - ./nginx/dev:/etc/nginx/conf.d
+volumes:
+  redisdata:
+  esdata:
+  database-data:
