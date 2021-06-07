@@ -29,7 +29,7 @@ FROM python:3.8.3-alpine
 # RUN /env/bin/pip install --upgrade pip && /env/bin/pip install -r /app/requirements.txt
 # ADD . /app
 
-# CMD gunicorn -b :$PORT mr-django.wsgi
+# CMD gunicorn -b :$PORT mrdjango.wsgi
 # [END docker]
 
 # set work directory
