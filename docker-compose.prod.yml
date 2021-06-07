@@ -1,12 +1,12 @@
 version: "3.7"
 
 services:
-    app:
-        container_name: app
+    backend:
+        container_name: backend
         build:
             context: .
             dockerfile: Dockerfile.prod
-        image: 569121191347.dkr.ecr.eu-central-1.amazonaws.com/gpminerals:app
+        image: 569121191347.dkr.ecr.eu-central-1.amazonaws.com/gpminerals:backend
         command: gunicorn gpminerals.wsgi:application --bind 0.0.0.0:8000 --workers=3
         ports:
             - 8000:8000
@@ -26,7 +26,7 @@ services:
             - ./nginx/certbot/conf:/etc/letsencrypt
             - ./nginx/certbot/www:/var/www/certbot
         depends_on:
-            - app
+            - backend
         networks:
             - main
         command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
@@ -52,7 +52,7 @@ services:
         volumes:
             - esdata:/usr/share/elasticsearch/data
         depends_on:
-            - app
+            - backend
         networks:
             - main
     redis:
@@ -63,7 +63,7 @@ services:
         volumes:
             - redisdata:/data
         depends_on:
-            - app
+            - backend
         networks:
             - main
 volumes:

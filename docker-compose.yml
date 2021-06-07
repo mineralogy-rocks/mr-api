@@ -14,15 +14,15 @@ services:
             - POSTGRES_USER: ${DATABASE_USER}
             - POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
             - POSTGRES_DB: ${DATABASE_NAME}
-    app: # The back-end of the mr project
-        container_name: app
+    backend: # The back-end of the mr project
+        container_name: backend
         build:
             context: .
             dockerfile: Dockerfile
         command: sh -c "python3 manage.py runserver 0.0.0.0:8000"
         restart: unless-stopped
         volumes:
-            - .:/usr/src/app/
+            - .:/usr/src/backend/
         env_file:
             - .env.dev
         ports:
@@ -57,7 +57,7 @@ services:
         ports:
             - "80:80"
         depends_on:
-            - app
+            - backend
         volumes:
             - ./nginx/dev:/etc/nginx/conf.d
 volumes:
