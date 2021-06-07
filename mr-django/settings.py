@@ -72,7 +72,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'debug_toolbar',
     'api',
-    'web',
     'search_indexes',  # Elasticsearch integration with the Django REST
 ]
 
@@ -115,7 +114,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'gpminerals.wsgi.application'
+WSGI_APPLICATION = 'mr-django.wsgi.application'
 
 # DEBUG_TOOLBAR_PANELS = [
 #     'debug_toolbar.panels.versions.VersionsPanel',
