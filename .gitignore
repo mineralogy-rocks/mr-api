@@ -1,6 +1,6 @@
 venv
 .pytest_cache
-gpminerals/.env
+mr-django/.env
 api/__pychache__
 /static
 kubernetes/postgres/secrets.yaml
@@ -9,6 +9,3 @@ kubernetes/aws/secrets.yaml
 /.env.dev
 /.env.staging.proxy-companion
 /.env.prod.proxy-companion
-/frontend/node_modules
-/frontend/.nuxt
-acme.json
