@@ -1,90 +1,74 @@
-version: '3.7'
+version: "3.7"
 
 services:
-  app:
-    container_name: app
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
-    image: 569121191347.dkr.ecr.eu-central-1.amazonaws.com/gpminerals:app
-    command: gunicorn gpminerals.wsgi:application --bind 0.0.0.0:8000 --workers=3
-    ports:
-      - 8000:8000
-    env_file:
-      - .env
-    networks:
-      - main
-  frontend:
-    container_name: frontend
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.prod
-    image: 569121191347.dkr.ecr.eu-central-1.amazonaws.com/gpminerals:frontend
-    environment:
-      - BASE_URL=http://app:8000
-      - BROWSER_BASE_URL=https://mineralogy.rocks
-    ports:
-      - 3000:3000
-    depends_on:
-      - app
-    networks:
-      - main
-  nginx: 
-    container_name: nginx
-    image: nginx:1.15-alpine
-    restart: unless-stopped
-    ports:
-        - 80:80
-        - 443:443
-    volumes:
-        - ./nginx/prod:/etc/nginx/conf.d
-        - ./nginx/certbot/conf:/etc/letsencrypt
-        - ./nginx/certbot/www:/var/www/certbot
-    depends_on: 
-        - app
-        - frontend
-    networks:
-      - main
-    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
-  certbot:
-    image: certbot/certbot
-    restart: unless-stopped
-    volumes:
-        - ./nginx/certbot/conf:/etc/letsencrypt
-        - ./nginx/certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"   
-    networks:
-      - main
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.0
-    environment:
-      - discovery.type=single-node
-      - http.cors.allow-origin="*"
-      - http.cors.enabled=true
-      - http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Cont>
-      - http.cors.allow-credentials=true
-    ports:
-      - "9200:9200"
-    volumes:
-      - esdata:/usr/share/elasticsearch/data
-    depends_on:
-      - app
-    networks:
-      - main
-  redis:
-    restart: always
-    image: redis:latest
-    ports:
-      - "6379:6379"
-    volumes:
-      - redisdata:/data
-    depends_on:
-      - app
-    networks:
-      - main
+    app:
+        container_name: app
+        build:
+            context: .
+            dockerfile: Dockerfile.prod
+        image: 569121191347.dkr.ecr.eu-central-1.amazonaws.com/gpminerals:app
+        command: gunicorn gpminerals.wsgi:application --bind 0.0.0.0:8000 --workers=3
+        ports:
+            - 8000:8000
+        env_file:
+            - .env
+        networks:
+            - main
+    nginx:
+        container_name: nginx
+        image: nginx:1.15-alpine
+        restart: unless-stopped
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - ./nginx/prod:/etc/nginx/conf.d
+            - ./nginx/certbot/conf:/etc/letsencrypt
+            - ./nginx/certbot/www:/var/www/certbot
+        depends_on:
+            - app
+        networks:
+            - main
+        command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
+    certbot:
+        image: certbot/certbot
+        restart: unless-stopped
+        volumes:
+            - ./nginx/certbot/conf:/etc/letsencrypt
+            - ./nginx/certbot/www:/var/www/certbot
+        entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+        networks:
+            - main
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.10.0
+        environment:
+            - discovery.type=single-node
+            - http.cors.allow-origin="*"
+            - http.cors.enabled=true
+            - http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Cont>
+            - http.cors.allow-credentials=true
+        ports:
+            - "9200:9200"
+        volumes:
+            - esdata:/usr/share/elasticsearch/data
+        depends_on:
+            - app
+        networks:
+            - main
+    redis:
+        restart: always
+        image: redis:latest
+        ports:
+            - "6379:6379"
+        volumes:
+            - redisdata:/data
+        depends_on:
+            - app
+        networks:
+            - main
 volumes:
-  esdata:
-  redisdata:
+    esdata:
+    redisdata:
 networks:
-  main:
-    driver: bridge
+    main:
+        driver: bridge
