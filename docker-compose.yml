@@ -1,6 +1,6 @@
 version: "3.8"
 services:
-    database:
+    database: # local database, used for development
         container_name: db
         image: postgres:latest
         restart: unless-stopped
@@ -8,16 +8,18 @@ services:
             - "5432:5432"
         volumes:
             - database-data:/var/lib/postgresql/data/
+        env_file:
+            - .env.dev
         environment:
-            - POSTGRES_USER=gpminerals
-            - POSTGRES_PASSWORD=gpmineralsDB
-            - POSTGRES_DB=postgres
+            - POSTGRES_USER: ${DATABASE_USER}
+            - POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+            - POSTGRES_DB: ${DATABASE_NAME}
     app:
         container_name: app
         build:
             context: .
             dockerfile: Dockerfile
-        command: python manage.py runserver 0.0.0.0:8000
+        command: sh -c "python3 manage.py runserver 0.0.0.0:8000"
         restart: unless-stopped
         volumes:
             - .:/usr/src/app/
