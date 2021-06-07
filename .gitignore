@@ -9,3 +9,4 @@ kubernetes/aws/secrets.yaml
 /.env.dev
 /.env.staging.proxy-companion
 /.env.prod.proxy-companion
+db/master_dump.sql
