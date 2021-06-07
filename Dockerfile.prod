@@ -6,7 +6,7 @@
 FROM python:3.8.3-alpine as builder
 
 # set work directory
-WORKDIR /usr/src/back-end
+WORKDIR /usr/src/backend
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -24,7 +24,7 @@ RUN flake8 --ignore=E501,F401 ./mr-django
 
 # install dependencies
 COPY ./requirements.txt .
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/back-end/wheels -r requirements.txt
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/backend/wheels -r requirements.txt
 
 
 #########
@@ -35,21 +35,21 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/back-end/wheels -r r
 FROM python:3.8.3-alpine
 
 # create directory for the app user
-RUN mkdir -p /home/back-end
+RUN mkdir -p /home/backend
 
 # create the app user
-RUN addgroup -S back-end && adduser -S back-end -G back-end
+RUN addgroup -S backend && adduser -S backend -G backend
 
 # create the appropriate directories
-ENV HOME=/home/back-end
-ENV APP_HOME=/home/back-end/web
+ENV HOME=/home/backend
+ENV APP_HOME=/home/backend/web
 RUN mkdir $APP_HOME
 WORKDIR $APP_HOME
 
 # install dependencies
 RUN apk update && apk add libpq
-COPY --from=builder /usr/src/back-end/wheels /wheels
-COPY --from=builder /usr/src/back-end/requirements.txt .
+COPY --from=builder /usr/src/backend/wheels /wheels
+COPY --from=builder /usr/src/backend/requirements.txt .
 RUN pip install --no-cache /wheels/*
 
 
@@ -57,7 +57,7 @@ RUN pip install --no-cache /wheels/*
 COPY . $APP_HOME
 
 # chown all the files to the app user
-RUN chown -R back-end:back-end $APP_HOME
+RUN chown -R backend:backend $APP_HOME
 
 # change to the app user
-USER back-end
+USER backend

@@ -33,7 +33,7 @@ FROM python:3.8.3-alpine
 # [END docker]
 
 # set work directory
-WORKDIR /usr/src/back-end
+WORKDIR /usr/src/backend
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1

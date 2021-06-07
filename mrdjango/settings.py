@@ -103,7 +103,7 @@ ROOT_URLCONF = 'mrdjango.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'static/admin/templates'],
+        'DIRS': [], # BASE_DIR / 'static/admin/templates'
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
