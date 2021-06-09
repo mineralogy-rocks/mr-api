@@ -1,3 +1,5 @@
 #!/bin/bash
 set -e
-psql "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB" -Fc < ./backup/master_dump.sql
+export PGPASSWORD="$POSTGRES_PASSWORD";
+pg_restore -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DB -c ./docker-entrypoint-initdb.d/master_dump.sql
+# psql "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB" -Fc < ./backup/master_dump.sql

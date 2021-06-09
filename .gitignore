@@ -5,8 +5,5 @@ api/__pychache__
 /static
 kubernetes/postgres/secrets.yaml
 kubernetes/aws/secrets.yaml
-/.env
-/.env.dev
-/.env.staging.proxy-companion
-/.env.prod.proxy-companion
+/*.env
 db/master_dump.sql

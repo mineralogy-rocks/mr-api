@@ -8,16 +8,10 @@ services:
             - "5432:5432"
         volumes:
             - database-data:/var/lib/postgresql/data/
-            - ./db:/docker-entrypoint-initdb.d/
-            - ./db:/backup
+            # - ./db:/docker-entrypoint-initdb.d/
+            # - ./db:/backup
         env_file:
-            - ./.env.dev
-        environment:
-            POSTGRES_DB: ${DATABASE_NAME}
-            POSTGRES_USER: ${DATABASE_USER}
-            POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-            POSTGRES_HOST: ${DATABASE_HOST}
-            POSTGRES_PORT: ${DATABASE_PORT}
+            - ./.dev.env
     backend: # The back-end of the mr project
         container_name: backend
         build:
@@ -28,7 +22,7 @@ services:
         volumes:
             - .:/usr/src/backend/
         env_file:
-            - .env.dev
+            - .dev.env
         ports:
             - "8000:8000"
     elasticsearch: # A search engine service
