@@ -9,7 +9,7 @@ services:
         volumes:
             - database-data:/var/lib/postgresql/data/
             - ./db:/docker-entrypoint-initdb.d/
-            # - ./db:/backup
+            - ./db:/backup
         env_file:
             - ./.dev.env
     backend: # The back-end of the mr project
