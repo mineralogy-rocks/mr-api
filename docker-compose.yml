@@ -8,7 +8,7 @@ services:
             - "5432:5432"
         volumes:
             - database-data:/var/lib/postgresql/data/
-            # - ./db:/docker-entrypoint-initdb.d/
+            - ./db:/docker-entrypoint-initdb.d/
             # - ./db:/backup
         env_file:
             - ./.dev.env
@@ -22,7 +22,7 @@ services:
         volumes:
             - .:/usr/src/backend/
         env_file:
-            - .dev.env
+            - ./.dev.env
         ports:
             - "8000:8000"
     elasticsearch: # A search engine service
