@@ -8,8 +8,8 @@ services:
             - "5432:5432"
         volumes:
             - database-data:/var/lib/postgresql/data/
-            - ./db:/docker-entrypoint-initdb.d/
-            - ./db:/backup
+            - ./db/sh/:/docker-entrypoint-initdb.d/
+            - ./db/backup:/backup
         env_file:
             - ./.dev.env
     backend: # The back-end of the mr project
@@ -40,7 +40,7 @@ services:
             - esdata:/usr/share/elasticsearch/data
     redis: # A database for caching the requests
         container_name: redis
-        restart: always
+        restart: unless-stopped
         image: redis:latest
         ports:
             - "6379:6379"
