@@ -3,8 +3,6 @@ set -e
 
 # Put your credentials below.
 
-docker-compose -f ../../docker-compose.yml run --rm --no-deps db \
-mysqldump --host=gta-dev.cp7esvs8xwum.eu-west-1.rds.amazonaws.com \
-		  --user=gta_prod_master \
-		  --password='[m&pa:Wp#%9FAfHe' \
-		  > ../_data/db/backup/db__$(date +%d.%m.%Y__%H-%M).sql
+docker-compose -f ../../docker-compose.yml run --rm --no-deps database \
+pg_dump "host=$POSTGRES_HOST_PROD port=$POSTGRES_PORT_PROD dbname=$POSTGRES_DB_PROD user=$POSTGRES_USER_PROD password=$POSTGRES_PASSWORD_PROD" \
+         --clean --no-owner --no-privileges > ../backup/db__$(date +%d.%m.%Y__%H-%M).sql
