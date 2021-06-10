@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3"
 services:
     database: # Local dev database
         container_name: database
@@ -10,7 +10,7 @@ services:
             - ./db/services/db/dump_db:/dump_db:ro
 
             - database-data:/var/lib/postgresql/data/
-            - ../db/backup:/backup
+            - ./db/backup:/backup
         env_file:
             - ./.dev.env
     backend: # The back-end of the mr project
