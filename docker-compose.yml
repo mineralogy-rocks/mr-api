@@ -7,9 +7,10 @@ services:
         ports:
             - "5432:5432"
         volumes:
+            - ./db/services/db/dump_db:/dump_db:ro
+
             - database-data:/var/lib/postgresql/data/
-            - ./db/sh/:/docker-entrypoint-initdb.d/
-            - ./db/backup:/backup
+            - ../db/backup:/backup
         env_file:
             - ./.dev.env
     backend: # The back-end of the mr project
