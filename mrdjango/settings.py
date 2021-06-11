@@ -14,7 +14,7 @@ import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = (environ.Path(__file__) - 2)()
-print(BASE_DIR)
+
 env = environ.Env()
 
 # Quick-start development settings - unsuitable for production
@@ -27,6 +27,7 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DJANGO_DEBUG', default=False)
 
 ALLOWED_HOSTS = env('DJANGO_ALLOWED_HOSTS', default=[])
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 CORS_ALLOWED_ORIGINS = [

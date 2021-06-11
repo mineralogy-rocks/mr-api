@@ -1,7 +1,8 @@
 venv
 .pytest_cache
-mr-django/.env
 api/__pychache__
+mrdjango/__pychache__
+search_indexes/__pychache__
 /static
 kubernetes/postgres/secrets.yaml
 kubernetes/aws/secrets.yaml
