@@ -35,7 +35,6 @@ CORS_ALLOWED_ORIGINS = [
     "https://0.0.0.0:3000",
     "http://0.0.0.0",
     "http://localhost:3000",
-    'http://gpminerals.s3-website.eu-central-1.amazonaws.com',
 ]
 
 
