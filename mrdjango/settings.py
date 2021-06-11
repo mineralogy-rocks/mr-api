@@ -30,13 +30,7 @@ ALLOWED_HOSTS = env('DJANGO_ALLOWED_HOSTS', default=[])
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-CORS_ALLOWED_ORIGINS = [
-    "http://0.0.0.0:3000",
-    "https://0.0.0.0:3000",
-    "http://0.0.0.0",
-    "http://localhost:3000",
-]
-
+CORS_ALLOWED_ORIGINS = env('DJANGO_CORS_ALLOWED_ORIGINS', default=[])
 
 LOGGING = {
     'version': 1,
