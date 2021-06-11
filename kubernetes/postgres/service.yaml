@@ -1,7 +1,0 @@
-kind: Service
-apiVersion: v1
-metadata:
-  name: db
-spec:
-  type: ExternalName
-  externalName: master.c6ya4cff5frj.eu-central-1.rds.amazonaws.com
