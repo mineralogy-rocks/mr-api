@@ -7,8 +7,8 @@ services:
         ports:
             - "5432:5432"
         volumes:
-            - ./db/services/db/dump_db:/dump_db:ro
-            - ./db/services/db/restore_db:/restore_db:ro
+            - ./db/services/dump_db.sh:/dump_db.sh:ro
+            - ./db/services/restore_db.sh:/restore_db.sh:ro
 
             - database-data:/var/lib/postgresql/data/
             - ./db/backup:/backup
