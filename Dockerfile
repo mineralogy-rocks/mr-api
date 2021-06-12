@@ -33,7 +33,7 @@ FROM python:3.8.3-alpine
 # [END docker]
 
 # set work directory
-WORKDIR /usr/src/backend
+WORKDIR /app
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -44,8 +44,11 @@ RUN apk update \
     && apk add postgresql-dev gcc python3-dev musl-dev
 # install dependencies
 RUN pip install --upgrade pip
-COPY ./requirements.txt .
-RUN pip install -r requirements.txt
 
-# copy project
-COPY . .
+COPY src/requirements/base.txt src/requirements/base.txt
+COPY src/requirements/development.txt src/requirements/development.txt
+RUN python -m pip install -r src/requirements/development.txt
+
+EXPOSE 8000
+WORKDIR /app/src
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

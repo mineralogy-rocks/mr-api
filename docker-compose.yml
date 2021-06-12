@@ -19,10 +19,9 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-        command: sh -c "python3 manage.py runserver 0.0.0.0:8000"
         restart: unless-stopped
         volumes:
-            - .:/usr/src/backend/
+            - .:/app
         env_file:
             - ./.dev.env
         ports:
