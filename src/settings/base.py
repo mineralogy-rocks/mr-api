@@ -69,8 +69,10 @@ INSTALLED_APPS = [
     'django_elasticsearch_dsl_drf',
     'storages',
     'corsheaders',
+
     'debug_toolbar',
     'api',
+    'stats',
     'search_indexes',  # Elasticsearch integration with the Django REST
 ]
 
