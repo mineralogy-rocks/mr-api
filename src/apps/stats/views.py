@@ -6,8 +6,8 @@ from rest_framework.response import Response
 from django.db.models import Q
 from django.shortcuts import render
 from api.models import *
-from api.stats.serializers import *
-from api.stats.functions.stats import *
+from stats.serializers import *
+from stats.functions.stats import *
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
 from django.views.decorators.cache import cache_page

@@ -9,5 +9,4 @@ urlpatterns = [
     path('mineral/relation/<uuid:pk>', views.mineral_relation.as_view(), name='mineral_relation'),
     path('mineral/classification/<uuid:pk>', views.mineralClassification.as_view(), name='mineral_classification'),
     path('group_first_children/<uuid:pk>', views.group_first_children.as_view(), name='group_first_children'),
-    path('stats/', include('api.stats.urls', namespace='stats')),
 ]
