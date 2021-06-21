@@ -10,11 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 import os
+import sys
 import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = (environ.Path(__file__) - 2)()
 BACKEND_ROOT_DIR = (environ.Path(__file__) - 3)()
+
+sys.path.append(os.path.join(BASE_DIR, 'apps'))
 
 environ.Env.read_env(os.path.join(BACKEND_ROOT_DIR, '.dev.env'))
 
@@ -24,6 +27,7 @@ env = environ.Env()
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -97,7 +101,7 @@ DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda _request: DEBUG
 }
 
-ROOT_URLCONF = 'mrdjango.urls'
+ROOT_URLCONF = 'urls'
 
 TEMPLATES = [
     {
@@ -115,7 +119,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'mrdjango.wsgi.application'
+WSGI_APPLICATION = 'wsgi.application'
 
 # DEBUG_TOOLBAR_PANELS = [
 #     'debug_toolbar.panels.versions.VersionsPanel',

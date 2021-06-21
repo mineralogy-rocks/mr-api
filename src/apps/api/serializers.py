@@ -2,8 +2,8 @@ from rest_framework import serializers
 from django.db.models import Q, F, Case, When, BooleanField, Subquery, Value, Min
 from decimal import *
 from api.models import *
-from api.stats.serializers import discoveryCountryCountsSerializer
-from api.stats.functions.stats import discovery_country_counts
+from stats.serializers import discoveryCountryCountsSerializer
+from stats.functions.stats import discovery_country_counts
 
 class StatusListSerializer(serializers.ModelSerializer):
     class Meta:
