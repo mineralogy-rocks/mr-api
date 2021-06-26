@@ -47,18 +47,32 @@ services:
             - "6379:6379"
         volumes:
             - redisdata:/data
-    nginx: # A web server
+    nginx:
         container_name: nginx
         restart: unless-stopped
-        build:
-            context: ./nginx
-            dockerfile: Dockerfile
+        image: nginx:stable-alpine
         ports:
-            - "80:80"
-        depends_on:
-            - backend
+            - '80:80'
+        command: > 
+            /bin/sh -c "envsubst '$${DOMAIN}' < /etc/nginx/nginx.template > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"
+        env_file:
+            - ./.dev.env
+        # environment:
+        #     - DOMAIN=${DOMAIN}
         volumes:
-            - ./nginx/dev:/etc/nginx/conf.d
+            - ./nginx/dev/nginx.template:/etc/nginx/nginx.template:ro
+    # nginx: # A web server
+    #     container_name: nginx
+    #     restart: unless-stopped
+    #     build:
+    #         context: ./nginx
+    #         dockerfile: Dockerfile
+    #     ports:
+    #         - "80:80"
+    #     depends_on:
+    #         - backend
+    #     volumes:
+    #         - ./nginx/dev:/etc/nginx/conf.d
 volumes:
     redisdata:
     esdata:
