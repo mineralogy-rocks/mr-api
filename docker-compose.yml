@@ -47,7 +47,7 @@ services:
             - "6379:6379"
         volumes:
             - redisdata:/data
-    nginx:
+    nginx: # A web server
         container_name: nginx
         restart: unless-stopped
         image: nginx:stable-alpine
@@ -59,18 +59,6 @@ services:
             - ./.dev.env
         volumes:
             - ./nginx/dev/nginx.template:/etc/nginx/nginx.template:ro
-    # nginx: # A web server
-    #     container_name: nginx
-    #     restart: unless-stopped
-    #     build:
-    #         context: ./nginx
-    #         dockerfile: Dockerfile
-    #     ports:
-    #         - "80:80"
-    #     depends_on:
-    #         - backend
-    #     volumes:
-    #         - ./nginx/dev:/etc/nginx/conf.d
 volumes:
     redisdata:
     esdata:
