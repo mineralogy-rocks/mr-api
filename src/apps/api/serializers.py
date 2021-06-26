@@ -388,24 +388,21 @@ class MineralHistoryNodeSerializer(serializers.BaseSerializer):
         }
 
     def get_related_discovery_countries(self):
-        # a function which grabs discovery countries of all minerals,
-        # groups and count the results
+        # a function which grabs discovery countries of all minerals, groups and count the results
         queryset = MineralCountry.objects.all()
         resp = discovery_country_counts(queryset)
         serializer = discoveryCountryCountsSerializer(resp, many=True)
         return serializer.data
         
     def get_discovery_country(self, obj):
-        # a function which firstly joins country_list to mineral_country and 
-        # then outputs the data
+        # a function which firstly joins country_list to mineral_country and then outputs the data
         queryset = obj.country_mineral
         resp = MineralCountrySerializer.setup_eager_loading(queryset)
         serializer = MineralCountrySerializer(resp, many=True)
         return serializer.data
 
     def get_history(self, obj):
-        # a function which collects history and discovery_country data
-        # and merges it
+        # a function which collects history and discovery_country data and merges it
         output = {}
         if hasattr(obj, 'history'):
             history_queryset = MineralHistorySerializer(obj.history).data
