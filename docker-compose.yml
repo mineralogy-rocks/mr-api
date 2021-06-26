@@ -57,8 +57,6 @@ services:
             /bin/sh -c "envsubst '$${DOMAIN}' < /etc/nginx/nginx.template > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"
         env_file:
             - ./.dev.env
-        # environment:
-        #     - DOMAIN=${DOMAIN}
         volumes:
             - ./nginx/dev/nginx.template:/etc/nginx/nginx.template:ro
     # nginx: # A web server
