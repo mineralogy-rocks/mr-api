@@ -67,21 +67,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'rest_framework',
+
     'django_extensions',
     'django_elasticsearch_dsl',
     'django_elasticsearch_dsl_drf',
     'storages',
     'corsheaders',
 
-    'debug_toolbar',
     'api',
     'stats',
     'search',  # Elasticsearch integration with the Django REST
 ]
 
 MIDDLEWARE = [
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -96,10 +96,6 @@ MIDDLEWARE = [
 INTERNAL_IPS = [
     '127.0.0.1', '0.0.0.0', 'localhost',
 ]
-
-DEBUG_TOOLBAR_CONFIG = {
-    'SHOW_TOOLBAR_CALLBACK': lambda _request: DEBUG
-}
 
 ROOT_URLCONF = 'urls'
 
