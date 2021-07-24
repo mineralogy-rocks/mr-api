@@ -15,29 +15,31 @@ import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = (environ.Path(__file__) - 2)()
-BACKEND_ROOT_DIR = (environ.Path(__file__) - 3)()
+# BACKEND_ROOT_DIR = (environ.Path(__file__) - 3)()
 
 sys.path.append(os.path.join(BASE_DIR, 'apps'))
 
-environ.Env.read_env(os.path.join(BACKEND_ROOT_DIR, '.dev.env'))
+# environ.Env.read_env(os.path.join(BACKEND_ROOT_DIR, '.dev.env'))
 
-env = environ.Env()
+# env = environ.Env()
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 
-SECRET_KEY = env('SECRET_KEY')
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env('DJANGO_DEBUG', default=False)
+DEBUG = os.environ.get('DJANGO_DEBUG', default=False)
 
-ALLOWED_HOSTS = env('DJANGO_ALLOWED_HOSTS', default=[])
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', default=[]).split(",")
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-CORS_ALLOWED_ORIGINS = env('DJANGO_CORS_ALLOWED_ORIGINS', default=[])
+CORS_ALLOWED_ORIGINS = os.environ.get('DJANGO_CORS_ALLOWED_ORIGINS', default=[]).split(",")
+
 
 LOGGING = {
     'version': 1,
@@ -137,12 +139,12 @@ WSGI_APPLICATION = 'wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': env('DATABASE_ENGINE'),  # 'django.db.backends.postgresql_psycopg2',
-        'NAME': env('POSTGRES_DB'),
-        'USER': env('POSTGRES_USER'),
-        'PASSWORD': env('POSTGRES_PASSWORD'),
-        'HOST': env('POSTGRES_HOST'),
-        'PORT': env('POSTGRES_PORT')
+        'ENGINE': os.environ.get('DATABASE_ENGINE'),  # 'django.db.backends.postgresql_psycopg2',
+        'NAME': os.environ.get('POSTGRES_DB'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        'HOST': os.environ.get('POSTGRES_HOST'),
+        'PORT': os.environ.get('POSTGRES_PORT')
     }
 }
 
