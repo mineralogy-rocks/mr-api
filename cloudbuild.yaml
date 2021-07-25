@@ -1,0 +1,9 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/mr-django:latest', '.']
+  - name: 'docker/compose:3.7'
+    args: ['up', '-d']
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      ['tag', 'mr-django:latest', 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA']
+images: ['gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA']

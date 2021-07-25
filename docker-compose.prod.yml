@@ -6,7 +6,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.prod
-        image: 569121191347.dkr.ecr.eu-central-1.amazonaws.com/gpminerals:backend
+        image: gcr.io/${PROJECT_ID}/mr-django:latest
         command: gunicorn gpminerals.wsgi:application --bind 0.0.0.0:8000 --workers=3
         ports:
             - 8000:8000
