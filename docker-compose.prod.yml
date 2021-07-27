@@ -6,12 +6,12 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.prod
-        image: gcr.io/${PROJECT_ID}/mr-django:latest
+        # image: gcr.io/${PROJECT_ID}/mr-django:latest
         command: gunicorn gpminerals.wsgi:application --bind 0.0.0.0:8000 --workers=3
         ports:
             - 8000:8000
         env_file:
-            - .env
+            - ./.prod.env
         networks:
             - main
     nginx:
@@ -31,7 +31,7 @@ services:
             - ./.prod.env
         networks:
             - main
-        command: "/bin/sh -c 'envsubst '$${DOMAIN}' < /etc/nginx/conf.d; while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'"
+        command: "/bin/sh -c 'envsubst '$${DOMAIN}' < /etc/nginx/conf.d; while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
     certbot:
         image: certbot/certbot
         restart: unless-stopped
