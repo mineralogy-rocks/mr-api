@@ -23,8 +23,9 @@ COPY . .
 RUN flake8 --ignore=E501,F401 ./mr-django
 
 # install dependencies
-COPY ./requirements.txt .
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/backend/wheels -r requirements.txt
+COPY src/requirements/base.txt src/requirements/base.txt
+COPY src/requirements/server.txt src/requirements/server.txt
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r src/requirements/base.txt
 
 
 #########
