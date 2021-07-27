@@ -6,7 +6,7 @@
 FROM python:3.8.3-alpine as builder
 
 # set work directory
-WORKDIR /usr/src/backend
+WORKDIR /app
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -20,7 +20,7 @@ RUN apk update \
 RUN pip install --upgrade pip
 RUN pip install flake8
 COPY . .
-RUN flake8 --ignore=E501,F401 ./mr-django
+RUN flake8 --ignore=E501,F401,F403,F405 ./src/settings
 
 # install dependencies
 COPY src/requirements/base.txt src/requirements/base.txt
@@ -49,8 +49,8 @@ WORKDIR $APP_HOME
 
 # install dependencies
 RUN apk update && apk add libpq
-COPY --from=builder /usr/src/backend/wheels /wheels
-COPY --from=builder /usr/src/backend/requirements.txt .
+COPY --from=builder /app/wheels /wheels
+COPY --from=builder /app/src/requirements /requirements
 RUN pip install --no-cache /wheels/*
 
 
