@@ -6,8 +6,8 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.prod
-        # image: gcr.io/${PROJECT_ID}/mr-django:latest
-        command: gunicorn gpminerals.wsgi:application --bind 0.0.0.0:8000 --workers=3
+        image: registry.digitalocean.com/mr-project/mr-django:latest
+        command: gunicorn src.wsgi:application --bind 0.0.0.0:8000 --workers=3
         ports:
             - 8000:8000
         env_file:
