@@ -1,11 +1,12 @@
 #!/bin/bash
+export $(grep -v '^#' ./.prod.env | xargs -d '\n')
 
 if ! [ -x "$(command -v docker-compose)" ]; then
   echo 'Error: docker-compose is not installed.' >&2
   exit 1
 fi
 
-domains=(mineralogy.rocks)
+domains=(api.$DOMAIN)
 rsa_key_size=4096
 data_path="./nginx/certbot"
 email="liubomyr.gavryliv@gmail.com" # Adding a valid address is strongly recommended
