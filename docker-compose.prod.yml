@@ -32,6 +32,8 @@ services:
             - ./nginx/certbot/www:/var/www/certbot
         depends_on:
             - backend
+        environment:
+            NGINX_IMAGE: ${NGINX_IMAGE}
         env_file:
             - ./.prod.env
         networks:
