@@ -6,7 +6,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.prod
-        image: registry.digitalocean.com/mr-project/mr-django:latest
+        image: registry.digitalocean.com/mr-project/backend:latest
         command: gunicorn wsgi:application --pythonpath 'src' --bind 0.0.0.0:8000 --workers=3
         ports:
             - 8000:8000
@@ -16,16 +16,17 @@ services:
             - main
     nginx:
         container_name: nginx
-        image: nginx:1.15-alpine
+        image: registry.digitalocean.com/mr-project/nginx:latest
+        build:
+            context: ./nginx/prod/
+            dockerfile: Dockerfile.prod
         restart: unless-stopped
         ports:
             - 80:80
             - 443:443
         volumes:
-            # - ./nginx/prod:/etc/nginx/conf.d
-            - ./nginx/prod/nginx-conf/nginx.conf:/etc/nginx/nginx.conf
-            # - ./nginx/prod/nginx:/etc/nginx/conf.d
-            - ./nginx/prod/nginx/app.conf:/etc/nginx/nginx.template:ro
+            - ./nginx/prod/nginx.conf:/etc/nginx/nginx.conf
+            - ./nginx/prod/app.conf:/etc/nginx/nginx.template:ro
 
             - ./nginx/certbot/conf:/etc/letsencrypt
             - ./nginx/certbot/www:/var/www/certbot
