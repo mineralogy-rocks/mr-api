@@ -33,7 +33,7 @@ jobs:
 
       - name: Add environment variables to .prod.env
         run: |
-          echo DJANGO_DEBUG=False >> .prod.env
+          echo DJANGO_DEBUG=${{ secrets.DJANGO_DEBUG }} >> .prod.env
           echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .prod.env
           echo DJANGO_HOST=${{ secrets.DJANGO_HOST }} >> .prod.env
           echo DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }} >> .prod.env
