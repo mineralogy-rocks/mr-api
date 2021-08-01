@@ -31,26 +31,26 @@ jobs:
       - name: Checkout master
         uses: actions/checkout@v2
 
-      - name: Add environment variables to .env
+      - name: Add environment variables to .prod.env
         run: |
-          echo DJANGO_DEBUG=${{ secrets.DJANGO_DEBUG }} >> .env
-          echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
-          echo DJANGO_HOST=${{ secrets.DJANGO_HOST }} >> .env
-          echo DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }} >> .env
-          echo DJANGO_CORS_ALLOWED_ORIGINS=${{ secrets.DJANGO_CORS_ALLOWED_ORIGINS }} >> .env
-          echo DJANGO_SETTINGS_MODULE=${{ secrets.DJANGO_SETTINGS_MODULE }} >> .env
-          echo DATABASE_ENGINE=${{ secrets.DATABASE_ENGINE }} >> .env
-          echo POSTGRES_DB=${{ secrets.POSTGRES_DB }} >> .env
-          echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> .env
-          echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> .env
-          echo POSTGRES_HOST=${{ secrets.POSTGRES_HOST }} >> .env
-          echo POSTGRES_PORT=${{ secrets.POSTGRES_PORT }} >> .env
-          echo USE_S3=${{ secrets.USE_S3 }} >> .env
-          echo AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} >> .env
-          echo AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} >> .env
-          echo AWS_STORAGE_BUCKET_NAME=${{ secrets.AWS_STORAGE_BUCKET_NAME }} >> .env
-          echo VIRTUAL_HOST=${{ secrets.VIRTUAL_HOST }} >> .env
-          echo DOMAIN=${{ secrets.DOMAIN }} >> .env
+          echo DJANGO_DEBUG=${{ secrets.DJANGO_DEBUG }} >> .prod.env
+          echo SECRET_KEY="${{ secrets.SECRET_KEY }}" >> .prod.env
+          echo DJANGO_HOST=${{ secrets.DJANGO_HOST }} >> .prod.env
+          echo DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }} >> .prod.env
+          echo DJANGO_CORS_ALLOWED_ORIGINS=${{ secrets.DJANGO_CORS_ALLOWED_ORIGINS }} >> .prod.env
+          echo DJANGO_SETTINGS_MODULE=${{ secrets.DJANGO_SETTINGS_MODULE }} >> .prod.env
+          echo DATABASE_ENGINE=${{ secrets.DATABASE_ENGINE }} >> .prod.env
+          echo POSTGRES_DB=${{ secrets.POSTGRES_DB }} >> .prod.env
+          echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> .prod.env
+          echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> .prod.env
+          echo POSTGRES_HOST=${{ secrets.POSTGRES_HOST }} >> .prod.env
+          echo POSTGRES_PORT=${{ secrets.POSTGRES_PORT }} >> .prod.env
+          echo USE_S3=${{ secrets.USE_S3 }} >> .prod.env
+          echo AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} >> .prod.env
+          echo AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} >> .prod.env
+          echo AWS_STORAGE_BUCKET_NAME=${{ secrets.AWS_STORAGE_BUCKET_NAME }} >> .prod.env
+          echo VIRTUAL_HOST=${{ secrets.VIRTUAL_HOST }} >> .prod.env
+          echo DOMAIN=${{ secrets.DOMAIN }} >> .prod.env
 
       - name: Set environment variables
         run: |
@@ -74,7 +74,7 @@ jobs:
       # build images
       - name: Build images
         run: |
-          docker-compose -f docker-compose.prod.yml --env-file .env build backend
+          docker-compose -f docker-compose.prod.yml build backend
 
       # push images
       - name: Push images
