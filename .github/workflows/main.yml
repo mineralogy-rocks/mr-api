@@ -1,6 +1,6 @@
 # This is a workflow which builds image and deploys to DO
 
-name: CI
+name: Continuous Integration and Delivery
 
 # Controls when the workflow will run
 on:
@@ -13,24 +13,70 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+env:
+  BACKEND_IMAGE: registry.digitalocean.com/mr-project/backend:latest
+  # NGINX_IMAGE: registry.digitalocean.com/mr-project/nginx:latest
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
   build:
+    name: Build Docker Images
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout master
       - uses: actions/checkout@v2
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Add environment variables to .prod.env
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          echo DJANGO_DEBUG=False >> .prod.env
+          echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .prod.env
+          echo DJANGO_HOST=${{ secrets.DJANGO_HOST }} >> .prod.env
+          echo DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }} >> .prod.env
+          echo DJANGO_CORS_ALLOWED_ORIGINS=${{ secrets.DJANGO_CORS_ALLOWED_ORIGINS }} >> .prod.env
+          echo DJANGO_SETTINGS_MODULE=${{ secrets.DJANGO_SETTINGS_MODULE }} >> .prod.env
+          echo DATABASE_ENGINE=${{ secrets.DATABASE_ENGINE }} >> .prod.env
+          echo POSTGRES_DB=${{ secrets.POSTGRES_DB }} >> .prod.env
+          echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> .prod.env
+          echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> .prod.env
+          echo POSTGRES_HOST=${{ secrets.POSTGRES_HOST }} >> .prod.env
+          echo POSTGRES_PORT=${{ secrets.POSTGRES_PORT }} >> .prod.env
+          echo USE_S3=${{ secrets.USE_S3 }} >> .prod.env
+          echo AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} >> .prod.env
+          echo AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} >> .prod.env
+          echo AWS_STORAGE_BUCKET_NAME=${{ secrets.AWS_STORAGE_BUCKET_NAME }} >> .prod.env
+          echo VIRTUAL_HOST=${{ secrets.VIRTUAL_HOST }} >> .prod.env
+          echo DOMAIN=${{ secrets.DOMAIN }} >> .prod.env
+
+      - name: Set environment variables
+        run: |
+          echo "BACKEND_IMAGE=$(echo ${{env.BACKEND_IMAGE}} )" >> $GITHUB_ENV
+
+      # install doctl for accessing DO registry
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      # login into DO registry
+      - name: Log in to DO Container Registry
+        run: doctl registry login --expiry-seconds 600
+
+      # pull images
+      - name: Pull images
+        run: |
+          docker pull ${{ env.BACKEND_IMAGE }} || true
+
+      # build images
+      - name: Build images
+        run: |
+          docker-compose -f docker-compose.prod.yml build backend
+
+      # push images
+      - name: Push images
+        run: |
+          docker push ${{ env.BACKEND_IMAGE }}
