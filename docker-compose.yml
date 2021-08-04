@@ -47,8 +47,8 @@ services:
             - "6379:6379"
         volumes:
             - redisdata:/data
-    nginx: # A web server
-        container_name: nginx
+    nginx-dev: # A web server
+        container_name: nginx-dev
         restart: unless-stopped
         image: nginx:stable-alpine
         ports:
