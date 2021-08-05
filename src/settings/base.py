@@ -15,14 +15,8 @@ import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = (environ.Path(__file__) - 2)()
-# BACKEND_ROOT_DIR = (environ.Path(__file__) - 3)()
 
 sys.path.append(os.path.join(BASE_DIR, 'apps'))
-
-# environ.Env.read_env(os.path.join(BACKEND_ROOT_DIR, '.dev.env'))
-
-# env = environ.Env()
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
