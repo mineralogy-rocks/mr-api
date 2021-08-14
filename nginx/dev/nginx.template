@@ -31,6 +31,18 @@ http {
 		keepalive_timeout 5;
 		client_max_body_size 20m;
 
+		location = /favicon.ico {
+			alias /var/www/static/img/favicon/favicon.ico;
+		}
+
+		location /media  {
+			alias /var/www/media;
+		}
+
+		location /static {
+			alias /var/www/static;
+		}
+
 		location / {
 			proxy_http_version 1.1;
 
