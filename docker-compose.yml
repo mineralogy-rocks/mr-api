@@ -45,6 +45,7 @@ services:
             - "8000:8000"
         volumes:
             - .:/app
+
             - ./nginx/_data/media:/var/www/media
             - ./nginx/_data/static:/var/www/static
             

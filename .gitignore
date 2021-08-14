@@ -6,3 +6,4 @@ kubernetes/postgres/secrets.yaml
 kubernetes/aws/secrets.yaml
 /*.env
 db/backup/*.sql
+nginx/_data/*
