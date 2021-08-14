@@ -1,5 +1,23 @@
 version: "3"
 services:
+
+    nginx-dev: # A web server
+        container_name: nginx-dev
+        restart: unless-stopped
+        image: nginx:stable-alpine
+        ports:
+            - '80:80'
+        command: > 
+            /bin/sh -c "envsubst '$${DOMAIN}' < /etc/nginx/nginx.template > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"
+        env_file:
+            - ./.dev.env
+        volumes:
+            - ./nginx/dev/nginx.template:/etc/nginx/nginx.template:ro
+
+            - ./nginx/_data/log:/var/log/nginx
+            - ./nginx/_data/media:/var/www/media
+            - ./nginx/_data/static:/var/www/static
+
     database: # Local dev database
         container_name: database
         image: postgres:latest
@@ -14,18 +32,22 @@ services:
             - ./db/backup:/backup
         env_file:
             - ./.dev.env
+
     backend: # The back-end of the mr project
         container_name: backend
         build:
             context: .
             dockerfile: Dockerfile
         restart: unless-stopped
-        volumes:
-            - .:/app
         env_file:
             - ./.dev.env
         ports:
             - "8000:8000"
+        volumes:
+            - .:/app
+            - ./nginx/_data/media:/var/www/media
+            - ./nginx/_data/static:/var/www/static
+            
     elasticsearch: # A search engine service
         container_name: elasticsearch
         image: docker.elastic.co/elasticsearch/elasticsearch:7.10.0
@@ -39,6 +61,7 @@ services:
             - "9200:9200"
         volumes:
             - esdata:/usr/share/elasticsearch/data
+
     redis: # A database for caching the requests
         container_name: redis
         restart: unless-stopped
@@ -47,18 +70,7 @@ services:
             - "6379:6379"
         volumes:
             - redisdata:/data
-    nginx-dev: # A web server
-        container_name: nginx-dev
-        restart: unless-stopped
-        image: nginx:stable-alpine
-        ports:
-            - '80:80'
-        command: > 
-            /bin/sh -c "envsubst '$${DOMAIN}' < /etc/nginx/nginx.template > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"
-        env_file:
-            - ./.dev.env
-        volumes:
-            - ./nginx/dev/nginx.template:/etc/nginx/nginx.template:ro
+
 volumes:
     redisdata:
     esdata:
