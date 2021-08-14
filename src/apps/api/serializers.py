@@ -300,42 +300,42 @@ class MineralListSerializer(serializers.ModelSerializer):
         # fields = ('mineral_id', 'mineral_name', 'formula', 'status', 'classification',
         #           'relations', 'note', 'ns_index', 'history', 'tabs', 'created_at', 'updated_at',)
 
-    def get_discovery_country(self, obj):
+    def get_discovery_country(self, instance):
         # a function which firstly joins country_list to mineral_country and 
         # then outputs the data
-        queryset = obj.country_mineral
+        queryset = instance.country_mineral
         resp = MineralCountrySerializer.setup_eager_loading(queryset)
         serializer = MineralCountrySerializer(resp, many=True)
         return serializer.data
 
-    def get_tabs(self, obj):
+    def get_tabs(self, instance):
         # a function which collects available tabs for mineral
         # and merges it
-        tabs = nuxtTabsSerializer(obj).data
+        tabs = nuxtTabsSerializer(instance).data
         if len(tabs) > 0:
             return tabs
         else:
             return None
 
-    def get_history(self, obj):
+    def get_history(self, instance):
         # a function which collects history and discovery_country data
         # and merges it
         output = {}
-        if hasattr(obj, 'history'):
-            history_queryset = MineralHistorySerializer(obj.history).data
+        if hasattr(instance, 'history'):
+            history_queryset = MineralHistorySerializer(instance.history).data
             output.update(history_queryset)
-        country_queryset = self.get_discovery_country(obj)
+        country_queryset = self.get_discovery_country(instance)
         if len(country_queryset) > 0:
                 output.update({ 'discovery_country': country_queryset })
         if output:
             return output
 
-    def get_classification(self, obj):
-        return mineralClassificationSerializer(obj).data
+    def get_classification(self, instance):
+        return mineralClassificationSerializer(instance).data
 
-    def get_status(self, obj):
+    def get_status(self, instance):
         # a function which generates description of status
-        return StatusDescriptionSerializer(obj).data
+        return StatusDescriptionSerializer(instance).data
 
 class groupFirstChildrenSerializer(serializers.BaseSerializer):
 
@@ -348,7 +348,7 @@ class groupFirstChildrenSerializer(serializers.BaseSerializer):
 
     def to_representation(self, instance):
         hierarchy = instance.annotate(status_min=Min('mineral_id__status__status_id'),
-                                        is_bottom_level=Case(When(Q(mineral_id__status__status_id__gte=1.0) & Q(mineral_id__status__status_id__lt=2.0), then=False),default=True,output_field=BooleanField()))\
+                                        is_bottom_level=Case(When(Q(mineral_id__status__status_id__gte=1.0) & Q(mineral_id__status__status_id__lt=2.0), then=False), default=True, output_field=BooleanField()))\
                                 .order_by('is_bottom_level','status_min')
 
         if len(hierarchy) > 0:
