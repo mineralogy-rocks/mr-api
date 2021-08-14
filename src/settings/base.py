@@ -209,6 +209,15 @@ ELASTICSEARCH_DSL = {
     },
 }
 
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/3.1/howto/static-files/
+
+STATIC_ROOT = os.environ.get('DJANGO_STATIC_ROOT', default='/app/static')
+MEDIA_ROOT = os.environ.get('DJANGO_MEDIA_ROOT', default='/app/media')
+
+STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
+
 # Settings for REST Framework
 
 REST_FRAMEWORK = {
