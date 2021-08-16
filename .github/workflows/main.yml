@@ -15,11 +15,10 @@ on:
 
 env:
   BACKEND_IMAGE: registry.digitalocean.com/mr-project/backend:latest
-  # NGINX_IMAGE: registry.digitalocean.com/mr-project/nginx:latest
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
+  # This workflow contains two jobs: build and deploy afterwards
   build:
     name: Build Docker Images
     # The type of runner that the job will run on
@@ -49,7 +48,7 @@ jobs:
           echo AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} >> .prod.env
           echo AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} >> .prod.env
           echo AWS_STORAGE_BUCKET_NAME=${{ secrets.AWS_STORAGE_BUCKET_NAME }} >> .prod.env
-          echo VIRTUAL_HOST=${{ secrets.VIRTUAL_HOST }} >> .prod.env
+          echo AWS_S3_ENDPOINT_URL=${{ secrets.AWS_S3_ENDPOINT_URL }} >> .prod.env
           echo DOMAIN=${{ secrets.DOMAIN }} >> .prod.env
 
       - name: Set environment variables
@@ -60,11 +59,11 @@ jobs:
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          token: ${{ secrets.DIGITAL_OCEAN_ACCESS_TOKEN }}
 
       # login into DO registry
       - name: Log in to DO Container Registry
-        run: doctl registry login --expiry-seconds 600
+        run: doctl registry login --expiry-seconds 180
 
       # pull images
       - name: Pull images
@@ -88,22 +87,29 @@ jobs:
     if: github.ref == 'refs/heads/master'
     steps:
       - name: Checkout master
-        uses: actions/checkout@v1
-      - name: Add environment variables to .env
+        uses: actions/checkout@v2
+
+      - name: Add environment variables to .prod.env
         run: |
-          echo DEBUG=0 >> .env
-          echo SQL_ENGINE=django.db.backends.postgresql >> .env
-          echo DATABASE=postgres >> .env
-          echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
-          echo SQL_DATABASE=${{ secrets.SQL_DATABASE }} >> .env
-          echo SQL_USER=${{ secrets.SQL_USER }} >> .env
-          echo SQL_PASSWORD=${{ secrets.SQL_PASSWORD }} >> .env
-          echo SQL_HOST=${{ secrets.SQL_HOST }} >> .env
-          echo SQL_PORT=${{ secrets.SQL_PORT }} >> .env
-          echo WEB_IMAGE=${{ env.WEB_IMAGE }} >> .env
-          echo NGINX_IMAGE=${{ env.NGINX_IMAGE }} >> .env
-          echo NAMESPACE=${{ secrets.NAMESPACE }} >> .env
-          echo PERSONAL_ACCESS_TOKEN=${{ secrets.PERSONAL_ACCESS_TOKEN }} >> .env
+          echo DJANGO_DEBUG=${{ secrets.DJANGO_DEBUG }} >> .prod.env
+          echo SECRET_KEY="${{ secrets.SECRET_KEY }}" >> .prod.env
+          echo DJANGO_HOST=${{ secrets.DJANGO_HOST }} >> .prod.env
+          echo DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }} >> .prod.env
+          echo DJANGO_CORS_ALLOWED_ORIGINS=${{ secrets.DJANGO_CORS_ALLOWED_ORIGINS }} >> .prod.env
+          echo DJANGO_SETTINGS_MODULE=${{ secrets.DJANGO_SETTINGS_MODULE }} >> .prod.env
+          echo DATABASE_ENGINE=${{ secrets.DATABASE_ENGINE }} >> .prod.env
+          echo POSTGRES_DB=${{ secrets.POSTGRES_DB }} >> .prod.env
+          echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> .prod.env
+          echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> .prod.env
+          echo POSTGRES_HOST=${{ secrets.POSTGRES_HOST }} >> .prod.env
+          echo POSTGRES_PORT=${{ secrets.POSTGRES_PORT }} >> .prod.env
+          echo USE_S3=${{ secrets.USE_S3 }} >> .prod.env
+          echo AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} >> .prod.env
+          echo AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} >> .prod.env
+          echo AWS_STORAGE_BUCKET_NAME=${{ secrets.AWS_STORAGE_BUCKET_NAME }} >> .prod.env
+          echo AWS_S3_ENDPOINT_URL=${{ secrets.AWS_S3_ENDPOINT_URL }} >> .prod.env
+          echo DOMAIN=${{ secrets.DOMAIN }} >> .prod.env
+
       - name: Add the private SSH key to the ssh-agent
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
@@ -112,16 +118,16 @@ jobs:
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
           ssh-keyscan github.com >> ~/.ssh/known_hosts
           ssh-add - <<< "${{ secrets.PRIVATE_KEY }}"
+
       - name: Build and deploy images on DigitalOcean
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          scp  -o StrictHostKeyChecking=no -r ./.env ./docker-compose.prod.yml root@${{ secrets.DIGITAL_OCEAN_IP_ADDRESS }}:/app
+          scp  -o StrictHostKeyChecking=no -r ./.prod.env ./docker-compose.prod.yml root@${{ secrets.DIGITAL_OCEAN_IP_ADDRESS }}:/mr-django
           ssh -o StrictHostKeyChecking=no root@${{ secrets.DIGITAL_OCEAN_IP_ADDRESS }} << 'ENDSSH'
             cd /app
             source .env
             docker login ghcr.io -u $NAMESPACE -p $PERSONAL_ACCESS_TOKEN
             docker pull $WEB_IMAGE
-            docker pull $NGINX_IMAGE
             docker-compose -f docker-compose.prod.yml up -d
           ENDSSH
