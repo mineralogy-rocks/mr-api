@@ -125,9 +125,9 @@ jobs:
         run: |
           scp  -o StrictHostKeyChecking=no -r ./.prod.env ./docker-compose.prod.yml root@${{ secrets.DIGITAL_OCEAN_IP_ADDRESS }}:/mr-django
           ssh -o StrictHostKeyChecking=no root@${{ secrets.DIGITAL_OCEAN_IP_ADDRESS }} << 'ENDSSH'
-            cd /app
-            source .env
-            docker login ghcr.io -u $NAMESPACE -p $PERSONAL_ACCESS_TOKEN
-            docker pull $WEB_IMAGE
+            cd /mr-django
+            source .prod.env
+            doctl registry login --expiry-seconds 180
+            docker pull $BACKEND_IMAGE
             docker-compose -f docker-compose.prod.yml up -d
           ENDSSH
