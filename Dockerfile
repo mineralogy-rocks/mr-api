@@ -24,4 +24,5 @@ EXPOSE 8000
 WORKDIR /app/src
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
 # [END docker]
