@@ -46,8 +46,8 @@ services:
         volumes:
             - .:/app
 
-            - ./nginx/_data/media:/var/www/media
-            - ./nginx/_data/static:/var/www/static
+            - ./nginx/_data/media:/app/media
+            - ./nginx/_data/static:/app/static
             
     elasticsearch: # A search engine service
         container_name: elasticsearch
