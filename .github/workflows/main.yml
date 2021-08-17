@@ -89,6 +89,10 @@ jobs:
       - name: Checkout master
         uses: actions/checkout@v2
 
+      - name: Set environment variable
+        run: |
+          echo "BACKEND_IMAGE=$(echo ${{env.BACKEND_IMAGE}} )" >> $GITHUB_ENV
+
       - name: Add environment variables to .prod.env
         run: |
           echo DJANGO_DEBUG=${{ secrets.DJANGO_DEBUG }} >> .prod.env
@@ -110,33 +114,6 @@ jobs:
           echo AWS_S3_ENDPOINT_URL=${{ secrets.AWS_S3_ENDPOINT_URL }} >> .prod.env
           echo DOMAIN=${{ secrets.DOMAIN }} >> .prod.env
 
-      # - name: copy files via ssh
-      #   uses: appleboy/scp-action@master
-      #   with:
-      #     host: ${{ secrets.DIGITAL_OCEAN_IP_ADDRESS }}
-      #     username: ${{ secrets.USERNAME }}
-      #     key: ${{ secrets.PRIVATE_KEY }}
-      #     port: 22
-      #     source: '.prod.env,docker-compose.prod.yml'
-      #     target: '~/mr-django'
-      #     overwrite: true
-      #     debug: true
-      #     script: whoami
-
-      # - name: update and re-run all services
-      #   uses: appleboy/ssh-action@master
-      #   with:
-      #     host: ${{ secrets.DIGITAL_OCEAN_IP_ADDRESS }}
-      #     username: ${{ secrets.INSTANCE_USERNAME }}
-      #     key: ${{ secrets.PRIVATE_KEY }}
-      #     debug: true
-      #     script: |
-      #       cd /mr-django
-      #       ls -a
-      #       source .prod.env
-      #       doctl registry login --expiry-seconds 280
-      #       docker pull $BACKEND_IMAGE
-      #       docker-compose -f docker-compose.prod.yml up -d
       - name: Add the private SSH key to the ssh-agent
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
@@ -145,17 +122,16 @@ jobs:
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
           ssh-keyscan github.com >> ~/.ssh/known_hosts
           ssh-add - <<< "${{ secrets.PRIVATE_KEY }}"
+
       - name: Build and deploy images on DigitalOcean
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          ls -a
           scp -o StrictHostKeyChecking=no -r .prod.env docker-compose.prod.yml root@${{ secrets.DIGITAL_OCEAN_IP_ADDRESS }}:mr-django
           ssh -o StrictHostKeyChecking=no root@${{ secrets.DIGITAL_OCEAN_IP_ADDRESS }} << 'ENDSSH'
-            ls
             cd mr-django
             source .prod.env
             doctl registry login --expiry-seconds 180
-            docker pull $BACKEND_IMAGE
+            docker pull ${{ env.BACKEND_IMAGE }}
             docker-compose -f docker-compose.prod.yml up -d
           ENDSSH
