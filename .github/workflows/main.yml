@@ -120,6 +120,7 @@ jobs:
           source: '.prod.env,docker-compose.prod.yml'
           target: 'mr-django'
           overwrite: true
+          debug: true
 
       - name: update and re-run all services
         uses: appleboy/ssh-action@master
@@ -127,6 +128,7 @@ jobs:
           host: ${{ secrets.DIGITAL_OCEAN_IP_ADDRESS }}
           username: ${{ secrets.INSTANCE_USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
+          debug: true
           script: |
             cd /mr-django
             ls -a
