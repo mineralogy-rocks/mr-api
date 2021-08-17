@@ -2,6 +2,7 @@ venv
 .pytest_cache
 __pycache__/
 /static
+/media
 kubernetes/postgres/secrets.yaml
 kubernetes/aws/secrets.yaml
 /*.env
