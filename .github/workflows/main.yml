@@ -116,9 +116,9 @@ jobs:
           host: ${{ secrets.DIGITAL_OCEAN_IP_ADDRESS }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
-          port: ${{ secrets.PORT }}
+          port: 22
           source: '.prod.env,docker-compose.prod.yml'
-          target: 'mr-django'
+          target: '~/mr-django'
           overwrite: true
           debug: true
 
