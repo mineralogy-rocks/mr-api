@@ -150,8 +150,10 @@ jobs:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
           ls -a
+          scp -o StrictHostKeyChecking=no -r .prod.env docker-compose.prod.yml root@${{ secrets.DIGITAL_OCEAN_IP_ADDRESS }}:mr-django
           ssh -o StrictHostKeyChecking=no root@${{ secrets.DIGITAL_OCEAN_IP_ADDRESS }} << 'ENDSSH'
-            cd /mr-django
+            ls
+            cd mr-django
             source .prod.env
             doctl registry login --expiry-seconds 180
             docker pull $BACKEND_IMAGE
