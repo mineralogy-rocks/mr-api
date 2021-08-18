@@ -33,6 +33,9 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         return super().get_serializer_class()
 
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
 # class mineral_basic(APIView):
 #     """
 #     A view which provides the basic details + history node on every mineral
