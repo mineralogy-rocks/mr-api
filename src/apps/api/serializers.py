@@ -337,7 +337,7 @@ class MineralListSerializer(serializers.ModelSerializer):
         # a function which generates description of status
         return StatusDescriptionSerializer(instance).data
 
-class groupFirstChildrenSerializer(serializers.BaseSerializer):
+class MineralChildrenSerializer(serializers.BaseSerializer):
 
     @staticmethod
     def setup_eager_loading(queryset):

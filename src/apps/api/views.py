@@ -2,9 +2,9 @@ from django.db.models import Q
 from django.shortcuts import render
 
 from rest_framework import status
-from rest_framework.decorators import api_view
-from rest_framework.views import APIView
 from rest_framework import generics
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin
+from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
@@ -14,6 +14,24 @@ from . import models as models
 from . import serializers as serializers
 
 
+class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
+
+    queryset = models.MineralList.objects.all()
+    serializer_class = serializers.MineralListSerializer
+
+    def get_queryset(self):
+
+        if self.action in ['children']:
+            return models.MineralHierarchy.objects.all()
+
+        return super().get_queryset()
+
+    def get_serializer_class(self):
+
+        if self.action in ['children']:
+            return serializers.MineralChildrenSerializer
+
+        return super().get_serializer_class()
 
 # class mineral_basic(APIView):
 #     """
