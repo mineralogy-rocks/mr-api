@@ -21,7 +21,9 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
     def get_queryset(self):
 
-        if self.action in ['children']:
+        if self.action in ['list']:
+            return self.get_serializer_class().setup_eager_loading(self.queryset)
+        elif self.action in ['children']:
             return models.MineralHierarchy.objects.all()
 
         return super().get_queryset()
