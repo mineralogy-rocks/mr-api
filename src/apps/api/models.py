@@ -1,11 +1,9 @@
-from django.db import models
-from django.db.models import F, Q
 import uuid
 import re
 from decimal import *
-from django_elasticsearch_dsl_drf.wrappers import dict_to_obj
+
+from django.db import models
 from django.utils.safestring import mark_safe
-from django.db.models import Prefetch
 
 ########## LIST TABLES ##########
 
