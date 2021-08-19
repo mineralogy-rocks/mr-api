@@ -277,55 +277,43 @@ class MineralRelationSerializer(serializers.BaseSerializer):
         return output
 
 
-class MineralListSerializer(serializers.ModelSerializer):
+class MineralBaseSerializer(serializers.ModelSerializer):
     mineral_id = serializers.UUIDField(read_only=True)
     mineral_name = serializers.CharField(required=True)
     formula = serializers.ReadOnlyField(source='mineral_formula_html')
-    # status = MineralStatusSerializer(many=True, read_only=True)
-    status = serializers.SerializerMethodField()
-    # classification = serializers.SerializerMethodField()
+    statuses = serializers.SerializerMethodField()
     note = serializers.CharField()
-    # relations = MineralRelationSerializer(read_only=True)
     ns_index = serializers.ReadOnlyField(source='get_ns_index')
     history = serializers.SerializerMethodField()
-    tabs = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(read_only=True)
     updated_at =serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = MineralList
-        fields = ('mineral_id', 'mineral_name', 'formula', 'status', 'note', 
-                  'ns_index', 'history', 'tabs', 'created_at', 'updated_at',)
+        fields = ['mineral_id', 'mineral_name', 'formula', 'statuses', 'note', 
+                  'ns_index', 'history', 'created_at', 'updated_at',]
 
-        # fields = ('mineral_id', 'mineral_name', 'formula', 'status', 'classification',
-        #           'relations', 'note', 'ns_index', 'history', 'tabs', 'created_at', 'updated_at',)
+    @staticmethod
+    def setup_eager_loading(queryset):
+
+        related = queryset.select_related('history', 'id_class', 'id_subclass', 'id_family')
+        prefetched = related.prefetch_related('statuses', 'discovery_countries', )
+
+        return prefetched
 
     def get_discovery_country(self, instance):
-        # a function which firstly joins country_list to mineral_country and 
-        # then outputs the data
         queryset = instance.country_mineral
         resp = MineralCountrySerializer.setup_eager_loading(queryset)
         serializer = MineralCountrySerializer(resp, many=True)
         return serializer.data
 
-    def get_tabs(self, instance):
-        # a function which collects available tabs for mineral
-        # and merges it
-        tabs = nuxtTabsSerializer(instance).data
-        if len(tabs) > 0:
-            return tabs
-        else:
-            return None
-
     def get_history(self, instance):
-        # a function which collects history and discovery_country data
-        # and merges it
         output = {}
         if hasattr(instance, 'history'):
             history_queryset = MineralHistorySerializer(instance.history).data
             output.update(history_queryset)
         country_queryset = self.get_discovery_country(instance)
-        if len(country_queryset) > 0:
+        if len(country_queryset):
                 output.update({ 'discovery_country': country_queryset })
         if output:
             return output
@@ -333,9 +321,20 @@ class MineralListSerializer(serializers.ModelSerializer):
     def get_classification(self, instance):
         return mineralClassificationSerializer(instance).data
 
-    def get_status(self, instance):
-        # a function which generates description of status
+    def get_statuses(self, instance):
         return StatusDescriptionSerializer(instance).data
+
+
+class MineralListSerializer(MineralBaseSerializer, serializers.ModelSerializer):
+    tabs = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MineralList
+        fields = MineralBaseSerializer.Meta.fields + ['tabs']
+
+    def get_tabs(self, instance):
+        tabs = nuxtTabsSerializer(instance).data
+        return tabs if len(tabs) else None
 
 class MineralChildrenSerializer(serializers.BaseSerializer):
 

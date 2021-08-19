@@ -29,14 +29,18 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         return super().get_queryset()
 
     def get_serializer_class(self):
-
-        if self.action in ['children']:
+        if self.action in ['list']:
+            return serializers.MineralBaseSerializer
+        elif self.action in ['children']:
             return serializers.MineralChildrenSerializer
 
         return super().get_serializer_class()
 
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 # class mineral_basic(APIView):
 #     """

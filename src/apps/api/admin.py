@@ -252,7 +252,7 @@ def GrHierarchyInline(param):
 
 @admin.register(MineralList)
 class MineralListAdmin(admin.ModelAdmin):
-    list_display = ('mineral_name', 'mineral_formula_html', 'statuses', 'get_ns_index',)
+    list_display = ('mineral_name', 'mineral_formula_html', 'get_statuses', 'get_ns_index',)
     list_filter = (StatusListFilter, 'id_class')
     ordering = ('mineral_name',)
     search_fields = ('mineral_name',)
