@@ -398,22 +398,26 @@ class IonSubunit(models.Model):
 
 class MineralList(models.Model):
     mineral_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+
     mineral_name = models.CharField(unique=True, max_length=200)
-    status = models.ManyToManyField(StatusList, through='MineralStatus', related_name='mineral_status')
-    relations = models.ManyToManyField('self', through='MineralRelation', related_name='mineral_relation')
-    hierarchy = models.ManyToManyField('self', through='MineralHierarchy', related_name='mineral_hierarchy')
-    impurity = models.ManyToManyField(IonList, through='MineralImpurity', related_name='mineral_impurity')
-    ion_theoretical = models.ManyToManyField(IonList, through='MineralIonTheoretical', related_name='mineral_ion_theoretical')
     formula = models.TextField(blank=True, null=True)
     note = models.TextField(blank=True, null=True)
     id_class = models.ForeignKey(NsClass, models.CASCADE, db_column='id_class', to_field='id_class', related_name='ns_class', blank=True, null=True)
     id_subclass = models.ForeignKey(NsSubclass, models.CASCADE, db_column='id_subclass', to_field='id_subclass', related_name='ns_subclass', blank=True, null=True)
     id_family = models.ForeignKey(NsFamily, models.CASCADE, db_column='id_family', to_field='id_family', related_name='ns_family', blank=True, null=True)
     id_mineral = models.CharField(max_length=10, blank=True, null=True)
-    discovery_country = models.ManyToManyField(CountryList, through='MineralCountry', related_name='mineral_country')
-    name_person = models.ManyToManyField(NationalityList, through='MineralNamePerson', related_name='person')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    discovery_countries = models.ManyToManyField(CountryList, through='MineralCountry', related_name='mineral_countries')
+    statuses = models.ManyToManyField(StatusList, through='MineralStatus', related_name='mineral_statuses')
+    relations = models.ManyToManyField('self', through='MineralRelation', related_name='mineral_relations')
+    hierarchy = models.ManyToManyField('self', through='MineralHierarchy', related_name='mineral_hierarchy')
+    impurities = models.ManyToManyField(IonList, through='MineralImpurity', related_name='mineral_impurities')
+    ions_theoretical = models.ManyToManyField(IonList, through='MineralIonTheoretical', related_name='mineral_ions_theoretical')
+    name_person = models.ManyToManyField(NationalityList, through='MineralNamePerson', related_name='mineral_name_person')
+
+
 
     # @property
     def get_ns_index(self):
@@ -429,10 +433,11 @@ class MineralList(models.Model):
         return ns_index
     get_ns_index.short_description = 'Nickel-Strunz Index'
 
-    def statuses(self):
+    def get_statuses(self):
         if self.status:
             return '; '.join([str(status.status_id) for status in self.status.all()])
-    statuses.short_description = 'Mineral Statuses'
+
+    get_statuses.short_description = 'Mineral Statuses'
 
     # @property
     def search_statuses(self):
@@ -562,7 +567,7 @@ class MineralCountry(models.Model):
 
 
 class MineralHistory(models.Model):
-    mineral_id = models.OneToOneField(MineralList, models.CASCADE, db_column='mineral_id', related_name='history', primary_key=True)
+    mineral_id = models.OneToOneField(MineralList, models.CASCADE, db_column='mineral_id', primary_key=True, related_name='history')
     discovery_year_min = models.IntegerField(blank=True, null=True)
     discovery_year_max = models.IntegerField(blank=True, null=True)
     discovery_year_note = models.TextField(blank=True, null=True)
