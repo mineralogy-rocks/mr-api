@@ -3,6 +3,7 @@ from django.shortcuts import render
 
 from rest_framework import status
 from rest_framework import generics
+from rest_framework import filters
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
@@ -20,6 +21,9 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     serializer_class = serializers.MineralDetailSerializer
 
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer, ]
+
+    ordering_fields = ['mineral_name',]
+    filter_backends = (filters.OrderingFilter,)
 
     def get_queryset(self):
 
