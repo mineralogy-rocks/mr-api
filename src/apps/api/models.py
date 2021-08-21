@@ -443,8 +443,8 @@ class MineralLog(models.Model):
     def search_statuses(self):
         # statuses = MsSpecies.objects.all().prefetch_related(Prefetch('mineral_status', queryset=MineralStatus.objects.select_related('mineral_id','status_id')))
         # print(statuses)
-        if self.status:
-            return self.status #[status.status_id for status in self.status.all()]
+        if self.statuses:
+            return self.statuses #[status.status_id for status in self.status.all()]
 
     def mineral_formula_html(self):
         replacements = [

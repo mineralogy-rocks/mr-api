@@ -95,7 +95,7 @@ class StatusDescriptionSerializer(serializers.BaseSerializer):
 
         return statuses
 
-class mineralHierarchySerializer(serializers.BaseSerializer):
+class MineralHierarchySerializer(serializers.BaseSerializer):
 
     @staticmethod
     def setup_eager_loading(queryset):
@@ -174,7 +174,7 @@ class mineralHierarchySerializer(serializers.BaseSerializer):
                     })
         return output
 
-class nickelStrunzSerializer(serializers.BaseSerializer):
+class NickelStrunzSerializer(serializers.BaseSerializer):
 
     @staticmethod
     def setup_eager_loading(queryset):
@@ -212,13 +212,13 @@ class nickelStrunzSerializer(serializers.BaseSerializer):
         else:
             return None
 
-class mineralClassificationSerializer(serializers.BaseSerializer):
+class MineralClassificationSerializer(serializers.BaseSerializer):
 
     def to_representation(self, instance):
         output = []
         # Groups classification part
-        ns = nickelStrunzSerializer(instance).data
-        groups = mineralHierarchySerializer(instance).data
+        ns = NickelStrunzSerializer(instance).data
+        groups = MineralHierarchySerializer(instance).data
         output = [ns, groups]
         output = [classification for classification in output if classification is not None]
 
@@ -314,7 +314,7 @@ class MineralBaseSerializer(serializers.ModelSerializer):
             return output
 
     def get_classification(self, instance):
-        return mineralClassificationSerializer(instance).data
+        return MineralClassificationSerializer(instance).data
 
     def get_statuses(self, instance):
         return StatusDescriptionSerializer(instance).data
@@ -328,7 +328,7 @@ class MineralDetailSerializer(MineralBaseSerializer, serializers.ModelSerializer
         fields = MineralBaseSerializer.Meta.fields + ['tabs']
 
     def get_tabs(self, instance):
-        tabs = nuxtTabsSerializer(instance).data
+        tabs = NuxtTabsSerializer(instance).data
         return tabs if len(tabs) else None
 
 class MineralChildrenSerializer(serializers.BaseSerializer):
@@ -410,7 +410,7 @@ class MineralHistoryNodeSerializer(serializers.BaseSerializer):
         output.update({ 'discovery_country_counts': country_counts })
         return output
 
-class nuxtTabsSerializer(serializers.BaseSerializer):
+class NuxtTabsSerializer(serializers.BaseSerializer):
 
     def get_tabs(self, mineral_id):
         query = '''

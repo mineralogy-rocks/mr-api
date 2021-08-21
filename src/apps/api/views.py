@@ -6,7 +6,7 @@ from rest_framework import generics
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
-from rest_framework.renderers import JSONRenderer
+from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.parsers import JSONParser
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
@@ -19,11 +19,12 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     queryset = models.MineralLog.objects.all()
     serializer_class = serializers.MineralDetailSerializer
 
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer, ]
+
     def get_queryset(self):
 
         if self.action in ['retrieve']:
-            return self.queryset.select_related('history', 'id_class', 'id_subclass', 'id_family') \
-                                .prefetch_related('statuses', 'discovery_countries',)
+            return self.queryset.select_related('history', 'id_class', 'id_subclass', 'id_family')
 
         elif self.action in ['list']:
             return self.queryset.select_related('history', 'id_class', 'id_subclass', 'id_family') \
