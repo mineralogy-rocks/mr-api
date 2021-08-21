@@ -483,7 +483,7 @@ class MineralStatus(models.Model):
         verbose_name_plural = 'MineralStatus'
 
     def __str__(self):
-        return str(self.status_id)
+        return str(self.mineral_id)
 
 class MineralRelation(models.Model):
     id = models.AutoField(primary_key=True)

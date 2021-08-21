@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from django.db.models import Q, F, Case, When, BooleanField, Subquery, Value, Min
+from django.db.models import Q, F, Case, When, BooleanField, Subquery, Value, Min, OuterRef
 from decimal import *
 from api.models import *
 from stats.serializers import discoveryCountryCountsSerializer
@@ -30,70 +30,99 @@ class MineralStatusSerializer(serializers.ModelSerializer):
         model = MineralStatus
         fields = ['status', 'status_id', 'description_short', 'description_long']
 
-class StatusDescriptionSerializer(serializers.BaseSerializer):
+class StatusDescriptionSerializer(serializers.ModelSerializer):
 
-    def get_status_description(self, mineral_id):
+    group = serializers.SerializerMethodField()
+    # description = 
+    # relations = 
 
-        # TODO: refactor to ORM
+    class Meta:
+        model = StatusList
+        fields = ['group']
+
+    def get_group(self, instance):
+
+        relations = MineralStatus.objects.values('mineral_id__related_minerals__relation_id','status_id').annotate(
+            status=F('status_id'),
+            relation_id=Case(
+                When(Q(status_id__gte=2.0) | Q(status_id__lt=5.0), then=F('mineral_id__related_minerals__relation_id')),
+                default=None,
+            ),
+        ) \
+        .filter((Q(mineral_id__related_minerals__relation_type_id=1) | Q(mineral_id__related_minerals__relation_type_id__isnull=True)) &
+                 (Q(mineral_id__related_minerals__direct_relation=True) | Q(mineral_id__related_minerals__direct_relation__isnull=True)))
+
+        statuses = StatusList.objects.filter(Q(status_id__in=Subquery(relations.values('status_id'))))
+
+        print(statuses)
+        print(instance.mineral_id.related_minerals.all())
+        # instance.annotate(relations=Subquery(relations.values('status_id')))
+        return {'some': 'some'}
+
+# class StatusDescriptionSerializer(serializers.BaseSerializer):
+
+#     def get_status_description(self, mineral_id):
+
+#         # TODO: refactor to ORM
         
-        query = '''
-                    select sl.status_id, sl.description_group as status_group, sl.description_short as status_description, 
-                    ml.mineral_id, ml.mineral_name
-                    from (
-                    select distinct ms.status_id,
-                        case 
-                            when (ms.status_id >=2.0 and ms.status_id < 5.0) or (ms.status_id >=8.0 and ms.status_id < 9.0) 
-                            then mr.relation_id 
-                            else null
-                        end relation_id
-                    from mineral_status ms
-                    left join mineral_relation mr on ms.mineral_id = mr.mineral_id 
-                    where ms.mineral_id = %s
-                    and (mr.relation_type_id = 1 or null and mr.direct_relation = true or null)
-                    group by mr.relation_id, ms.status_id
-                    ) subquery
-                    inner join status_list sl 
-                    on sl.status_id = subquery.status_id
-                    left join mineral_log ml
-                    on ml.mineral_id = subquery.relation_id;
-            '''
-        queryset = StatusList.objects
-        return queryset.raw(query, [mineral_id])
+#         query = '''
+#                     select sl.status_id, sl.description_group as status_group, sl.description_short as status_description, 
+#                     ml.mineral_id, ml.mineral_name
+#                     from (
+#                     select distinct ms.status_id,
+#                         case 
+#                             when (ms.status_id >=2.0 and ms.status_id < 5.0) or (ms.status_id >=8.0 and ms.status_id < 9.0) 
+#                             then mr.relation_id 
+#                             else null
+#                         end relation_id
+#                     from mineral_status ms
+#                     left join mineral_relation mr on ms.mineral_id = mr.mineral_id 
+#                     where ms.mineral_id = %s
+#                     and (mr.relation_type_id = 1 or null and mr.direct_relation = true or null)
+#                     group by mr.relation_id, ms.status_id
+#                     ) subquery
+#                     inner join status_list sl 
+#                     on sl.status_id = subquery.status_id
+#                     left join mineral_log ml
+#                     on ml.mineral_id = subquery.relation_id;
+#             '''
+#         queryset = StatusList.objects
+#         return queryset.raw(query, [mineral_id])
 
-    def to_representation(self, instance):
-        raw_sql = self.get_status_description(instance.mineral_id)
-        query = list(raw_sql)
-        statuses = []
-        for status in query:
-            local = {}
-            local.update({
-                # 'status_id': status.status_id,
-                'group': status.status_group,
-                'description': []
-            })
-            if status.mineral_id:
-                relations = {
-                    'mineral_id': status.mineral_id,
-                    'mineral_name': status.mineral_name,
-                    }
-                local['relations'] = [relations]
-            if len(statuses) > 0 and status.status_group not in set([loc_status['group'] for loc_status in statuses]):
-                local['description'].append(status.status_description)
-                statuses.append(local)
-            elif len(statuses) == 0:
-                local['description'].append(status.status_description)
-                statuses.append(local)
-            else:
-                query_status = [loc_status for loc_status in statuses if loc_status['group'] == status.status_group][0]
-                if status.status_description not in query_status['description']:
-                    query_status['description'].append(status.status_description)
-                if relations:
-                    if 'relations' in query_status.keys() and status.mineral_id not in [relation['mineral_id'] for relation in query_status['relations']]:
-                        query_status['relations'].append(relations)
-                    else:
-                        query_status['relations'] = relations
+#     def to_representation(self, instance):
+#         raw_sql = self.get_status_description(instance.mineral_id)
+#         query = list(raw_sql)
+#         statuses = []
+#         for status in query:
+#             local = {}
+#             local.update({
+#                 # 'status_id': status.status_id,
+#                 'group': status.status_group,
+#                 'description': []
+#             })
+#             if status.mineral_id:
+#                 relations = {
+#                     'mineral_id': status.mineral_id,
+#                     'mineral_name': status.mineral_name,
+#                     }
+#                 local['relations'] = [relations]
+#             if len(statuses) > 0 and status.status_group not in set([loc_status['group'] for loc_status in statuses]):
+#                 local['description'].append(status.status_description)
+#                 statuses.append(local)
+#             elif len(statuses) == 0:
+#                 local['description'].append(status.status_description)
+#                 statuses.append(local)
+#             else:
+#                 query_status = [loc_status for loc_status in statuses if loc_status['group'] == status.status_group][0]
+#                 if status.status_description not in query_status['description']:
+#                     query_status['description'].append(status.status_description)
+#                 if relations:
+#                     if 'relations' in query_status.keys() and status.mineral_id not in [relation['mineral_id'] for relation in query_status['relations']]:
+#                         query_status['relations'].append(relations)
+#                     else:
+#                         query_status['relations'] = relations
 
-        return statuses
+#         return statuses
 
 class MineralHierarchySerializer(serializers.BaseSerializer):
 
@@ -284,7 +313,8 @@ class MineralBaseSerializer(serializers.ModelSerializer):
     mineral_id = serializers.UUIDField(read_only=True)
     mineral_name = serializers.CharField(required=True)
     formula = serializers.ReadOnlyField(source='mineral_formula_html')
-    statuses = serializers.SerializerMethodField()
+    statuses = StatusDescriptionSerializer(source='mineral_status', many=True)
+    # statuses = serializers.SerializerMethodField()
     note = serializers.CharField()
     ns_index = serializers.ReadOnlyField(source='get_ns_index')
     history = serializers.SerializerMethodField()
