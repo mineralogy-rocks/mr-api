@@ -23,14 +23,14 @@ from django_elasticsearch_dsl_drf.filter_backends import (
 from django_elasticsearch_dsl_drf.viewsets import BaseDocumentViewSet
 from django_elasticsearch_dsl_drf.pagination import PageNumberPagination
 
-from .documents import MineralListDocument
-from .serializers import MineralListDocumentSerializer
+from .documents import MineralLogDocument
+from .serializers import MineralLogDocumentSerializer
 
-class MineralListDocumentView(BaseDocumentViewSet):
-    """The MineralListDocument view."""
+class MineralLogDocumentView(BaseDocumentViewSet):
+    """The MineralLogDocument view."""
 
-    document = MineralListDocument
-    serializer_class = MineralListDocumentSerializer
+    document = MineralLogDocument
+    serializer_class = MineralLogDocumentSerializer
     pagination_class = PageNumberPagination
     lookup_field = 'id'
     filter_backends = [

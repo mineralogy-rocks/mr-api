@@ -2,17 +2,17 @@
 from rest_framework import serializers
 from django_elasticsearch_dsl_drf.serializers import DocumentSerializer
 
-from .documents import MineralListDocument
+from .documents import MineralLogDocument
 
-class MineralListDocumentSerializer(DocumentSerializer):
-    """Serializer for the MineralList document."""
+class MineralLogDocumentSerializer(DocumentSerializer):
+    """Serializer for the MineralLog document."""
     # status = serializers.SerializerMethodField()
 
     class Meta(object):
         """Meta options."""
 
         # Specify the correspondent document class
-        document = MineralListDocument
+        document = MineralLogDocument
 
         # List the serializer fields. Note, that the order of the fields
         # is preserved in the ViewSet.

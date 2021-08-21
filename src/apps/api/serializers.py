@@ -33,6 +33,9 @@ class MineralStatusSerializer(serializers.ModelSerializer):
 class StatusDescriptionSerializer(serializers.BaseSerializer):
 
     def get_status_description(self, mineral_id):
+
+        # TODO: refactor to ORM
+        
         query = '''
                     select sl.status_id, sl.description_group as status_group, sl.description_short as status_description, 
                     ml.mineral_id, ml.mineral_name
@@ -51,7 +54,7 @@ class StatusDescriptionSerializer(serializers.BaseSerializer):
                     ) subquery
                     inner join status_list sl 
                     on sl.status_id = subquery.status_id
-                    left join mineral_list ml
+                    left join mineral_log ml
                     on ml.mineral_id = subquery.relation_id;
             '''
         queryset = StatusList.objects
@@ -289,17 +292,9 @@ class MineralBaseSerializer(serializers.ModelSerializer):
     updated_at =serializers.DateTimeField(read_only=True)
 
     class Meta:
-        model = MineralList
+        model = MineralLog
         fields = ['mineral_id', 'mineral_name', 'formula', 'statuses', 'note', 
                   'ns_index', 'history', 'created_at', 'updated_at',]
-
-    @staticmethod
-    def setup_eager_loading(queryset):
-
-        related = queryset.select_related('history', 'id_class', 'id_subclass', 'id_family')
-        prefetched = related.prefetch_related('statuses', 'discovery_countries', )
-
-        return prefetched
 
     def get_discovery_country(self, instance):
         queryset = instance.country_mineral
@@ -325,11 +320,11 @@ class MineralBaseSerializer(serializers.ModelSerializer):
         return StatusDescriptionSerializer(instance).data
 
 
-class MineralListSerializer(MineralBaseSerializer, serializers.ModelSerializer):
+class MineralDetailSerializer(MineralBaseSerializer, serializers.ModelSerializer):
     tabs = serializers.SerializerMethodField()
 
     class Meta:
-        model = MineralList
+        model = MineralLog
         fields = MineralBaseSerializer.Meta.fields + ['tabs']
 
     def get_tabs(self, instance):
@@ -423,13 +418,13 @@ class nuxtTabsSerializer(serializers.BaseSerializer):
             where nt.tab_short_name in ( 
             select 'history' 
             where exists (select 1 from mineral_history mh where mh.mineral_id = %(mineral_id)s) or
-            exists (select 1 from mineral_list ml where ml.mineral_id = %(mineral_id)s) 
+            exists (select 1 from mineral_log ml where ml.mineral_id = %(mineral_id)s) 
             union 
             select 'classification' 
             where exists (select 1 from mineral_hierarchy mh 
                             where mh.mineral_id = %(mineral_id)s 
                             or mh.parent_id = %(mineral_id)s) or 
-            exists (select 1 from mineral_list ml where ml.mineral_id = %(mineral_id)s and ml.id_class is not null) 
+            exists (select 1 from mineral_log ml where ml.mineral_id = %(mineral_id)s and ml.id_class is not null) 
             union 
             select 'relations' 
             where exists (select 1 from mineral_relation mr where mr.mineral_id = %(mineral_id)s)

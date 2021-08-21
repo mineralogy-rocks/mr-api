@@ -20,7 +20,7 @@ folding_analyzer = analyzer('folding_analyzer',
 # )
 
 @registry.register_document
-class MineralListDocument(Document):
+class MineralLogDocument(Document):
     mineral_id = StringField(attr='mineral_id')
     mineral_name = StringField(analyzer=folding_analyzer)
     # mineral_name = KeywordField(fields={
@@ -44,7 +44,7 @@ class MineralListDocument(Document):
         return self.get_queryset()
 
     def get_queryset(self):
-        queryset = super(MineralListDocument, self).get_queryset()
+        queryset = super(MineralLogDocument, self).get_queryset()
         queryset = queryset.select_related('id_class', 'id_subclass', 'id_family')
         queryset = queryset.prefetch_related('status')
         # queryset = queryset.prefetch_related(Prefetch('status', queryset=MsSpeciesStatus.objects.select_related('mineral_id','status_id')))
@@ -84,7 +84,7 @@ class MineralListDocument(Document):
 
     class Django:
         # The model associated with Elasticsearch document
-        model = MineralList
+        model = MineralLog
         # related_models = (MsSpeciesStatus,)
         # fields = ('get_ns_index',)
         # The fields of the model you want to be indexed

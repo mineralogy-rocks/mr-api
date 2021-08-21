@@ -3,7 +3,7 @@ from django.shortcuts import render
 
 from rest_framework import status
 from rest_framework import generics
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
@@ -16,13 +16,19 @@ from . import serializers as serializers
 
 class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
-    queryset = models.MineralList.objects.all()
-    serializer_class = serializers.MineralListSerializer
+    queryset = models.MineralLog.objects.all()
+    serializer_class = serializers.MineralDetailSerializer
 
     def get_queryset(self):
 
-        if self.action in ['list']:
-            return self.get_serializer_class().setup_eager_loading(self.queryset)
+        if self.action in ['retrieve']:
+            return self.queryset.select_related('history', 'id_class', 'id_subclass', 'id_family') \
+                                .prefetch_related('statuses', 'discovery_countries',)
+
+        elif self.action in ['list']:
+            return self.queryset.select_related('history', 'id_class', 'id_subclass', 'id_family') \
+                                .prefetch_related('statuses', 'discovery_countries', )
+
         elif self.action in ['children']:
             return models.MineralHierarchy.objects.all()
 

@@ -164,7 +164,7 @@ class MineralCountryInline(admin.TabularInline):
 
 class MineralRelationInline(admin.TabularInline):
     model = MineralRelation
-    # model = MineralList.relations.through
+    # model = MineralLog.relations.through
     raw_id_fields = ('relation_id',)
     # fields = ('relation_id', 'relation_type_id')
     ordering = ('relation_id__mineral_name',)
@@ -183,7 +183,7 @@ class MineralRelationInline(admin.TabularInline):
 
     # def get_queryset(self, request):
     #     qs = super().get_queryset(request)
-    #     # related = MineralList.objects.select_related('relations')
+    #     # related = MineralLog.objects.select_related('relations')
     #     qs = qs.prefetch_related('mineral_relation')
     #     # fetched = qs.prefetch_related(Prefetch('relation_id', queryset=related))
     #     return qs
@@ -250,8 +250,8 @@ def GrHierarchyInline(param):
 
     return GroupInline
 
-@admin.register(MineralList)
-class MineralListAdmin(admin.ModelAdmin):
+@admin.register(MineralLog)
+class MineralLogAdmin(admin.ModelAdmin):
     list_display = ('mineral_name', 'mineral_formula_html', 'get_statuses', 'get_ns_index',)
     list_filter = (StatusListFilter, 'id_class')
     ordering = ('mineral_name',)
