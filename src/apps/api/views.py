@@ -23,6 +23,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer, ]
 
     ordering_fields = ['mineral_name',]
+    ordering = ['mineral_name',]
     filter_backends = (filters.OrderingFilter,)
 
     def get_queryset(self):
