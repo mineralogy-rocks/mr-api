@@ -42,21 +42,19 @@ class StatusDescriptionSerializer(serializers.ModelSerializer):
 
     def get_group(self, instance):
 
-        relations = MineralStatus.objects.values('mineral_id__related_minerals__relation_id','status_id').annotate(
-            status=F('status_id'),
-            relation_id=Case(
-                When(Q(status_id__gte=2.0) | Q(status_id__lt=5.0), then=F('mineral_id__related_minerals__relation_id')),
-                default=None,
-            ),
-        ) \
-        .filter((Q(mineral_id__related_minerals__relation_type_id=1) | Q(mineral_id__related_minerals__relation_type_id__isnull=True)) &
-                 (Q(mineral_id__related_minerals__direct_relation=True) | Q(mineral_id__related_minerals__direct_relation__isnull=True)))
+        relations = instance.all() \
+            .filter((Q(mineral_id__related_minerals__relation_type_id=1) | Q(mineral_id__related_minerals__relation_type_id__isnull=True)) &
+                    (Q(mineral_id__related_minerals__direct_relation=True) | Q(mineral_id__related_minerals__direct_relation__isnull=True))) \
+            .annotate(
+                status=F('status_id'),
+                relation_id=Case(
+                    When((Q(status_id__gte=2.0) & Q(status_id__lt=5.0)) | (Q(status_id__gte=8.0) & Q(status_id__lt=9.0)), then=F('mineral_id__related_minerals__relation_id')),
+                    default=None,
+                ),
+            )
+                 
+        print(relations.values())
 
-        statuses = StatusList.objects.filter(Q(status_id__in=Subquery(relations.values('status_id'))))
-
-        print(statuses)
-        print(instance.mineral_id.related_minerals.all())
-        # instance.annotate(relations=Subquery(relations.values('status_id')))
         return {'some': 'some'}
 
 # class StatusDescriptionSerializer(serializers.BaseSerializer):
@@ -313,7 +311,7 @@ class MineralBaseSerializer(serializers.ModelSerializer):
     mineral_id = serializers.UUIDField(read_only=True)
     mineral_name = serializers.CharField(required=True)
     formula = serializers.ReadOnlyField(source='mineral_formula_html')
-    statuses = StatusDescriptionSerializer(source='mineral_status', many=True)
+    statuses = StatusDescriptionSerializer(source="mineral_status")
     # statuses = serializers.SerializerMethodField()
     note = serializers.CharField()
     ns_index = serializers.ReadOnlyField(source='get_ns_index')
