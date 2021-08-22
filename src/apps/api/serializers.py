@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from django.db.models import Q, F, Case, When, BooleanField, Subquery, Value, Min, OuterRef
+from django.db.models import Q, F, Case, When, BooleanField, Subquery, Value, Min, FilteredRelation
 from decimal import *
 from api.models import *
 from stats.serializers import discoveryCountryCountsSerializer
@@ -46,6 +46,8 @@ class StatusDescriptionSerializer(serializers.ModelSerializer):
             .filter((Q(mineral_id__related_minerals__relation_type_id=1) | Q(mineral_id__related_minerals__relation_type_id__isnull=True)) &
                     (Q(mineral_id__related_minerals__direct_relation=True) | Q(mineral_id__related_minerals__direct_relation__isnull=True))) \
             .annotate(
+                status_group=F('status_id__description_group'),
+                status_description=F('status_id__description_short'),
                 status=F('status_id'),
                 relation_id=Case(
                     When((Q(status_id__gte=2.0) & Q(status_id__lt=5.0)) | (Q(status_id__gte=8.0) & Q(status_id__lt=9.0)), then=F('mineral_id__related_minerals__relation_id')),
@@ -53,7 +55,10 @@ class StatusDescriptionSerializer(serializers.ModelSerializer):
                 ),
             )
                  
-        print(relations.values())
+
+        print(
+            relations.values()
+            )
 
         return {'some': 'some'}
 
