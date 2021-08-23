@@ -397,6 +397,7 @@ class IonSubunit(models.Model):
         return self.subunit_id
 
 class MineralLog(models.Model):
+
     mineral_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
 
     mineral_name = models.CharField(unique=True, max_length=200)
@@ -431,6 +432,7 @@ class MineralLog(models.Model):
         else:
             ns_index = None
         return ns_index
+        
     get_ns_index.short_description = 'Nickel-Strunz Index'
 
     def get_statuses(self):
@@ -441,10 +443,8 @@ class MineralLog(models.Model):
 
     # @property
     def search_statuses(self):
-        # statuses = MsSpecies.objects.all().prefetch_related(Prefetch('mineral_status', queryset=MineralStatus.objects.select_related('mineral_id','status_id')))
-        # print(statuses)
         if self.statuses:
-            return self.statuses #[status.status_id for status in self.status.all()]
+            return self.statuses
 
     def mineral_formula_html(self):
         replacements = [
@@ -459,6 +459,7 @@ class MineralLog(models.Model):
             return mark_safe(parsed)
         else:
             return None
+            
     mineral_formula_html.short_description = 'Formula'
 
     class Meta:
