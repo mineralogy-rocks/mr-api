@@ -1,5 +1,6 @@
+from django.db.models.expressions import OuterRef
 from rest_framework import serializers
-from django.db.models import Q, F, Case, When, BooleanField, Subquery, Value, Min, FilteredRelation, Count
+from django.db.models import Q, F, Case, When, BooleanField, Subquery, Value, Min, Exists, Count
 from decimal import *
 from api.models import *
 from stats.serializers import discoveryCountryCountsSerializer
@@ -45,20 +46,24 @@ class StatusDescriptionSerializer(serializers.ModelSerializer):
         relations = instance.all() \
             .filter((Q(mineral_id__related_minerals__relation_type_id=1) | Q(mineral_id__related_minerals__relation_type_id__isnull=True) &
                     Q(mineral_id__related_minerals__direct_relation=True) | Q(mineral_id__related_minerals__direct_relation__isnull=True))) \
-            .values('status_id').annotate(
+            .values('status_id') \
+            .annotate(
                 status_count=Count('status_id'),
-                relation_id=Case(
+                status_group=F('status_id__description_group'),
+                status_description=F('status_id__description_short'),
+                mineral_id=Case(
                     When((Q(status_id__gte=2.0) & Q(status_id__lt=5.0)) | (Q(status_id__gte=8.0) & Q(status_id__lt=9.0)), then=F('mineral_id__related_minerals__relation_id')),
                     default=None,
                 ),
-            ).values('status_id', 'relation_id').distinct()
+                mineral_name=Case(
+                    When(Q(mineral_id__isnull=False), then=F('mineral_id__related_minerals__relation_id__mineral_name')),
+                    default=None,
+                ),
+            ).values('status_id', 'status_group', 'status_description', 'mineral_id', 'mineral_name').distinct()
                  
+        # print(relations.values())
 
-        print(
-            relations
-            )
-
-        return {'some': 'some'}
+        return {'some': relations.values_list()}
 
 # class StatusDescriptionSerializer(serializers.BaseSerializer):
 
