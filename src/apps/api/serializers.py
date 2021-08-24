@@ -11,7 +11,7 @@ from stats.functions.stats import discovery_country_counts
 class StatusListSerializer(serializers.ModelSerializer):
     class Meta:
         model = StatusList
-        fields = ['status_id', 'description_short', 'description_long']
+        fields = ['status_id', 'description_group', 'description_short', 'description_long']
 
 class CountryListSerializer(serializers.ModelSerializer):
     class Meta:
@@ -55,10 +55,10 @@ class StatusDescriptionSerializer(serializers.ModelSerializer):
             [type]: [description]
         """
 
-        relations = services.get_relations(instance)
+        relations = services.get_statuses_and_relations(instance)
         # print(relations.values())
 
-        return {'some': relations.values_list()}
+        return {'some': relations}
 
 # class StatusDescriptionSerializer(serializers.BaseSerializer):
 

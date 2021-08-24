@@ -1,5 +1,6 @@
 from django.db.models import Q
 from django.shortcuts import render
+from rest_framework import parsers
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import status
@@ -16,13 +17,27 @@ from . import models as models
 from . import serializers as serializers
 
 
+
+class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
+
+    queryset = models.StatusList.objects.all()
+    serializer_class = serializers.StatusListSerializer
+
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer, ]
+
+    ordering_fields = ['status_id', 'description_group', ]
+    ordering = ['status_id',]
+
+    filter_backends = [filters.OrderingFilter,]
+
+
 class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
     queryset = models.MineralLog.objects.all()
     serializer_class = serializers.MineralDetailSerializer
 
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer, ]
-
+    
     ordering_fields = ['mineral_name',]
     ordering = ['mineral_name',]
 

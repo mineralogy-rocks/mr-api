@@ -10,6 +10,7 @@ app_name = 'api'
 router = DefaultRouter()
 
 router.register(r'mineral', views.MineralViewSet, basename='mineral')
+router.register(r'status', views.StatusViewSet, basename='status')
 
 urlpatterns = [
     path('', include(router.urls)),
