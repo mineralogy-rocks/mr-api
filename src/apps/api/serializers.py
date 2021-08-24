@@ -1,10 +1,12 @@
-from django.db.models.expressions import OuterRef
 from rest_framework import serializers
 from django.db.models import Q, F, Case, When, BooleanField, Subquery, Value, Min, Exists, Count
 from decimal import *
+
 from api.models import *
+from api import services as services
 from stats.serializers import discoveryCountryCountsSerializer
 from stats.functions.stats import discovery_country_counts
+
 
 class StatusListSerializer(serializers.ModelSerializer):
     class Meta:
@@ -40,27 +42,20 @@ class StatusDescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = StatusList
         fields = ['group']
+        
+    
 
     def get_group(self, instance):
+        """ Grab all 
 
-        relations = instance.all() \
-            .filter((Q(mineral_id__related_minerals__relation_type_id=1) | Q(mineral_id__related_minerals__relation_type_id__isnull=True) &
-                    Q(mineral_id__related_minerals__direct_relation=True) | Q(mineral_id__related_minerals__direct_relation__isnull=True))) \
-            .values('status_id') \
-            .annotate(
-                status_count=Count('status_id'),
-                status_group=F('status_id__description_group'),
-                status_description=F('status_id__description_short'),
-                mineral_id=Case(
-                    When((Q(status_id__gte=2.0) & Q(status_id__lt=5.0)) | (Q(status_id__gte=8.0) & Q(status_id__lt=9.0)), then=F('mineral_id__related_minerals__relation_id')),
-                    default=None,
-                ),
-                mineral_name=Case(
-                    When(Q(mineral_id__isnull=False), then=F('mineral_id__related_minerals__relation_id__mineral_name')),
-                    default=None,
-                ),
-            ).values('status_id', 'status_group', 'status_description', 'mineral_id', 'mineral_name').distinct()
-                 
+        Args:
+            instance (QuerySet object): a manager for mineral_status through MineralLog object
+
+        Returns:
+            [type]: [description]
+        """
+
+        relations = services.get_relations(instance)
         # print(relations.values())
 
         return {'some': relations.values_list()}

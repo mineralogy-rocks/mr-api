@@ -1,5 +1,6 @@
 from django.db.models import Q
 from django.shortcuts import render
+from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import status
 from rest_framework import generics
@@ -24,7 +25,10 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
     ordering_fields = ['mineral_name',]
     ordering = ['mineral_name',]
-    filter_backends = (filters.OrderingFilter,)
+
+    filter_backends = [filters.OrderingFilter, DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['statuses']
+    search_fields = ['mineral_name',]
 
     def get_queryset(self):
 
