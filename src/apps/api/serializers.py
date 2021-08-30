@@ -56,7 +56,6 @@ class StatusDescriptionSerializer(serializers.ModelSerializer):
         """
 
         relations = services.get_statuses_and_relations(instance)
-        # print(relations.values())
 
         return {'some': relations}
 
@@ -314,7 +313,7 @@ class MineralBaseSerializer(serializers.ModelSerializer):
     mineral_id = serializers.UUIDField(read_only=True)
     mineral_name = serializers.CharField(required=True)
     formula = serializers.ReadOnlyField(source='mineral_formula_html')
-    statuses = StatusDescriptionSerializer(source="mineral_status")
+    statuses = StatusDescriptionSerializer(source='mineral_status')
     # statuses = serializers.SerializerMethodField()
     note = serializers.CharField()
     ns_index = serializers.ReadOnlyField(source='get_ns_index')
@@ -359,6 +358,7 @@ class MineralDetailSerializer(MineralBaseSerializer, serializers.ModelSerializer
         fields = MineralBaseSerializer.Meta.fields + ['tabs']
 
     def get_tabs(self, instance):
+        
         tabs = NuxtTabsSerializer(instance).data
         return tabs if len(tabs) else None
 
