@@ -6,9 +6,9 @@ from sentry_sdk.integrations.django import DjangoIntegration
 
 
 sentry_sdk.init(
-	dsn=os.environ.get('DJANGO_SENTRY_DSN', default=None),
+    dsn=os.environ.get('DJANGO_SENTRY_DSN', default=None),
     environment=os.environ.get('DJANGO_SENTRY_ENV', default=''),
-	integrations=[DjangoIntegration()]
+    integrations=[DjangoIntegration()]
 )
 
 
