@@ -606,22 +606,6 @@ class MineralHierarchy(models.Model):
     def __str__(self):
         return self.mineral_id.mineral_name
 
-class GrHierarchy(models.Model):
-    id = models.AutoField(primary_key=True)
-    supergroup_id = models.ForeignKey(MineralLog, models.CASCADE, db_column='supergroup_id', related_name='supergroup')
-    group_id = models.ForeignKey(MineralLog, models.CASCADE, db_column='group_id', related_name='group')
-    subgroup_id = models.ForeignKey(MineralLog, models.CASCADE, db_column='subgroup_id', related_name='subgroup')
-    root_id = models.ForeignKey(MineralLog, models.CASCADE, db_column='root_id', related_name='root')
-    serie_id = models.ForeignKey(MineralLog, models.CASCADE, db_column='serie_id', related_name='serie')
-    mineral_id = models.ForeignKey(MineralLog, models.CASCADE, db_column='mineral_id', related_name='mineral_test')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        managed = False,
-        db_table = 'gr_hierarchy'
-        verbose_name_plural = 'GrHierarchy'
-
 
 ####### Names db tables go here ###########
 

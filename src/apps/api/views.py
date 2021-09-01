@@ -52,7 +52,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         elif self.action in ['list']:
             return self.queryset.select_related('history', 'id_class', 'id_subclass', 'id_family') \
-                                .prefetch_related('statuses', 'discovery_countries', )
+                                .prefetch_related('statuses', 'discovery_countries',)
 
         elif self.action in ['children']:
             return models.MineralHierarchy.objects.all()
