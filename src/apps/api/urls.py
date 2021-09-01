@@ -12,8 +12,12 @@ router = DefaultRouter()
 router.register(r'mineral', views.MineralViewSet, basename='mineral')
 router.register(r'status', views.StatusViewSet, basename='status')
 
+def trigger_error(request):
+    division_by_zero = 1 / 0
+    
 urlpatterns = [
     path('', include(router.urls)),
+    path('sentry-debug/', trigger_error)
 ]
 
 # urlpatterns = [
