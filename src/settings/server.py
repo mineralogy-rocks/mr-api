@@ -1,14 +1,15 @@
 from .base import *
 import os
 
-# import sentry_sdk
-# from sentry_sdk.integrations.django import DjangoIntegration
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 
-# sentry_sdk.init(
-# 	dsn=env('DJANGO_SENTRY_DSN'),
-# 	integrations=[DjangoIntegration()]
-# )
+sentry_sdk.init(
+    dsn=os.environ.get('DJANGO_SENTRY_DSN', default=None),
+    environment=os.environ.get('DJANGO_SENTRY_ENV', default=''),
+    integrations=[DjangoIntegration()]
+)
 
 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
