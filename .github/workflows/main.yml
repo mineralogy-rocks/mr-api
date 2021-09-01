@@ -64,7 +64,7 @@ jobs:
 
       # login into DO registry
       - name: Log in to DO Container Registry
-        run: doctl registry login --expiry-seconds 380
+        run: doctl registry login --expiry-seconds 800
 
       # pull images
       - name: Pull images
