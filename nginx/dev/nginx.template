@@ -7,14 +7,9 @@ events {
 }
 
 http {
+
 	include /etc/nginx/mime.types;
 	default_type application/octet-stream;
-
-	sendfile on;
-	tcp_nopush on;
-	tcp_nodelay on;
-	keepalive_timeout 120;
-	types_hash_max_size 2048;
 
 	access_log /var/log/nginx/access.log;
 	error_log /var/log/nginx/error.log;
@@ -22,7 +17,6 @@ http {
 	gzip on;
 
 	resolver 127.0.0.11 valid=30s;
-
 
 	server {
 		listen 80;
@@ -54,6 +48,9 @@ http {
 
 			set $backend_upstream backend:8000;
 			proxy_pass http://$backend_upstream;
+
 		}
+		
+
 	}
 }
