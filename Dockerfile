@@ -10,6 +10,8 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # install psycopg2 dependencies
+# TODO: remove dependencies needed for gevent (from requirements too)
+
 RUN apk update \
     && apk add postgresql-dev gcc python3-dev musl-dev libffi-dev make libevent-dev build-base
 
