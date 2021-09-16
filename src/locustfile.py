@@ -8,7 +8,7 @@ class UserBehavior(TaskSet):
         self.client.get(
             "/api/", 
             headers=headers, 
-            name = "List all minerals"
+            name = "List api root"
             )
  
  
