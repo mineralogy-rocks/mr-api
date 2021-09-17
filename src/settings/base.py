@@ -67,6 +67,7 @@ INSTALLED_APPS = [
 
     'rest_framework',
 
+    'drf_spectacular',
     'django_extensions',
     'django_elasticsearch_dsl',
     'django_elasticsearch_dsl_drf',
@@ -154,10 +155,6 @@ CACHES = {
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 
-if DEBUG is True:
-    CACHE_TTL = 10  # Set cache time to 5 seconds in dev mode
-else:
-    CACHE_TTL = 60 * 15  # Set cache time to 15 minutes
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -214,4 +211,13 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend'
     ],
     'SEARCH_PARAM': 'q',
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# Settings for Documentation
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'mineralogy.rocks API',
+    'DESCRIPTION': 'This project is funded by SASPRO2, Marie Skłodowska-Curie Cofund.',
+    'VERSION': '1.0.0',
 }
