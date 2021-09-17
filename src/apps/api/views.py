@@ -1,17 +1,10 @@
-from django.db.models import Q
-from django.shortcuts import render
-from rest_framework import parsers
 from django_filters.rest_framework import DjangoFilterBackend
 
-from rest_framework import status
-from rest_framework import generics
 from rest_framework import filters
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
-from rest_framework.parsers import JSONParser
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import  AllowAny
 
 from . import models as models
 from . import serializers as serializers
@@ -24,6 +17,9 @@ class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     serializer_class = serializers.StatusListSerializer
 
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer, ]
+
+    permission_classes = [AllowAny,]
+    authentication_classes = []
 
     ordering_fields = ['status_id', 'description_group', ]
     ordering = ['status_id',]
@@ -38,12 +34,16 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer, ]
     
+    permission_classes = [AllowAny,]
+    authentication_classes = []
+    
     ordering_fields = ['mineral_name',]
     ordering = ['mineral_name',]
 
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['statuses']
     search_fields = ['mineral_name',]
+
 
     def get_queryset(self):
 
@@ -59,9 +59,12 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         return super().get_queryset()
 
+
     def get_serializer_class(self):
+        
         if self.action in ['list']:
             return serializers.MineralBaseSerializer
+        
         elif self.action in ['children']:
             return serializers.MineralChildrenSerializer
 
