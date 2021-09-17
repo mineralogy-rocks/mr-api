@@ -220,4 +220,6 @@ SPECTACULAR_SETTINGS = {
     'TITLE': 'mineralogy.rocks API',
     'DESCRIPTION': 'This project is funded by SASPRO2, Marie Skłodowska-Curie Cofund.',
     'VERSION': '1.0.0',
+
+    "SWAGGER_UI_DIST": "//unpkg.com/swagger-ui-dist@3.52.2",
 }
