@@ -10,8 +10,10 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # install psycopg2 dependencies
+# TODO: remove dependencies needed for gevent (from requirements too)
+
 RUN apk update \
-    && apk add postgresql-dev gcc python3-dev musl-dev
+    && apk add postgresql-dev gcc python3-dev musl-dev libffi-dev make libevent-dev build-base
 
 # install dependencies
 RUN python -m pip install --upgrade pip
@@ -23,6 +25,6 @@ RUN python -m pip install -r src/requirements/development.txt
 EXPOSE 8000
 WORKDIR /app/src
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 # [END docker]
