@@ -40,7 +40,7 @@ services:
             dockerfile: Dockerfile
         restart: unless-stopped
         # command: gunicorn wsgi:application --pythonpath 'src' --bind 0.0.0.0:8000 --worker-class=gevent --worker-connections=1000 --workers=5 --log-level debug
-        command: python manage.py runserver 0.0.0.0:8000
+        # command: python manage.py runserver 0.0.0.0:8000
         env_file:
             - ./.dev.env
         ports:
