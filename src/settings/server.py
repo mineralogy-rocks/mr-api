@@ -11,6 +11,7 @@ sentry_sdk.init(
     integrations=[DjangoIntegration()]
 )
 
+CACHE_TTL = 60 * 15  # Set cache time to 15 minutes
 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
