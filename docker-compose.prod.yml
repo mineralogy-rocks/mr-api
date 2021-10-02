@@ -2,20 +2,6 @@ version: "3.7"
 
 services:
 
-    backend:
-        container_name: backend
-        build:
-            context: .
-            dockerfile: Dockerfile.prod
-        image: registry.digitalocean.com/mr-project/backend:latest
-        command: gunicorn wsgi:application --pythonpath 'src' --bind 0.0.0.0:8000 --worker-class=gevent --worker-connections=1000 --workers=5
-        ports:
-            - 8000:8000
-        env_file:
-            - ./.prod.env
-        networks:
-            - main
-
     nginx:
         container_name: nginx
         image: nginx:1.21.0-alpine
@@ -45,6 +31,20 @@ services:
             - ./nginx/certbot/conf:/etc/letsencrypt
             - ./nginx/certbot/www:/var/www/certbot
         entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+        networks:
+            - main
+
+    backend:
+        container_name: backend
+        build:
+            context: .
+            dockerfile: Dockerfile.prod
+        image: registry.digitalocean.com/mr-project/backend:latest
+        command: gunicorn wsgi:application --pythonpath 'src' --bind 0.0.0.0:8000 --worker-class=gevent --worker-connections=1000 --workers=5
+        ports:
+            - 8000:8000
+        env_file:
+            - ./.prod.env
         networks:
             - main
 
