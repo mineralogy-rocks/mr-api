@@ -17,8 +17,6 @@ DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda _request: DEBUG
 }
 
-CACHE_TTL = 10  # Set cache time to 5 seconds in dev mode
-
 STATIC_ROOT = os.environ.get('DJANGO_STATIC_ROOT', default='/app/static')
 MEDIA_ROOT = os.environ.get('DJANGO_MEDIA_ROOT', default='/app/media')
 

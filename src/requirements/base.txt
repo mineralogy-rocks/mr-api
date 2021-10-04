@@ -11,7 +11,7 @@ django-environ==0.4.5
 django-extensions==3.1.1
 django-filter==2.4.0
 django-nine==0.2.3
-django-redis==4.12.1
+django-cacheops==6.0
 django-storages==1.10.1
 django-webpack-loader==0.7.0
 djangorestframework==3.12.1

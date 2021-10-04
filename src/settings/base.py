@@ -142,18 +142,12 @@ DATABASES = {
 
 # Redis
 
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/0",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
-    }
-}
+CACHEOPS_REDIS = "redis://redis:6379/1"
 
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
+CACHEOPS = {
+    'api.StatusList': {'ops': 'all', 'timeout': 60*15},
+    'api.*': {'ops': 'all', 'timeout': 60*1},
+}
 
 
 # Password validation

@@ -67,6 +67,5 @@ class discoveryCountryCounts(APIView):
         serializer = discoveryCountryCountsSerializer(output, many=True)
         return Response(serializer.data)
 
-    @method_decorator(cache_page(settings.CACHE_TTL))
     def dispatch(self, *args, **kwargs):
         return super(discoveryCountryCounts, self).dispatch(*args, **kwargs)
