@@ -86,15 +86,15 @@ class StatusList(models.Model):
     def __str__(self):
         return '{0} - {1}'.format(self.status_id, self.description_short)
 
-class RelationList(models.Model):
+class RelationTypeList(models.Model):
     relation_type_id = models.AutoField(primary_key=True)
     type = models.CharField(max_length=200, null=False)
     note = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
-        db_table = 'relation_list'
-        verbose_name_plural = 'RelationList'
+        db_table = 'relation_type_list'
+        verbose_name_plural = 'RelationTypeList'
 
     def __str__(self):
         return '{0}'.format(self.type)
@@ -486,22 +486,26 @@ class MineralStatus(models.Model):
     def __str__(self):
         return str(self.mineral_id)
 
+
 class MineralRelation(models.Model):
+    
     id = models.AutoField(primary_key=True)
     mineral_id = models.ForeignKey(MineralLog, models.CASCADE, db_column='mineral_id', related_name='related_minerals')
+    mineral_status_id = models.ForeignKey(MineralStatus, on_delete=models.CASCADE, db_column='mineral_status_id', to_field='id', related_name='relations')
     relation_id = models.ForeignKey(MineralLog, models.CASCADE, db_column='relation_id', related_name='related_relations')
-    direct_relation = models.BooleanField(null=False)
-    relation_type_id = models.ForeignKey(RelationList, models.CASCADE, db_column='relation_type_id', related_name='related_type', null=False, blank=False)
+    relation_type_id = models.ForeignKey(RelationTypeList, models.CASCADE, db_column='relation_type_id', related_name='related_type', null=False, blank=False)
     relation_note = models.TextField(blank=True, null=True)
+    direct_relation = models.BooleanField(null=False)
 
     class Meta:
         managed = False
         db_table = 'mineral_relation'
-        unique_together = (('mineral_id', 'relation_id', 'relation_type_id', 'direct_relation',))
+        unique_together = (('mineral_id', 'mineral_status_id', 'relation_id', 'relation_type_id', 'relation_note', 'direct_relation',))
         verbose_name_plural = 'MineralRelation'
 
     def __str__(self):
         return self.relation_id.mineral_name
+
 
 class MineralImpurity(models.Model):
     id = models.AutoField(primary_key=True)
