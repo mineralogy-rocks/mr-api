@@ -20,7 +20,7 @@ class CountryListSerializer(serializers.ModelSerializer):
 
 class RelationListSerializer(serializers.ModelSerializer):
     class Meta:
-        model = RelationList
+        model = RelationTypeList
         fields = ['type', 'note']
 
 
