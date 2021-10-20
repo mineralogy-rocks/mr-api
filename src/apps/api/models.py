@@ -572,18 +572,18 @@ class MineralCountry(models.Model):
 
 
 class MineralHistory(models.Model):
-    mineral_id = models.OneToOneField(MineralLog, models.CASCADE, db_column='mineral_id', primary_key=True, related_name='history')
+    id = models.AutoField(primary_key=True)
+    mineral_id = models.OneToOneField(MineralLog, models.CASCADE, db_column='mineral_id', related_name='history')
     discovery_year_min = models.IntegerField(blank=True, null=True)
     discovery_year_max = models.IntegerField(blank=True, null=True)
     discovery_year_note = models.TextField(blank=True, null=True)
+    certain = models.BooleanField(null=False, default=True)
     first_usage_date = models.TextField(blank=True, null=True)
     first_known_use = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     # @property
     def get_discovery_year(self):
-        if (self.discovery_year_max == None):
+        if not (self.discovery_year_max is None):
             discovery_year = self.discovery_year_min
         else:
             discovery_year = "{discovery_year_min}-{discovery_year_max}".format(
@@ -596,6 +596,7 @@ class MineralHistory(models.Model):
         managed = False
         db_table = 'mineral_history'
         verbose_name_plural = 'MineralHistory'
+
 
 class MineralHierarchy(models.Model):
     id = models.AutoField(primary_key=True)
