@@ -4,6 +4,7 @@ CREATE TABLE diaphaneity_list (
 );
 
 CREATE TABLE mineral_diaphaneity_tuple (
-	mineral_id uuid NOT NULL,
+    id SERIAL PRIMARY KEY,
+	mineral_id uuid NOT NULL REFERENCES mineral_log(mineral_id) ON UPDATE CASCADE ON DELETE CASCADE,
 	diaphaneity_id INT NOT NULL
 );
