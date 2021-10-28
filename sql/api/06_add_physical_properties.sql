@@ -3,8 +3,11 @@ CREATE TABLE diaphaneity_list (
 	diaphaneity_name varchar(150) NOT NULL UNIQUE
 );
 
+INSERT INTO diaphaneity_list (diaphaneity_name) VALUES ('Nearly opaque'), ('Opaque'), ('Translucent'), ('Transparent');
+
 CREATE TABLE mineral_diaphaneity_tuple (
     id SERIAL PRIMARY KEY,
 	mineral_id uuid NOT NULL REFERENCES mineral_log(mineral_id) ON UPDATE CASCADE ON DELETE CASCADE,
-	diaphaneity_id INT NOT NULL
+	diaphaneity_id INT NOT NULL REFERENCES diaphaneity_list(diaphaneity_id) ON UPDATE CASCADE ON DELETE CASCADE,
+	note text DEFAULT NULL
 );
