@@ -19,6 +19,8 @@ services:
             - ./nginx/certbot/www:/var/www/certbot
         env_file:
             - ./.prod.env
+        depends_on:
+            - backend
         networks:
             - main
         command: >
@@ -45,8 +47,6 @@ services:
             - 8000:8000
         env_file:
             - ./.prod.env
-        depends_on:
-            - nginx
         networks:
             - main
 
@@ -70,6 +70,7 @@ services:
     redis:
         restart: unless-stopped
         image: redis:latest
+        user: root
         ports:
             - "6379:6379"
         volumes:
