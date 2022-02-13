@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mr-api
+  labels:
+    app: mr-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mr-api
+  template:
+    metadata:
+      labels:
+        app: mr-api
+    spec:
+      containers:
+        - image: registry.digitalocean.com/mr-project/backend:latest
+          imagePullPolicy: IfNotPresent
+          name: mr-api
+          command: ["gunicorn", "wsgi:application", "--pythonpath", "src", "--bind", "0.0.0.0:8000", "--worker-class", "gevent", "--worker-connections", "1000", "--workers", "5"]
+          envFrom:
+            - secretRef:
+                name: mr-api-secret
+          ports:
+            - containerPort: 8000
+              name: gunicorn
