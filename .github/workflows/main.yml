@@ -1,6 +1,6 @@
 # This is a workflow which builds image and deploys to DO
 
-name: Continuous Integration and Delivery
+name: CI/CD pipeline
 
 # Controls when the workflow will run
 on:
