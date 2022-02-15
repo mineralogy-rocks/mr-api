@@ -9,8 +9,10 @@ on:
     branches: [master]
 
     paths:
+      - '.github/workflows/**'
       - 'k8s/**'
       - 'Dockerfile.prod'
+      - 'src/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
