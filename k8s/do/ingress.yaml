@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mr-api
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://mineralogy.rocks"
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "false"
+    nginx.ingress.kubernetes.io/whitelist-source-range: "158.195.0.0/16"
+spec:
+  tls:
+  - hosts:
+    - api.mineralogy.rocks
+    secretName: mr-api-tls
+  rules:
+  - host: api.mineralogy.rocks
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: mr-api
+              port:
+                number: 8000
