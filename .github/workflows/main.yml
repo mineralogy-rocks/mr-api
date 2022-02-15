@@ -54,7 +54,7 @@ jobs:
       # build images
       - name: Build images
         run: |
-          docker build -f $GITHUB_WORKSPACE/Dockerfile.prod -t ${{ env.BACKEND_IMAGE }}
+          docker build -f $GITHUB_WORKSPACE/Dockerfile.prod -t ${{ env.BACKEND_IMAGE }} .
 
       # push images
       - name: Push images
