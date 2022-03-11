@@ -18,7 +18,7 @@ spec:
         - image: registry.digitalocean.com/mr-project/backend:latest
           imagePullPolicy: Always
           name: mr-api
-          command: ["gunicorn", "wsgi:application", "--pythonpath", "src", "--bind", "0.0.0.0:8000", "--worker-class", "gevent", "--worker-connections", "1000", "--workers", "5"]
+          command: ["gunicorn", "wsgi:application", "--pythonpath", "src", "--bind", "0.0.0.0:8000", "--worker-class", "gevent", "--worker-connections", "1000", "--workers", "3"]
           envFrom:
             - secretRef:
                 name: mr-api-secret
