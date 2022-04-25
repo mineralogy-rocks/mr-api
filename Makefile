@@ -29,7 +29,7 @@ restore-local-db:
 		psql "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:${POSTGRES_PORT}/${POSTGRES_DB}" -Fc < ./db/backup/master_dump.sql
 
 start:
-	docker-compose up -d
+	docker-compose -f docker-compose.yml up -d
 
 stop:
-	docker-compose down
+	docker-compose -f docker-compose.yml down
