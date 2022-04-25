@@ -12,7 +12,7 @@ class BaseModel(models.Model):
 
 class Nameable(models.Model):
 
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=200, null=False)
 
     class Meta:
         abstract = True
