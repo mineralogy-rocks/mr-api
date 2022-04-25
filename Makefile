@@ -12,7 +12,7 @@ dump-prod-db:
 
 	@echo "--> Dumping prod database..."
 
-	docker-compose -f docker-compose.yml run --rm --no-deps database \
+	docker-compose -f docker-compose.yml run -e PGPASSWORD=${POSTGRES_PASSWORD} --rm --no-deps database \
 		pg_dump --host=${POSTGRES_HOST} \
 				--port=${POSTGRES_PORT} \
 				--dbname=${POSTGRES_DB} \
