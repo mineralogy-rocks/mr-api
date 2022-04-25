@@ -2,8 +2,8 @@
 from django.db.models import Q, F, Case, When, BooleanField, Subquery, Value, Min, Exists, Count
 from django.db.models.query import QuerySet
 
-from api.models import models as api_models
-from api import statuses as statuses
+from core.models import models as api_models
+from core import statuses as statuses
 
 def get_statuses_and_relations(instance: QuerySet) -> list:
     """ 

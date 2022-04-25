@@ -2,10 +2,8 @@ from rest_framework import serializers
 from django.db.models import Q, F, Case, When, BooleanField, Subquery, Value, Min, Exists, Count
 from decimal import *
 
-from api.models import *
-from api import services as services
-from stats.serializers import discoveryCountryCountsSerializer
-from stats.functions.stats import discovery_country_counts
+from core.models import *
+from . import services as services
 
 
 class StatusListSerializer(serializers.ModelSerializer):
@@ -411,13 +409,6 @@ class MineralHistoryNodeSerializer(serializers.BaseSerializer):
         return {
             'history': history
         }
-
-    def get_related_discovery_countries(self):
-        # a function which grabs discovery countries of all minerals, groups and count the results
-        queryset = MineralCountry.objects.all()
-        resp = discovery_country_counts(queryset)
-        serializer = discoveryCountryCountsSerializer(resp, many=True)
-        return serializer.data
         
     def get_discovery_country(self, obj):
         # a function which firstly joins country_list to mineral_country and then outputs the data
@@ -439,35 +430,4 @@ class MineralHistoryNodeSerializer(serializers.BaseSerializer):
         relations = []
         country_counts = self.get_related_discovery_countries()
         output.update({ 'discovery_country_counts': country_counts })
-        return output
-
-class NuxtTabsSerializer(serializers.BaseSerializer):
-
-    def get_tabs(self, mineral_id):
-        query = '''
-            select nt.tab_id, nt.tab_short_name, nt.tab_long_name from nuxt_tabs nt 
-            where nt.tab_short_name in ( 
-            select 'history' 
-            where exists (select 1 from mineral_history mh where mh.mineral_id = %(mineral_id)s) or
-            exists (select 1 from mineral_log ml where ml.mineral_id = %(mineral_id)s) 
-            union 
-            select 'classification' 
-            where exists (select 1 from mineral_hierarchy mh 
-                            where mh.mineral_id = %(mineral_id)s 
-                            or mh.parent_id = %(mineral_id)s) or 
-            exists (select 1 from mineral_log ml where ml.mineral_id = %(mineral_id)s and ml.id_class is not null) 
-            union 
-            select 'relations' 
-            where exists (select 1 from mineral_relation mr where mr.mineral_id = %(mineral_id)s)
-            );
-        '''
-        queryset = NuxtTabs.objects.all()
-        return queryset.raw(query, { 'mineral_id': mineral_id })
-
-    def to_representation(self, instance):
-        mineral_id = instance.mineral_id
-        tabs = list(self.get_tabs(mineral_id))
-        output = []
-        for tab in tabs:
-            output.append({ 'tab_id': tab.tab_id, 'tab_short_name': tab.tab_short_name, 'tab_long_name': tab.tab_long_name })
         return output

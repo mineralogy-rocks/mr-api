@@ -1,14 +1,10 @@
 from django.contrib import admin
 from django.db import models
 from django import forms
-from django.utils.safestring import mark_safe
-from api.models import *
+from core.models import *
 from django.forms import TextInput, Textarea
 from decimal import *
-import re
-from django.forms import ModelForm, BaseModelFormSet
 from django.contrib.admin.filters import RelatedFieldListFilter
-from django.forms import modelformset_factory
 
 # Register your models here.
 admin.site.register(MineralCountry)
@@ -238,17 +234,6 @@ class MineralNameInstitutionInline(admin.TabularInline):
         qs = qs.select_related('country_id')
         return qs
 
-def GrHierarchyInline(param):
-    foreign_key = param
-    class GroupInline(admin.TabularInline):
-        model = GrHierarchy
-        raw_id_fields = ('supergroup_id', 'group_id', 'subgroup_id','root_id', 'serie_id', 'mineral_id',)
-        fk_name = foreign_key
-        extra = 0
-        verbose_name = 'hierarchy'
-        verbose_name_plural = 'Groups'
-
-    return GroupInline
 
 @admin.register(MineralLog)
 class MineralLogAdmin(admin.ModelAdmin):
