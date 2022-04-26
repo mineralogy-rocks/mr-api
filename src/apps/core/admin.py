@@ -1,9 +1,71 @@
 from django.contrib import admin
 from django.db import models
-from django import forms
-from core.models import *
 from django.forms import TextInput, Textarea
+from django.utils.html import format_html
 from django.contrib.admin.filters import RelatedFieldListFilter
+
+from .models.core import StatusList, StatusGroupList, NsClass, NsSubclass, NsFamily
+
+
+@admin.register(StatusGroupList)
+class StatusGroupListAdmin(admin.ModelAdmin):
+    
+    list_display = ['id', 'name',]
+
+    list_display_links = ['name',]
+
+    ordering = ['name',]
+
+
+
+@admin.register(StatusList)
+class StatusListAdmin(admin.ModelAdmin):
+    list_display = ['status_id', 'group', 'description_short', 'description_long',]
+
+    list_display_links = ['status_id']
+
+    list_select_related = ['status_group']
+
+    list_filter = ['status_group']
+
+    ordering = ['status_id']
+
+
+
+@admin.register(NsClass)
+class NsClassAdmin(admin.ModelAdmin):
+    
+    list_display = ['id', 'description',]
+
+    list_display_links = ['id',]
+
+    ordering = ['id',]
+
+
+
+@admin.register(NsSubclass)
+class NsSubclassAdmin(admin.ModelAdmin):
+    
+    list_display = ['ns_subclass', 'description',]
+
+    list_display_links = ['ns_subclass',]
+
+    list_filter = ['ns_class',]
+
+    ordering = ['ns_class', 'ns_subclass',]
+
+
+
+@admin.register(NsFamily)
+class NsFamilyAdmin(admin.ModelAdmin):
+    
+    list_display = ['ns_family', 'description',]
+
+    list_display_links = ['ns_family',]
+
+    list_filter = ['ns_class',]
+
+    ordering = ['ns_class', 'ns_family',]
 
 
 # # Register your models here.
@@ -363,3 +425,6 @@ from django.contrib.admin.filters import RelatedFieldListFilter
 # class CountryListAdmin(admin.ModelAdmin):
 #     list_display = ('country_id', 'country_name', 'alpha_2', 'alpha_3', 'country_code', 'region', 'sub_region', 'intermediate_region',)
 #     search_fields = ('country_name',)
+
+admin.site.site_header = 'Mineralogy.rocks'
+admin.site.index_title = 'Administration'

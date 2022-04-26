@@ -1,20 +1,25 @@
+from django.db.models import Q, Case, When, BooleanField, Min
 from rest_framework import serializers
-from django.db.models import Q, F, Case, When, BooleanField, Subquery, Value, Min, Exists, Count
-from decimal import *
 
-from core.models import *
-from . import services as services
+from .models.core import StatusList, CountryList, RelationTypeList
+from .models.mineral import MineralLog, MineralStatus, MineralHierarchy, MineralCountry, MineralHistory
+from . import services
 
 
 class StatusListSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = StatusList
-        fields = ['status_id', 'description_group', 'description_short', 'description_long']
+        fields = ['id', 'status_id', 'description_group', 'description_short', 'description_long',]
+
+
 
 class CountryListSerializer(serializers.ModelSerializer):
     class Meta:
         model = CountryList
-        fields = ['country_name', 'region']
+        fields = ['id', 'name', 'region',]
+
+
 
 class RelationListSerializer(serializers.ModelSerializer):
     class Meta:
@@ -154,7 +159,7 @@ class MineralHierarchySerializer(serializers.BaseSerializer):
             from
                 hierarchy h;
         '''
-        queryset = self.setup_eager_loading(MineralHierarchy.objects)
+        queryset = self.setup_eager_loading(MineralHierarchy.objects.all())
         return queryset.raw(query, [mineral_id])
 
     def to_representation(self, instance):
@@ -349,16 +354,12 @@ class MineralBaseSerializer(serializers.ModelSerializer):
 
 
 class MineralDetailSerializer(MineralBaseSerializer, serializers.ModelSerializer):
-    tabs = serializers.SerializerMethodField()
 
     class Meta:
         model = MineralLog
-        fields = MineralBaseSerializer.Meta.fields + ['tabs']
+        fields = MineralBaseSerializer.Meta.fields
 
-    def get_tabs(self, instance):
-        
-        tabs = NuxtTabsSerializer(instance).data
-        return tabs if len(tabs) else None
+
 
 class MineralChildrenSerializer(serializers.BaseSerializer):
 

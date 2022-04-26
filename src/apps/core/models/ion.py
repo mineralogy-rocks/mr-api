@@ -1,7 +1,8 @@
 from django.db import models
 
-from .utils import formula_to_html
-from .base import BaseModel, Nameable, Creatable, Updatable
+from ..utils import formula_to_html
+from .base import BaseModel, Nameable
+from .element import ElementList
 
 
 class IonClassList(BaseModel, Nameable):
@@ -91,8 +92,8 @@ class IonLog(BaseModel, Nameable):
     ion_group = models.ForeignKey(IonGroupList, models.CASCADE, db_column='ion_group_id', to_field='id', related_name='ions', blank=True, null=True)
     ion_subgroup = models.ForeignKey(IonSubgroupList, models.CASCADE, db_column='ion_subgroup_id', to_field='id', related_name='ions', blank=True, null=True)
 
-    elements = models.ManyToManyField(ElementList, through='IonElement', related_name='ions')
-    subunits = models.ManyToManyField('self', through='IonSubunit', related_name='ions')
+    elements = models.ManyToManyField(ElementList, through='IonElement')
+    subunits = models.ManyToManyField('self', through='IonSubunit')
 
     class Meta:
         managed = False
@@ -121,7 +122,7 @@ class IonLog(BaseModel, Nameable):
 
 class IonElement(BaseModel):
 
-    ion = models.ForeignKey(IonList, models.CASCADE, db_column='ion_id', to_field='id', related_name='ions')
+    ion = models.ForeignKey(IonLog, models.CASCADE, db_column='ion_id', to_field='id', related_name='ions')
     element = models.ForeignKey(ElementList, models.CASCADE, db_column='element_id', to_field='id', related_name='elements')
 
     class Meta:
@@ -139,8 +140,8 @@ class IonElement(BaseModel):
 
 class IonSubunit(BaseModel):
 
-    ion = models.ForeignKey(IonList, models.CASCADE, db_column='ion_id', to_field='id', related_name='subunits')
-    subunit = models.ForeignKey(IonList, models.CASCADE, db_column='subunit_id', to_field='id', related_name='ions')
+    ion = models.ForeignKey(IonLog, models.CASCADE, db_column='ion_id', to_field='id', related_name='subunits')
+    subunit = models.ForeignKey(IonLog, models.CASCADE, db_column='subunit_id', to_field='id', related_name='ions')
 
     class Meta:
         managed = False

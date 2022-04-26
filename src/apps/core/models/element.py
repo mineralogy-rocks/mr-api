@@ -1,6 +1,6 @@
 from django.db import models
 
-from .base import BaseModel, Nameable, Creatable, Updatable
+from .base import BaseModel, Nameable
 
 
 class GoldschmidtClassList(BaseModel, Nameable):
@@ -109,7 +109,7 @@ class ElementList(BaseModel):
     safety = models.TextField(null=True)
     biological_role = models.TextField(null=True)
 
-    goldschmidt_class = models.ForeignKey(goldschmidtClassList, models.CASCADE, db_column='goldschmidt_class_id', to_field='id', related_name='elements')
+    goldschmidt_class = models.ForeignKey(GoldschmidtClassList, models.CASCADE, db_column='goldschmidt_class_id', to_field='id', related_name='elements')
     phase_state = models.ForeignKey(PhaseStateList, models.CASCADE, db_column='phase_state_id', to_field='id', related_name='elements')
     bonding_type = models.ForeignKey(BondingTypeList, models.CASCADE, db_column='bonding_type_id', to_field='id', related_name='elements')
     chemical_group = models.ForeignKey(ChemicalGroupList, models.CASCADE, db_column='chemical_group_id', to_field='id', related_name='elements')

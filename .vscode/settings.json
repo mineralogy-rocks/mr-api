@@ -1,4 +1,13 @@
 {
-    "python.pythonPath": "venv/bin/python",
-    "python.defaultInterpreterPath": "venv/bin/python",
+    "python.pythonPath": "venv/bin/python3",
+    "python.defaultInterpreterPath": "venv/bin/python3",
+    "python.formatting.blackPath": "venv/bin/black",
+    "python.linting.pycodestyleEnabled": false,
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true,
+    "python.formatting.provider": "black",
+    "python.linting.pylintArgs": [
+        "--disable=C0111", // missing docstring
+        "--load-plugins=pylint_django",
+     ],
 }

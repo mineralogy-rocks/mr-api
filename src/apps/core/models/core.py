@@ -1,9 +1,6 @@
-import uuid
-import re
-
 from django.db import models
 
-from .base import BaseModel, Nameable, Creatable, Updatable
+from .base import BaseModel, Nameable
 
 
 class NsClass(models.Model):
@@ -62,10 +59,24 @@ class NsFamily(BaseModel):
 
 
 
+class StatusGroupList(BaseModel, Nameable):
+
+    class Meta:
+        managed = False
+        db_table = 'status_group_list'
+
+        verbose_name = 'Status Group'
+        verbose_name_plural = 'Status Groups'
+
+    def __str__(self):
+        return self.name
+
+
+
 class StatusList(BaseModel):
     
     status_id = models.FloatField(null=False)
-    description_group = models.CharField(max_length=100)
+    status_group = models.ForeignKey(StatusGroupList, models.CASCADE, db_column='status_group_id', to_field='id')
     description_long = models.TextField(blank=True, null=True)
     description_short = models.CharField(max_length=100)
 
@@ -76,6 +87,11 @@ class StatusList(BaseModel):
         verbose_name = 'Status'
         verbose_name_plural = 'Statuses'
     
+    @property
+    def group(self):
+        return self.status_group.name
+
+
     def __str__(self):
         return '{} - {}'.format(self.status_id, self.description_short)
 
@@ -98,7 +114,7 @@ class RelationTypeList(BaseModel, Nameable):
 
 
 class CountryList(BaseModel, Nameable):
-    
+
     alpha_2 = models.CharField(max_length=10, null=True)
     alpha_3 = models.CharField(max_length=10, null=True)
     country_code = models.IntegerField(null=True)
@@ -109,7 +125,7 @@ class CountryList(BaseModel, Nameable):
     class Meta:
         managed = False
         db_table = 'country_list'
-        
+
         verbose_name = 'Country'
         verbose_name_plural = 'Countries'
 
@@ -125,7 +141,7 @@ class NationalityList(BaseModel, Nameable):
     class Meta: 
         managed = False
         db_table = 'nationality_list'
-        
+
         verbose_name = 'Nationality'
         verbose_name_plural = 'Nationalities'
 

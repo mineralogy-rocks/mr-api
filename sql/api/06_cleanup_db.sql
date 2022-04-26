@@ -1,23 +1,34 @@
 DROP TABLE IF EXISTS nuxt_tabs;
 
 ALTER TABLE ns_class RENAME COLUMN id_class TO id;
+
 ALTER TABLE ns_subclass RENAME COLUMN id_class TO ns_class;
 ALTER TABLE ns_subclass RENAME COLUMN id_subclass TO ns_subclass;
+                       
 ALTER TABLE ns_family RENAME COLUMN id_class TO ns_class;
 ALTER TABLE ns_family RENAME COLUMN id_subclass TO ns_subclass;
 ALTER TABLE ns_family RENAME COLUMN id_family TO ns_family;
                       
    
+
+CREATE TABLE status_group_list(
+	id serial PRIMARY KEY,
+	name varchar(200) UNIQUE NOT NULL
+);
+INSERT INTO status_group_list (name) VALUES ('grouping'), ('synonyms'), ('varieties'), ('polytypes'), ('obsolete nomenclature'), 
+('anthropotype'), ('mineraloids'), ('rocks'), ('unnamed'), ('mixtures'), ('IMA minerals');
 ALTER TABLE status_list RENAME TO status_list_old;
 CREATE TABLE status_list (
 	id SERIAL PRIMARY KEY,
 	status_id numeric(4,2) NOT NULL,
-	description_group varchar(100) DEFAULT NULL,
+	status_group_id INT DEFAULT NULL REFERENCES status_group_list ON UPDATE CASCADE,
 	description_short varchar(100) NOT NULL,
 	description_long TEXT DEFAULT NULL
 );
-INSERT INTO status_list (status_id, description_group, description_short, description_long) 
-SELECT status_id, description_group, description_short, description_long FROM status_list_old;
+
+INSERT INTO status_list (status_id, status_group_id, description_short, description_long) 
+SELECT status_id, status_group_list.id, description_short, description_long FROM status_list_old
+LEFT JOIN status_group_list ON status_list_old.description_group = status_group_list.name;
 
 ALTER TABLE mineral_status RENAME TO mineral_status_old;
 CREATE TABLE mineral_status (

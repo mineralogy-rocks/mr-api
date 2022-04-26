@@ -1,12 +1,11 @@
 import uuid
-import re
 
 from django.db import models
 
-from .utils import formula_to_html
+from ..utils import formula_to_html
 from .base import BaseModel, Nameable, Creatable, Updatable
-from .core import NsClass, NsSubclass, NsFamily, StatusList, CountryList, NationalityList
-from .ion import IonList
+from .core import NsClass, NsSubclass, NsFamily, StatusList, CountryList, RelationTypeList
+from .ion import IonLog
 
 
 
@@ -24,10 +23,10 @@ class MineralLog(Nameable, Creatable, Updatable):
 
     discovery_countries = models.ManyToManyField(CountryList, through='MineralCountry', related_name='minerals')
     statuses = models.ManyToManyField(StatusList, through='MineralStatus', related_name='minerals')
-    relations = models.ManyToManyField('self', through='MineralRelation', related_name='minerals')
-    hierarchy = models.ManyToManyField('self', through='MineralHierarchy', related_name='minerals')
-    impurities = models.ManyToManyField(IonList, through='MineralImpurity', related_name='minerals')
-    ions_theoretical = models.ManyToManyField(IonList, through='MineralIonTheoretical', related_name='minerals')
+    relations = models.ManyToManyField('self', through='MineralRelation')
+    hierarchy = models.ManyToManyField('self', through='MineralHierarchy')
+    impurities = models.ManyToManyField(IonLog, through='MineralImpurity', related_name='minerals')
+    ions_theoretical = models.ManyToManyField(IonLog, through='MineralIonTheoretical', related_name='minerals')
 
     class Meta:
         managed = False
@@ -40,7 +39,6 @@ class MineralLog(Nameable, Creatable, Updatable):
         return self.name
 
 
-    @property
     def ns_index(self):
         if self.ns_class:
             return "{ns_class}.{ns_subclass}{ns_family}.{ns_mineral}".format(
@@ -53,19 +51,18 @@ class MineralLog(Nameable, Creatable, Updatable):
             return None
 
 
-    @property
-    def statuses(self):
+    def formula_html(self):
+        return formula_to_html(self.formula)
+
+
+    def _statuses(self):
         if self.status:
             return '; '.join([str(status.status.status_id) for status in self.statuses.all()])
 
-    @property
-    def formula_html(self):
-        return formula_to_html(self.formula)
-            
 
     ns_index.short_description = 'Nickel-Strunz Index'
-    statuses.short_description = 'Mineral Statuses'
     formula_html.short_description = 'Formula'
+    _statuses.short_description = 'Mineral Statuses'
 
 
 
@@ -113,7 +110,7 @@ class MineralRelation(BaseModel):
 class MineralImpurity(BaseModel):
 
     mineral = models.ForeignKey(MineralLog, models.CASCADE, db_column='mineral_id', to_field='id', related_name='impurities')
-    ion = models.ForeignKey(IonList, models.CASCADE, db_column='ion_id', to_field='id', related_name='mineral_impurities')
+    ion = models.ForeignKey(IonLog, models.CASCADE, db_column='ion_id', to_field='id', related_name='mineral_impurities')
     ion_quantity = models.CharField(max_length=30, null=True, blank=True)
     rich_poor = models.BooleanField(null=True, blank=True)
 
@@ -132,7 +129,7 @@ class MineralImpurity(BaseModel):
 class MineralIonTheoretical(BaseModel):
 
     mineral = models.ForeignKey(MineralLog, models.CASCADE, db_column='mineral_id', to_field='id', related_name='theoretical_ions')
-    ion = models.ForeignKey(IonList, models.CASCADE, db_column='ion_id', to_field='id')
+    ion = models.ForeignKey(IonLog, models.CASCADE, db_column='ion_id', to_field='id')
 
     class Meta:
         managed = False

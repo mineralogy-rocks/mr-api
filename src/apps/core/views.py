@@ -6,14 +6,15 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.permissions import  AllowAny
 
-from . import models as models
+from .models.core import StatusList
+from .models.mineral import MineralLog, MineralHierarchy
 from . import serializers as serializers
 
 
 
 class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
-    queryset = models.StatusList.objects.all()
+    queryset = StatusList.objects.all()
     serializer_class = serializers.StatusListSerializer
 
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer, ]
@@ -29,7 +30,7 @@ class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
 class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
-    queryset = models.MineralLog.objects.all()
+    queryset = MineralLog.objects.all()
     serializer_class = serializers.MineralDetailSerializer
 
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer, ]
@@ -55,7 +56,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                 .prefetch_related('statuses', 'discovery_countries',)
 
         elif self.action in ['children']:
-            return models.MineralHierarchy.objects.all()
+            return MineralHierarchy.objects.all()
 
         return super().get_queryset()
 
