@@ -1,6 +1,5 @@
 DROP TABLE IF EXISTS nuxt_tabs;
 
-
 ALTER TABLE ns_class RENAME COLUMN id_class TO id;
 ALTER TABLE ns_subclass RENAME COLUMN id_class TO ns_class;
 ALTER TABLE ns_subclass RENAME COLUMN id_subclass TO ns_subclass;
@@ -36,3 +35,74 @@ INNER JOIN status_list sl ON sl.status_id = mso.status_id;
 ALTER TABLE mineral_relation DROP CONSTRAINT mineral_relation_mineral_status_id_fkey;
 DROP TABLE mineral_status_old, status_list_old;                    
 ALTER TABLE mineral_relation ADD CONSTRAINT mineral_relation_mineral_status_id_fkey FOREIGN KEY (mineral_status_id) REFERENCES mineral_status(id) ON UPDATE cascade on delete cascade;
+
+ALTER TABLE relation_type_list RENAME COLUMN relation_type_id TO id;
+ALTER TABLE relation_type_list RENAME COLUMN type TO name;
+
+ALTER TABLE country_list RENAME COLUMN country_id TO id;
+ALTER TABLE country_list RENAME COLUMN country_name TO name;
+
+ALTER TABLE nationality_list RENAME COLUMN nationality_id TO id;
+ALTER TABLE nationality_list RENAME COLUMN nationality_name TO name;
+
+ALTER TABLE goldschmidt_class_list RENAME COLUMN goldschmidt_class_id TO id;
+ALTER TABLE goldschmidt_class_list RENAME COLUMN goldschmidt_class_name TO name;
+
+ALTER TABLE bonding_type_list ALTER COLUMN bonding_type_name TYPE varchar(200) USING bonding_type_name::varchar;
+ALTER TABLE bonding_type_list RENAME COLUMN bonding_type_id TO id;
+ALTER TABLE bonding_type_list RENAME COLUMN bonding_type_name TO name;
+
+ALTER TABLE phase_state_list  ALTER COLUMN phase_state_name TYPE varchar(200) USING phase_state_name::varchar;
+ALTER TABLE phase_state_list RENAME COLUMN phase_state_id TO id;
+ALTER TABLE phase_state_list RENAME COLUMN phase_state_name TO name;
+
+ALTER TABLE chemical_group_list  ALTER COLUMN chemical_group_name TYPE varchar(200) USING chemical_group_name::varchar;
+ALTER TABLE chemical_group_list RENAME COLUMN chemical_group_id TO id;
+ALTER TABLE chemical_group_list RENAME COLUMN chemical_group_name TO name;
+
+ALTER TABLE element_list RENAME COLUMN element_id TO id;
+
+ALTER TABLE ion_class_list  ALTER COLUMN ion_class_name TYPE varchar(200) USING ion_class_name::varchar;
+ALTER TABLE ion_class_list RENAME COLUMN ion_class_id TO id;
+ALTER TABLE ion_class_list RENAME COLUMN ion_class_name TO name;
+
+ALTER TABLE ion_subclass_list  ALTER COLUMN ion_subclass_name TYPE varchar(200) USING ion_subclass_name::varchar;
+ALTER TABLE ion_subclass_list RENAME COLUMN ion_subclass_id TO id;
+ALTER TABLE ion_subclass_list RENAME COLUMN ion_subclass_name TO name;
+
+ALTER TABLE ion_group_list  ALTER COLUMN ion_group_name TYPE varchar(200) USING ion_group_name::varchar;
+ALTER TABLE ion_group_list RENAME COLUMN ion_group_id TO id;
+ALTER TABLE ion_group_list RENAME COLUMN ion_group_name TO name;
+
+ALTER TABLE ion_subgroup_list  ALTER COLUMN ion_subgroup_name TYPE varchar(200) USING ion_subgroup_name::varchar;
+ALTER TABLE ion_subgroup_list RENAME COLUMN ion_subgroup_id TO id;
+ALTER TABLE ion_subgroup_list RENAME COLUMN ion_subgroup_name TO name;
+ALTER TABLE ion_subgroup_list ADD CONSTRAINT ion_subgroup_list_un UNIQUE ("name");
+
+ALTER TABLE ion_type_list  ALTER COLUMN ion_type_name TYPE varchar(200) USING ion_type_name::varchar;
+ALTER TABLE ion_type_list RENAME COLUMN ion_type_id TO id;
+ALTER TABLE ion_type_list RENAME COLUMN ion_type_name TO name;
+
+alter table ion_list rename to ion_log;
+ALTER TABLE ion_log  ALTER COLUMN ion_name TYPE varchar(200) USING ion_name::varchar;
+ALTER TABLE ion_log RENAME COLUMN ion_id TO id;
+ALTER TABLE ion_log RENAME COLUMN ion_name TO name;
+
+ALTER TABLE mineral_log RENAME COLUMN mineral_id TO id;
+ALTER TABLE mineral_log RENAME COLUMN mineral_name TO name;
+ALTER TABLE mineral_log RENAME COLUMN id_class TO ns_class;
+ALTER TABLE mineral_log RENAME COLUMN id_subclass TO ns_subclass;
+ALTER TABLE mineral_log RENAME COLUMN id_family TO ns_family;
+ALTER TABLE mineral_log RENAME COLUMN id_mineral TO ns_mineral;
+
+DROP TABLE IF EXISTS mineral_ion_real;
+DROP TABLE IF EXISTS mineral_name_institution;
+DROP TABLE IF EXISTS mineral_name_ion;
+DROP TABLE IF EXISTS mineral_name_language;
+DROP TABLE IF EXISTS mineral_name_locality_country;
+DROP TABLE IF EXISTS mineral_name_locality;
+DROP TABLE IF EXISTS mineral_name_other;
+DROP TABLE IF EXISTS mineral_name_person;
+
+ALTER TABLE mineral_country DROP COLUMN created_at;
+ALTER TABLE mineral_country DROP COLUMN updated_at;
