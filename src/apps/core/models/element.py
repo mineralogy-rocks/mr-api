@@ -3,7 +3,7 @@ from django.db import models
 from .base import BaseModel, Nameable
 
 
-class GoldschmidtClassList(BaseModel, Nameable):
+class GoldschmidtClass(BaseModel, Nameable):
 
     class Meta:
         managed = False
@@ -17,7 +17,7 @@ class GoldschmidtClassList(BaseModel, Nameable):
     
     
 
-class BondingTypeList(BaseModel, Nameable):
+class BondingType(BaseModel, Nameable):
 
     class Meta:
         managed = False
@@ -31,7 +31,7 @@ class BondingTypeList(BaseModel, Nameable):
 
 
 
-class PhaseStateList(BaseModel, Nameable):
+class PhaseState(BaseModel, Nameable):
 
     class Meta:
         managed = False
@@ -45,7 +45,7 @@ class PhaseStateList(BaseModel, Nameable):
 
 
 
-class ChemicalGroupList(BaseModel, Nameable):
+class ChemicalGroup(BaseModel, Nameable):
 
     class Meta:
         managed = False
@@ -59,7 +59,7 @@ class ChemicalGroupList(BaseModel, Nameable):
 
 
 
-class ElementList(BaseModel):
+class Element(BaseModel):
 
     element = models.CharField(max_length=2, null=False)
     name = models.CharField(max_length=20, null=False)
@@ -109,10 +109,10 @@ class ElementList(BaseModel):
     safety = models.TextField(null=True)
     biological_role = models.TextField(null=True)
 
-    goldschmidt_class = models.ForeignKey(GoldschmidtClassList, models.CASCADE, db_column='goldschmidt_class_id', to_field='id', related_name='elements')
-    phase_state = models.ForeignKey(PhaseStateList, models.CASCADE, db_column='phase_state_id', to_field='id', related_name='elements')
-    bonding_type = models.ForeignKey(BondingTypeList, models.CASCADE, db_column='bonding_type_id', to_field='id', related_name='elements')
-    chemical_group = models.ForeignKey(ChemicalGroupList, models.CASCADE, db_column='chemical_group_id', to_field='id', related_name='elements')
+    goldschmidt_class = models.ForeignKey(GoldschmidtClass, models.CASCADE, db_column='goldschmidt_class_id', to_field='id', related_name='elements')
+    phase_state = models.ForeignKey(PhaseState, models.CASCADE, db_column='phase_state_id', to_field='id', related_name='elements')
+    bonding_type = models.ForeignKey(BondingType, models.CASCADE, db_column='bonding_type_id', to_field='id', related_name='elements')
+    chemical_group = models.ForeignKey(ChemicalGroup, models.CASCADE, db_column='chemical_group_id', to_field='id', related_name='elements')
 
     class Meta:
         managed = False

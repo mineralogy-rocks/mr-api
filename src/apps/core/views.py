@@ -6,190 +6,75 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.permissions import  AllowAny
 
-from .models.core import StatusList
-from .models.mineral import MineralLog, MineralHierarchy
-from . import serializers as serializers
-
+from .models.core import Status
+from .models.mineral import Mineral, MineralHierarchy
+from .serializers.core import StatusListSerializer
+from .serializers.mineral import MineralListSerializer
+from .filters import StatusFilter
 
 
 class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
-    queryset = StatusList.objects.all()
-    serializer_class = serializers.StatusListSerializer
+    http_method_names = ['get', 'options', 'head',]
+
+    queryset = Status.objects.all()
+    serializer_class = StatusListSerializer
 
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer, ]
 
     permission_classes = [AllowAny,]
     authentication_classes = []
 
-    ordering_fields = ['status_id', 'description_group', ]
+    ordering_fields = ['status_id', 'status_group', ]
     ordering = ['status_id',]
 
-    filter_backends = [filters.OrderingFilter,]
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend,]
+
+    search_fields = ['description_short', 'description_long', 'status_group__name',]
+    filterset_class = StatusFilter
+
 
 
 class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
-    queryset = MineralLog.objects.all()
-    serializer_class = serializers.MineralDetailSerializer
+    http_method_names = ['get', 'options', 'head',]
+
+    queryset = Mineral.objects.all()
+    serializer_class = MineralListSerializer
 
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer, ]
     
     permission_classes = [AllowAny,]
     authentication_classes = []
     
-    ordering_fields = ['mineral_name',]
-    ordering = ['mineral_name',]
+    ordering_fields = ['name',]
+    ordering = ['name',]
 
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['statuses']
-    search_fields = ['mineral_name',]
-
+    search_fields = ['name',]
 
     def get_queryset(self):
+        queryset = super().get_queryset()
 
-        if self.action in ['retrieve']:
-            return self.queryset.select_related('history', 'id_class', 'id_subclass', 'id_family')
+        serializer_class = self.get_serializer_class()
+        if hasattr(serializer_class, 'setup_eager_loading'):
+            queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
 
-        elif self.action in ['list']:
-            return self.queryset.select_related('history', 'id_class', 'id_subclass', 'id_family') \
-                                .prefetch_related('statuses', 'discovery_countries',)
-
-        elif self.action in ['children']:
-            return MineralHierarchy.objects.all()
-
-        return super().get_queryset()
+        return queryset
 
 
     def get_serializer_class(self):
         
         if self.action in ['list']:
-            return serializers.MineralBaseSerializer
-        
-        elif self.action in ['children']:
-            return serializers.MineralChildrenSerializer
+            return MineralListSerializer
 
         return super().get_serializer_class()
+
 
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
+
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-
-# class mineral_basic(APIView):
-#     """
-#     A view which provides the basic details + history node on every mineral
-#     """
-#     def get_client_ip(self, request):
-#         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-#         if x_forwarded_for:
-#             ip = x_forwarded_for.split(',')[0]
-#         else:
-#             ip = request.META.get('REMOTE_ADDR')
-#         return ip
-
-#     def get_object(self, pk):
-#         queryset = self.get_queryset()
-#         try:
-#             return queryset.get(pk=pk)
-#         except MineralList.DoesNotExist:
-#             raise Http404
-
-#     def get(self, request, pk):
-#         print(request)
-#         queryset = self.get_object(pk)
-#         serializer = MineralListSerializer(queryset)
-#         return Response(serializer.data)
-
-#     def get_queryset(self):  
-#         queryset = MineralList.objects.all()
-#         # Set up eager loading to avoid N+1 selects
-#         queryset = queryset.select_related('id_class', 'id_subclass', 'id_family', 'history',)
-#         queryset = queryset.prefetch_related('status',)
-#         return queryset
-
-# class mineral_history(APIView):
-#     """
-#     A view which provides the details on history node of mineral
-#     """
-#     def get_object(self, pk):
-#         queryset = self.get_queryset()
-#         try:
-#             return queryset.get(pk=pk)
-#         except MineralList.DoesNotExist:
-#             raise Http404
-
-#     def get(self, request, pk):
-#         queryset = self.get_object(pk)
-#         serializer = MineralHistoryNodeSerializer(queryset)
-#         return Response(serializer.data)
-
-#     def get_queryset(self):  
-#         queryset = MineralList.objects.all()
-#         # Set up eager loading to avoid N+1 selects
-#         queryset = queryset.select_related('history',)
-#         return queryset
-
-# class mineral_relation(APIView):
-#     """
-#     A view which provides the details on relations node of mineral
-#     """
-#     def get_object(self, pk):
-#         queryset = self.get_queryset()
-#         try:
-#             return queryset.get(pk=pk)
-#         except MineralList.DoesNotExist:
-#             raise Http404
-
-#     def get(self, request, pk):
-#         queryset = self.get_object(pk).relations
-#         serializer = MineralRelationSerializer(queryset, read_only=True)
-#         return Response(serializer.data)
-
-#     def get_queryset(self):  
-#         queryset = MineralList.objects.all()
-#         return queryset
-
-# class mineralClassification(APIView):
-#     """
-#     A view which provides the details on classification node of mineral
-#     """
-#     def get_object(self, pk):
-#         queryset = self.get_queryset()
-#         try:
-#             return queryset.get(pk=pk)
-#         except MineralList.DoesNotExist:
-#             return Response('Mineral doesn\'t exist')
-
-#     def get(self, request, pk):
-#         queryset = self.get_object(pk)
-#         serializer = mineralClassificationSerializer(queryset, read_only=True)
-#         return Response(serializer.data)
-
-#     def get_queryset(self):  
-#         queryset = MineralList.objects.all()
-#         # Set up eager loading to avoid N+1 selects
-#         queryset = queryset.select_related('id_class', 'id_subclass', 'id_family',)
-#         return queryset
-
-# class group_first_children(APIView):
-#     """
-#     the view which outputs first children of supergroup, group, subgroup, root or series
-#     """
-#     permission_classes = [AllowAny]
-#     serializer_class = groupFirstChildrenSerializer
-
-#     def get_queryset(self):  
-#         queryset = MineralHierarchy.objects.all()
-#         queryset_prefetch = self.serializer_class.setup_eager_loading(queryset)
-#         return queryset_prefetch
-
-#     def get(self, request, pk):
-#         """ READ part """
-#         try:
-#             queryset = self.get_queryset().filter(parent_id=pk)
-#             serializer = self.serializer_class(queryset)
-#             return Response(serializer.data)
-#         except MineralHierarchy.DoesNotExist:
-#             return Response("Entry in mineral_hierarchy doesn't exist.", status=status.HTTP_404_NOT_FOUND)

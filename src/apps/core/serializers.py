@@ -1,29 +1,29 @@
 from django.db.models import Q, Case, When, BooleanField, Min
 from rest_framework import serializers
 
-from .models.core import StatusList, CountryList, RelationTypeList
-from .models.mineral import MineralLog, MineralStatus, MineralHierarchy, MineralCountry, MineralHistory
+from .models.core import Status, Country, RelationType
+from .models.mineral import Mineral, MineralStatus, MineralHierarchy, MineralCountry, MineralHistory
 from . import services
 
 
 class StatusListSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = StatusList
-        fields = ['id', 'status_id', 'description_group', 'description_short', 'description_long',]
+        model = Status
+        fields = ['id', 'status_id', 'description_short', 'description_long',]
 
 
 
 class CountryListSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CountryList
+        model = Country
         fields = ['id', 'name', 'region',]
 
 
 
 class RelationListSerializer(serializers.ModelSerializer):
     class Meta:
-        model = RelationTypeList
+        model = RelationType
         fields = ['type', 'note']
 
 
@@ -43,7 +43,7 @@ class StatusDescriptionSerializer(serializers.ModelSerializer):
     # relations = 
 
     class Meta:
-        model = StatusList
+        model = Status
         fields = ['group']
         
     
@@ -325,7 +325,7 @@ class MineralBaseSerializer(serializers.ModelSerializer):
     updated_at =serializers.DateTimeField(read_only=True)
 
     class Meta:
-        model = MineralLog
+        model = Mineral
         fields = ['mineral_id', 'mineral_name', 'formula', 'statuses', 'note', 
                   'ns_index', 'history', 'created_at', 'updated_at',]
 
@@ -356,7 +356,7 @@ class MineralBaseSerializer(serializers.ModelSerializer):
 class MineralDetailSerializer(MineralBaseSerializer, serializers.ModelSerializer):
 
     class Meta:
-        model = MineralLog
+        model = Mineral
         fields = MineralBaseSerializer.Meta.fields
 
 

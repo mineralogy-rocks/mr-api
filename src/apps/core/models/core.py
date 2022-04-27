@@ -11,6 +11,7 @@ class NsClass(models.Model):
     class Meta:
         managed = False
         db_table = 'ns_class'
+        ordering = ['id',]
         
         verbose_name = 'Nickel-Strunz Class'
         verbose_name_plural = 'Nickel-Strunz Classes'
@@ -30,6 +31,7 @@ class NsSubclass(BaseModel):
         managed = False
         db_table = 'ns_subclass'
         unique_together = (('ns_class', 'ns_subclass'),)
+        ordering = ['ns_class', 'ns_subclass',]
         
         verbose_name = 'Nickel-Strunz Subclass'
         verbose_name_plural = 'Nickel-Strunz Subclasses'
@@ -50,6 +52,7 @@ class NsFamily(BaseModel):
         managed = False
         db_table = 'ns_family'
         unique_together = (('ns_class', 'ns_subclass', 'ns_family'),)
+        ordering = ['ns_class', 'ns_family',]
         
         verbose_name = 'Nickel-Strunz Family'
         verbose_name_plural = 'Nickel-Strunz Families'
@@ -59,11 +62,12 @@ class NsFamily(BaseModel):
 
 
 
-class StatusGroupList(BaseModel, Nameable):
+class StatusGroup(BaseModel, Nameable):
 
     class Meta:
         managed = False
         db_table = 'status_group_list'
+        ordering = ['name',]
 
         verbose_name = 'Status Group'
         verbose_name_plural = 'Status Groups'
@@ -73,16 +77,17 @@ class StatusGroupList(BaseModel, Nameable):
 
 
 
-class StatusList(BaseModel):
+class Status(BaseModel):
     
     status_id = models.FloatField(null=False)
-    status_group = models.ForeignKey(StatusGroupList, models.CASCADE, db_column='status_group_id', to_field='id')
+    status_group = models.ForeignKey(StatusGroup, models.CASCADE, db_column='status_group_id', to_field='id')
     description_long = models.TextField(blank=True, null=True)
     description_short = models.CharField(max_length=100)
 
     class Meta:
         managed = False
         db_table = 'status_list'
+        ordering = ['status_id',]
         
         verbose_name = 'Status'
         verbose_name_plural = 'Statuses'
@@ -97,7 +102,7 @@ class StatusList(BaseModel):
 
 
 
-class RelationTypeList(BaseModel, Nameable):
+class RelationType(BaseModel, Nameable):
     
     note = models.TextField(blank=True, null=True)
 
@@ -113,7 +118,7 @@ class RelationTypeList(BaseModel, Nameable):
 
 
 
-class CountryList(BaseModel, Nameable):
+class Country(BaseModel, Nameable):
 
     alpha_2 = models.CharField(max_length=10, null=True)
     alpha_3 = models.CharField(max_length=10, null=True)
@@ -134,7 +139,7 @@ class CountryList(BaseModel, Nameable):
 
 
 
-class NationalityList(BaseModel, Nameable):
+class Nationality(BaseModel, Nameable):
 
     note = models.TextField(null=True)
 

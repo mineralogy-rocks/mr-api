@@ -4,12 +4,12 @@ from django.db import models
 
 from ..utils import formula_to_html
 from .base import BaseModel, Nameable, Creatable, Updatable
-from .core import NsClass, NsSubclass, NsFamily, StatusList, CountryList, RelationTypeList
-from .ion import IonLog
+from .core import NsClass, NsSubclass, NsFamily, Status, Country, RelationType
+from .ion import Ion
 
 
 
-class MineralLog(Nameable, Creatable, Updatable):
+class Mineral(Nameable, Creatable, Updatable):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
 
@@ -21,16 +21,17 @@ class MineralLog(Nameable, Creatable, Updatable):
     ns_family = models.ForeignKey(NsFamily, models.CASCADE, db_column='ns_family', to_field='ns_family', blank=True, null=True)
     ns_mineral = models.CharField(max_length=10, blank=True, null=True)
 
-    discovery_countries = models.ManyToManyField(CountryList, through='MineralCountry', related_name='minerals')
-    statuses = models.ManyToManyField(StatusList, through='MineralStatus', related_name='minerals')
+    discovery_countries = models.ManyToManyField(Country, through='MineralCountry')
+    statuses = models.ManyToManyField(Status, through='MineralStatus')
     relations = models.ManyToManyField('self', through='MineralRelation')
     hierarchy = models.ManyToManyField('self', through='MineralHierarchy')
-    impurities = models.ManyToManyField(IonLog, through='MineralImpurity', related_name='minerals')
-    ions_theoretical = models.ManyToManyField(IonLog, through='MineralIonTheoretical', related_name='minerals')
+    impurities = models.ManyToManyField(Ion, through='MineralImpurity')
+    ions_theoretical = models.ManyToManyField(Ion, through='MineralIonTheoretical')
 
     class Meta:
         managed = False
         db_table = 'mineral_log'
+        ordering = ['name',]
 
         verbose_name = 'Mineral'
         verbose_name_plural = 'Minerals'
@@ -56,7 +57,7 @@ class MineralLog(Nameable, Creatable, Updatable):
 
 
     def _statuses(self):
-        if self.status:
+        if self.statuses:
             return '; '.join([str(status.status.status_id) for status in self.statuses.all()])
 
 
@@ -68,8 +69,8 @@ class MineralLog(Nameable, Creatable, Updatable):
 
 class MineralStatus(BaseModel, Creatable, Updatable):
 
-    mineral = models.ForeignKey(MineralLog, models.CASCADE, db_column='mineral_id', to_field='id')
-    status = models.ForeignKey(StatusList, models.CASCADE, db_column='status_id', to_field='id', related_name='minerals')
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', to_field='id')
+    status = models.ForeignKey(Status, models.CASCADE, db_column='status_id', to_field='id', related_name='minerals')
 
     class Meta:
         managed = False
@@ -86,11 +87,11 @@ class MineralStatus(BaseModel, Creatable, Updatable):
 
 class MineralRelation(BaseModel):
 
-    mineral = models.ForeignKey(MineralLog, models.CASCADE, db_column='mineral_id', to_field='id')
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', to_field='id')
     status = models.ForeignKey(MineralStatus, on_delete=models.CASCADE, db_column='mineral_status_id', to_field='id', related_name='relations')
-    relation = models.ForeignKey(MineralLog, models.CASCADE, db_column='relation_id', to_field='id', related_name='inverse_relations')
+    relation = models.ForeignKey(Mineral, models.CASCADE, db_column='relation_id', to_field='id', related_name='inverse_relations')
+    relation_type = models.ForeignKey(RelationType, models.CASCADE, db_column='relation_type_id', to_field='id', null=False, blank=False)
 
-    relation_type = models.ForeignKey(RelationTypeList, models.CASCADE, db_column='relation_type_id', to_field='id', null=False, blank=False)
     relation_note = models.TextField(blank=True, null=True)
     direct_relation = models.BooleanField(null=False)
 
@@ -109,8 +110,8 @@ class MineralRelation(BaseModel):
 
 class MineralImpurity(BaseModel):
 
-    mineral = models.ForeignKey(MineralLog, models.CASCADE, db_column='mineral_id', to_field='id', related_name='impurities')
-    ion = models.ForeignKey(IonLog, models.CASCADE, db_column='ion_id', to_field='id', related_name='mineral_impurities')
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', to_field='id', related_name='impurities')
+    ion = models.ForeignKey(Ion, models.CASCADE, db_column='ion_id', to_field='id', related_name='mineral_impurities')
     ion_quantity = models.CharField(max_length=30, null=True, blank=True)
     rich_poor = models.BooleanField(null=True, blank=True)
 
@@ -128,8 +129,8 @@ class MineralImpurity(BaseModel):
 
 class MineralIonTheoretical(BaseModel):
 
-    mineral = models.ForeignKey(MineralLog, models.CASCADE, db_column='mineral_id', to_field='id', related_name='theoretical_ions')
-    ion = models.ForeignKey(IonLog, models.CASCADE, db_column='ion_id', to_field='id')
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', to_field='id', related_name='theoretical_ions')
+    ion = models.ForeignKey(Ion, models.CASCADE, db_column='ion_id', to_field='id')
 
     class Meta:
         managed = False
@@ -146,8 +147,8 @@ class MineralIonTheoretical(BaseModel):
 
 class MineralCountry(BaseModel):
 
-    mineral = models.ForeignKey(MineralLog, models.CASCADE, db_column='mineral_id', to_field='id')
-    country = models.ForeignKey(CountryList, models.CASCADE, db_column='country_id', to_field='id', related_name='minerals')
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', to_field='id')
+    country = models.ForeignKey(Country, models.CASCADE, db_column='country_id', to_field='id', related_name='minerals')
 
     note = models.TextField(db_column='note', blank=True, null=True)
 
@@ -167,7 +168,7 @@ class MineralCountry(BaseModel):
 
 class MineralHistory(BaseModel):
 
-    mineral = models.OneToOneField(MineralLog, models.CASCADE, db_column='mineral_id', to_field='id', related_name='history')
+    mineral = models.OneToOneField(Mineral, models.CASCADE, db_column='mineral_id', to_field='id', related_name='history')
     discovery_year_min = models.IntegerField(blank=True, null=True)
     discovery_year_max = models.IntegerField(blank=True, null=True)
     discovery_year_note = models.TextField(blank=True, null=True)
@@ -191,8 +192,8 @@ class MineralHistory(BaseModel):
 
 class MineralHierarchy(BaseModel):
 
-    mineral = models.ForeignKey(MineralLog, models.CASCADE, db_column='mineral_id', to_field='id', related_name='mineral')
-    parent = models.ForeignKey(MineralLog, models.CASCADE, db_column='parent_id', to_field='id', related_name='parent', null=True)
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', to_field='id', related_name='mineral')
+    parent = models.ForeignKey(Mineral, models.CASCADE, db_column='parent_id', to_field='id', related_name='parent', null=True)
 
     class Meta:
         managed = False

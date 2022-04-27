@@ -2,10 +2,10 @@ from django.db import models
 
 from ..utils import formula_to_html
 from .base import BaseModel, Nameable
-from .element import ElementList
+from .element import Element
 
 
-class IonClassList(BaseModel, Nameable):
+class IonClass(BaseModel, Nameable):
 
     class Meta:
         managed = False
@@ -19,7 +19,7 @@ class IonClassList(BaseModel, Nameable):
 
 
 
-class IonSubclassList(BaseModel, Nameable):
+class IonSubclass(BaseModel, Nameable):
 
     class Meta:
         managed = False
@@ -33,7 +33,7 @@ class IonSubclassList(BaseModel, Nameable):
 
 
 
-class IonGroupList(BaseModel, Nameable):
+class IonGroup(BaseModel, Nameable):
 
     class Meta:
         managed = False
@@ -47,7 +47,7 @@ class IonGroupList(BaseModel, Nameable):
 
 
 
-class IonSubgroupList(BaseModel, Nameable):
+class IonSubgroup(BaseModel, Nameable):
 
     class Meta:
         managed = False
@@ -61,7 +61,7 @@ class IonSubgroupList(BaseModel, Nameable):
 
 
 
-class IonTypeList(BaseModel, Nameable):
+class IonType(BaseModel, Nameable):
 
     class Meta:
         managed = False
@@ -75,7 +75,7 @@ class IonTypeList(BaseModel, Nameable):
 
 
 
-class IonLog(BaseModel, Nameable):
+class Ion(BaseModel, Nameable):
 
     formula = models.CharField(max_length=100, null=False)
     formula_with_oxidation = models.CharField(max_length=100, null=True)
@@ -85,14 +85,14 @@ class IonLog(BaseModel, Nameable):
     structure_description = models.TextField(null=True, blank=True)
     geometry = models.TextField(null=True, blank=True)
 
-    ion_type = models.ForeignKey(IonTypeList, models.CASCADE, db_column='ion_type_id', to_field='id', related_name='ions')
+    ion_type = models.ForeignKey(IonType, models.CASCADE, db_column='ion_type_id', to_field='id', related_name='ions')
     variety_of = models.ForeignKey('self', on_delete=models.CASCADE, db_column='variety_of', to_field='id', null=True, blank=True)
-    ion_class = models.ForeignKey(IonClassList, models.CASCADE, db_column='ion_class_id', to_field='id', related_name='ions', blank=True, null=True)
-    ion_subclass = models.ForeignKey(IonSubclassList, models.CASCADE, db_column='ion_subclass_id', to_field='id', related_name='ions', blank=True, null=True)
-    ion_group = models.ForeignKey(IonGroupList, models.CASCADE, db_column='ion_group_id', to_field='id', related_name='ions', blank=True, null=True)
-    ion_subgroup = models.ForeignKey(IonSubgroupList, models.CASCADE, db_column='ion_subgroup_id', to_field='id', related_name='ions', blank=True, null=True)
+    ion_class = models.ForeignKey(IonClass, models.CASCADE, db_column='ion_class_id', to_field='id', related_name='ions', blank=True, null=True)
+    ion_subclass = models.ForeignKey(IonSubclass, models.CASCADE, db_column='ion_subclass_id', to_field='id', related_name='ions', blank=True, null=True)
+    ion_group = models.ForeignKey(IonGroup, models.CASCADE, db_column='ion_group_id', to_field='id', related_name='ions', blank=True, null=True)
+    ion_subgroup = models.ForeignKey(IonSubgroup, models.CASCADE, db_column='ion_subgroup_id', to_field='id', related_name='ions', blank=True, null=True)
 
-    elements = models.ManyToManyField(ElementList, through='IonElement')
+    elements = models.ManyToManyField(Element, through='IonElement')
     subunits = models.ManyToManyField('self', through='IonSubunit')
 
     class Meta:
@@ -122,8 +122,8 @@ class IonLog(BaseModel, Nameable):
 
 class IonElement(BaseModel):
 
-    ion = models.ForeignKey(IonLog, models.CASCADE, db_column='ion_id', to_field='id', related_name='ions')
-    element = models.ForeignKey(ElementList, models.CASCADE, db_column='element_id', to_field='id', related_name='elements')
+    ion = models.ForeignKey(Ion, models.CASCADE, db_column='ion_id', to_field='id', related_name='ions')
+    element = models.ForeignKey(Element, models.CASCADE, db_column='element_id', to_field='id', related_name='elements')
 
     class Meta:
         managed = False
@@ -140,8 +140,8 @@ class IonElement(BaseModel):
 
 class IonSubunit(BaseModel):
 
-    ion = models.ForeignKey(IonLog, models.CASCADE, db_column='ion_id', to_field='id', related_name='subunits')
-    subunit = models.ForeignKey(IonLog, models.CASCADE, db_column='subunit_id', to_field='id', related_name='ions')
+    ion = models.ForeignKey(Ion, models.CASCADE, db_column='ion_id', to_field='id', related_name='subunits')
+    subunit = models.ForeignKey(Ion, models.CASCADE, db_column='subunit_id', to_field='id', related_name='ions')
 
     class Meta:
         managed = False

@@ -1,3 +1,5 @@
+import re
+
 from django.utils.safestring import mark_safe
 
 

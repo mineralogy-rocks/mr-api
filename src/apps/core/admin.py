@@ -4,22 +4,20 @@ from django.forms import TextInput, Textarea
 from django.utils.html import format_html
 from django.contrib.admin.filters import RelatedFieldListFilter
 
-from .models.core import StatusList, StatusGroupList, NsClass, NsSubclass, NsFamily
+from .models.core import Status, StatusGroup, NsClass, NsSubclass, NsFamily
 
 
-@admin.register(StatusGroupList)
-class StatusGroupListAdmin(admin.ModelAdmin):
+@admin.register(StatusGroup)
+class StatusGroupAdmin(admin.ModelAdmin):
     
     list_display = ['id', 'name',]
 
     list_display_links = ['name',]
 
-    ordering = ['name',]
 
 
-
-@admin.register(StatusList)
-class StatusListAdmin(admin.ModelAdmin):
+@admin.register(Status)
+class StatusAdmin(admin.ModelAdmin):
     list_display = ['status_id', 'group', 'description_short', 'description_long',]
 
     list_display_links = ['status_id']
@@ -27,8 +25,6 @@ class StatusListAdmin(admin.ModelAdmin):
     list_select_related = ['status_group']
 
     list_filter = ['status_group']
-
-    ordering = ['status_id']
 
 
 
@@ -38,8 +34,6 @@ class NsClassAdmin(admin.ModelAdmin):
     list_display = ['id', 'description',]
 
     list_display_links = ['id',]
-
-    ordering = ['id',]
 
 
 
@@ -52,8 +46,6 @@ class NsSubclassAdmin(admin.ModelAdmin):
 
     list_filter = ['ns_class',]
 
-    ordering = ['ns_class', 'ns_subclass',]
-
 
 
 @admin.register(NsFamily)
@@ -64,8 +56,6 @@ class NsFamilyAdmin(admin.ModelAdmin):
     list_display_links = ['ns_family',]
 
     list_filter = ['ns_class',]
-
-    ordering = ['ns_class', 'ns_family',]
 
 
 # # Register your models here.
