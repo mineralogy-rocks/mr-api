@@ -13,7 +13,6 @@ import os
 import sys
 import environ
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = (environ.Path(__file__) - 2)()
 
 sys.path.append(os.path.join(BASE_DIR, 'apps'))
@@ -23,11 +22,11 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 
 DEBUG = os.environ.get('DJANGO_DEBUG', default=0) == 'True'
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', default=['']).split(",")
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', default='').split(',')
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-CORS_ALLOWED_ORIGINS = os.environ.get('DJANGO_CORS_ALLOWED_ORIGINS', default=['']).split(",")
+CORS_ALLOWED_ORIGINS = os.environ.get('DJANGO_CORS_ALLOWED_ORIGINS', default='').split(',')
 
 
 LOGGING = {
@@ -56,6 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'django_filters',
 
     'rest_framework',
@@ -127,9 +127,6 @@ DATABASES = {
         'PORT': os.environ.get('POSTGRES_PORT')
     }
 }
-
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
 
 
 # Password validation

@@ -25,7 +25,7 @@ class Mineral(Nameable, Creatable, Updatable):
     statuses = models.ManyToManyField(Status, through='MineralStatus')
     relations = models.ManyToManyField('self', through='MineralRelation')
     hierarchy = models.ManyToManyField('self', through='MineralHierarchy')
-    impurities = models.ManyToManyField(Ion, through='MineralImpurity')
+    impurities = models.ManyToManyField(Ion, through='MineralImpurity', related_name='impurities')
     ions_theoretical = models.ManyToManyField(Ion, through='MineralIonTheoretical')
 
     class Meta:
@@ -110,8 +110,8 @@ class MineralRelation(BaseModel):
 
 class MineralImpurity(BaseModel):
 
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', to_field='id', related_name='impurities')
-    ion = models.ForeignKey(Ion, models.CASCADE, db_column='ion_id', to_field='id', related_name='mineral_impurities')
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', to_field='id')
+    ion = models.ForeignKey(Ion, models.CASCADE, db_column='ion_id', to_field='id')
     ion_quantity = models.CharField(max_length=30, null=True, blank=True)
     rich_poor = models.BooleanField(null=True, blank=True)
 
@@ -129,7 +129,7 @@ class MineralImpurity(BaseModel):
 
 class MineralIonTheoretical(BaseModel):
 
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', to_field='id', related_name='theoretical_ions')
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', to_field='id')
     ion = models.ForeignKey(Ion, models.CASCADE, db_column='ion_id', to_field='id')
 
     class Meta:

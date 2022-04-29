@@ -23,9 +23,11 @@ class StatusListSerializer(serializers.ModelSerializer):
 
 class CountryListSerializer(serializers.ModelSerializer):
 
+    iso_code = serializers.CharField(source='alpha_2')
+
     class Meta:
         model = Country
-        fields = ['id', 'name', 'region',]
+        fields = ['id', 'name', 'region', 'iso_code',]
 
 
 

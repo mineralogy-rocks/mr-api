@@ -51,7 +51,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     ordering = ['name',]
 
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['statuses']
+    filterset_fields = ['statuses',]
     search_fields = ['name',]
 
     def get_queryset(self):
@@ -60,6 +60,16 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         serializer_class = self.get_serializer_class()
         if hasattr(serializer_class, 'setup_eager_loading'):
             queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
+
+        return queryset
+
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+
+        if 'q' in self.request.query_params:
+            query = self.request.query_params.get('q', '')
+            queryset = queryset.filter(name__trigram_word_similar=query)
 
         return queryset
 
