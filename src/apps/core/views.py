@@ -10,7 +10,7 @@ from .models.core import Status
 from .models.mineral import Mineral, MineralHierarchy
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import MineralListSerializer
-from .filters import StatusFilter
+from .filters import StatusFilter, MineralFilter
 
 
 class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
@@ -51,8 +51,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     ordering = ['name',]
 
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['statuses',]
-    search_fields = ['name',]
+    filterset_class = MineralFilter
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -69,7 +68,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         if 'q' in self.request.query_params:
             query = self.request.query_params.get('q', '')
-            queryset = queryset.filter(name__trigram_word_similar=query)
+            queryset = queryset.filter(name__unaccent__trigram_word_similar=query)
 
         return queryset
 
