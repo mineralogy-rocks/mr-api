@@ -20,6 +20,19 @@ class StatusListSerializer(serializers.ModelSerializer):
         fields = ['id', 'status_id', 'status_group', 'description_short', 'description_long',]
 
 
+    @staticmethod
+    def setup_eager_loading(**kwargs):
+        queryset = kwargs.get('queryset')
+        request = kwargs.get('request')
+
+        select_related = [
+            'status_group',
+        ]
+
+        queryset = queryset.select_related(*select_related)
+        return queryset
+
+
 
 class CountryListSerializer(serializers.ModelSerializer):
 

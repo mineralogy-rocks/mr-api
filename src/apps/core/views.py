@@ -33,6 +33,15 @@ class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     search_fields = ['description_short', 'description_long', 'status_group__name',]
     filterset_class = StatusFilter
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        serializer_class = self.get_serializer_class()
+        if hasattr(serializer_class, 'setup_eager_loading'):
+            queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
+
+        return queryset
+
 
 
 class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):

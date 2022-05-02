@@ -23,10 +23,23 @@ restore-local-db:
 	$(eval include .dev.env)
 	$(eval export $(shell sed 's/=.*//' .dev.env))
 
-	@echo "--> Restorign local database..."
+	@echo "--> Restoring local database..."
 
 	docker-compose -f docker-compose.yml run --rm --no-deps database \
 		psql "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:${POSTGRES_PORT}/${POSTGRES_DB}" -Fc < ./db/backup/master_dump.sql
+
+run-sql:
+ifdef file
+		$(eval include .dev.env)
+		$(eval export $(shell sed 's/=.*//' .dev.env))
+
+		@echo "--> Running sql..."
+
+		docker-compose -f docker-compose.yml run --rm --no-deps database \
+			psql "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:${POSTGRES_PORT}/${POSTGRES_DB}" -a -f file
+else
+		@echo 'please, pass sql file as an argument!'
+endif
 
 start:
 	docker-compose -f docker-compose.yml up -d

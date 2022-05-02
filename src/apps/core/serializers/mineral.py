@@ -63,10 +63,10 @@ class MineralListSerializer(serializers.ModelSerializer):
             models.Prefetch('statuses', Status.objects.select_related('status_group')),
             'discovery_countries',
         ]
-
+        
         for query_param in request.query_params.keys():
-
-            if any(query_param in ['anions', 'cations', 'silicates', 'other_compounds']):
+            
+            if query_param in ['anions', 'cations', 'silicates', 'other_compounds']:
                 prefetch_related.append('ions_theoretical')
 
         queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)

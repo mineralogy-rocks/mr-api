@@ -16,7 +16,7 @@ CREATE TABLE status_group_list(
 	name varchar(200) UNIQUE NOT NULL
 );
 INSERT INTO status_group_list (name) VALUES ('grouping'), ('synonyms'), ('varieties'), ('polytypes'), ('obsolete nomenclature'), 
-('anthropotype'), ('mineraloids'), ('rocks'), ('unnamed'), ('mixtures'), ('IMA minerals');
+											('anthropotype'), ('mineraloids'), ('rocks'), ('unnamed'), ('mixtures'), ('IMA minerals');
 ALTER TABLE status_list RENAME TO status_list_old;
 CREATE TABLE status_list (
 	id SERIAL PRIMARY KEY,
@@ -117,3 +117,10 @@ DROP TABLE IF EXISTS mineral_name_person;
 
 ALTER TABLE mineral_country DROP COLUMN created_at;
 ALTER TABLE mineral_country DROP COLUMN updated_at;
+
+ALTER TABLE crystal_system_list RENAME COLUMN crystal_system_id TO id;
+ALTER TABLE crystal_system_list RENAME COLUMN crystal_system_name TO name;
+
+ALTER TABLE crystal_class_list  ALTER COLUMN crystal_class_name TYPE varchar(200) USING crystal_class_name::varchar;
+ALTER TABLE crystal_class_list RENAME COLUMN crystal_class_id TO id;
+ALTER TABLE crystal_class_list RENAME COLUMN crystal_class_name TO name;

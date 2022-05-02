@@ -137,18 +137,3 @@ class Country(BaseModel, Nameable):
     def __str__(self):
         return self.name
 
-
-
-class Nationality(BaseModel, Nameable):
-
-    note = models.TextField(null=True)
-
-    class Meta: 
-        managed = False
-        db_table = 'nationality_list'
-
-        verbose_name = 'Nationality'
-        verbose_name_plural = 'Nationalities'
-
-    def __str__(self):
-        return self.name

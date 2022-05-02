@@ -30,6 +30,7 @@ services:
 
             - database-data:/var/lib/postgresql/data/
             - ./db/backup:/backup
+            - ./sql/:/sql
         env_file:
             - ./.dev.env
 

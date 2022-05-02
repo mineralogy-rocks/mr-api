@@ -145,6 +145,23 @@ class MineralIonTheoretical(BaseModel):
 
 
 
+# class MineralCrystallography(BaseModel):
+    
+#     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', to_field='id')
+
+#     class Meta:
+#         managed = False
+#         db_table = 'mineral_crystallography'
+#         unique_together = (('mineral', 'ion'),)
+
+#         verbose_name = 'Theoretical Ion'
+#         verbose_name_plural = 'Theoretical Ions'
+
+#     def __str__(self):
+#         return self.ion.formula
+
+
+
 class MineralCountry(BaseModel):
 
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', to_field='id')
