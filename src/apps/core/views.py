@@ -1,3 +1,4 @@
+from django.db import models
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import filters
@@ -6,8 +7,8 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.permissions import  AllowAny
 
-from .models.core import Status
-from .models.mineral import Mineral, MineralHierarchy
+from .models.core import Status, NsFamily
+from .models.mineral import Mineral, MineralRelation
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import MineralListSerializer
 from .filters import StatusFilter, MineralFilter
@@ -69,6 +70,15 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         if hasattr(serializer_class, 'setup_eager_loading'):
             queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
 
+        isostructural_minerals = NsFamily.objects.values('ns_family').annotate(isostructural_minerals_count=models.Count('minerals')) \
+                                                        .filter(ns_family=models.OuterRef('ns_family'))
+
+        varieties_count = MineralRelation.objects.values('relation').filter(models.Q(direct_relation=True) & models.Q(status__status__status_group__name='varieties')) \
+                                                .annotate(varieties_count=models.Count('relation')).filter(mineral=models.OuterRef('id'))
+
+        queryset = queryset.annotate(isostructural_minerals_count=models.Subquery(isostructural_minerals.values('isostructural_minerals_count')),
+                                     varieties_count=models.Subquery(varieties_count.values('varieties_count')))
+        
         return queryset
 
 

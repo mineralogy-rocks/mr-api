@@ -1,13 +1,18 @@
 from django_filters import rest_framework as filters
 
-from .models.core import Status
+from .models.core import Status, StatusGroup
 from .models.ion import Ion
 from .models.mineral import Mineral
 
 
 class StatusFilter(filters.FilterSet):
 
-    status_group = filters.CharFilter(field_name="status_group__name", lookup_expr='iexact')
+    status_group = filters.ModelMultipleChoiceFilter(
+        label='Status Groups',
+        field_name="status_group__name", 
+        to_field_name='name',
+        queryset=StatusGroup.objects.all()
+        )
 
     class Meta:
         model = Status
@@ -17,28 +22,29 @@ class StatusFilter(filters.FilterSet):
 
 class MineralFilter(filters.FilterSet):
 
-    discovery_year_min = filters.NumberFilter(field_name="history__discovery_year_min", lookup_expr='gte')
-    discovery_year_max = filters.NumberFilter(field_name="history__discovery_year_max", lookup_expr='lte')
+    discovery_year__gte = filters.NumberFilter(field_name='history__discovery_year_min', lookup_expr='gte')
+    discovery_year__lte = filters.NumberFilter(field_name='history__discovery_year_max', lookup_expr='lte')
+    discovery_year__exact = filters.NumberFilter(field_name='history__discovery_year_min', lookup_expr='lte')
 
-    anions = filters.ModelMultipleChoiceFilter(
-        label='Anions',
-        field_name='ions_theoretical', 
-        queryset=Ion.objects.filter(ion_type__name='Anion')
+    anion = filters.ModelMultipleChoiceFilter(
+            label='Anions',
+            field_name='ions_theoretical', 
+            queryset=Ion.objects.filter(ion_type__name='Anion')
         )
-    cations = filters.ModelMultipleChoiceFilter(
-        label='Cations',
-        field_name='ions_theoretical', 
-        queryset=Ion.objects.filter(ion_type__name='Cation')
+    cation = filters.ModelMultipleChoiceFilter(
+            label='Cations',
+            field_name='ions_theoretical', 
+            queryset=Ion.objects.filter(ion_type__name='Cation')
         )
-    silicates = filters.ModelMultipleChoiceFilter(
-        label='Silicates',
-        field_name='ions_theoretical', 
-        queryset=Ion.objects.filter(ion_type__name='Silicate')
+    silicate = filters.ModelMultipleChoiceFilter(
+            label='Silicates',
+            field_name='ions_theoretical', 
+            queryset=Ion.objects.filter(ion_type__name='Silicate')
         )
-    other_compounds = filters.ModelMultipleChoiceFilter(
-        label='Other compounds',
-        field_name='ions_theoretical', 
-        queryset=Ion.objects.filter(ion_type__name='Other')
+    other_compound = filters.ModelMultipleChoiceFilter(
+            label='Other compounds',
+            field_name='ions_theoretical', 
+            queryset=Ion.objects.filter(ion_type__name='Other')
         )
 
     class Meta:
@@ -47,13 +53,12 @@ class MineralFilter(filters.FilterSet):
             'statuses',
 
             'ns_class',
+            'ns_family',
 
-            'discovery_year_min',
-            'discovery_year_max',
             'discovery_countries',
 
-            'anions',
-            'cations',
-            'silicates',
-            'other_compounds',
+            'anion',
+            'cation',
+            'silicate',
+            'other_compound',
             ]

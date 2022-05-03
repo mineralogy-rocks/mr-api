@@ -124,3 +124,31 @@ ALTER TABLE crystal_system_list RENAME COLUMN crystal_system_name TO name;
 ALTER TABLE crystal_class_list  ALTER COLUMN crystal_class_name TYPE varchar(200) USING crystal_class_name::varchar;
 ALTER TABLE crystal_class_list RENAME COLUMN crystal_class_id TO id;
 ALTER TABLE crystal_class_list RENAME COLUMN crystal_class_name TO name;
+
+ALTER TABLE space_group_list ALTER COLUMN space_group_name TYPE varchar(200) USING space_group_name::varchar;
+ALTER TABLE space_group_list RENAME COLUMN space_group_id TO id;
+ALTER TABLE space_group_list RENAME COLUMN space_group_name TO name;
+
+ALTER TABLE mineral_crystallography DROP COLUMN ns_space_group_id;
+DROP TABLE IF EXISTS ns_space_group_list;
+
+ALTER TABLE mineral_crystallography RENAME TO mineral_crystallography_old;
+CREATE TABLE mineral_crystallography (
+	id serial PRIMARY KEY,
+	mineral_id uuid NOT NULL REFERENCES mineral_log(id) ON UPDATE CASCADE,
+	crystal_system_id int NOT NULL REFERENCES crystal_system_list(id) ON UPDATE CASCADE,
+	crystal_class_id int DEFAULT NULL REFERENCES crystal_class_list(id) ON UPDATE CASCADE,
+	space_group_id int DEFAULT NULL REFERENCES space_group_list(id) ON UPDATE CASCADE,
+	a decimal default null,
+	b decimal default null,
+	c decimal default null,
+	alpha decimal default null,
+	beta decimal default null,
+	gamma decimal default null,
+	z int default null
+);
+INSERT INTO mineral_crystallography (mineral_id, crystal_system_id, crystal_class_id, space_group_id, a, b, c, alpha, beta, gamma, z) 
+SELECT mco.mineral_id, mco.crystal_system_id, mco.crystal_class_id, mco.space_group_id, mco.a, mco.b, mco.c, mco.alpha, 
+	   mco.beta, mco.gamma, mco.z FROM mineral_crystallography_old mco;
+	  
+DROP TABLE IF EXISTS mineral_crystallography_old;
