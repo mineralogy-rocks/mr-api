@@ -1,15 +1,13 @@
 from django.db import models
 from rest_framework import serializers
 
-from ..models.core import StatusGroup, Status, Country, RelationType
+from ..models.core import StatusGroup, Status, Country, RelationType, NsFamily
 from ..models.mineral import Mineral, MineralStatus, MineralHistory
 from .core import StatusListSerializer, CountryListSerializer
 from .crystal import CrystalSystemSerializer
 
 
 class MineralHistorySerializer(serializers.ModelSerializer):
-
-    discovery_year = serializers.CharField()
 
     class Meta:
         model = MineralHistory
@@ -24,15 +22,6 @@ class MineralHistorySerializer(serializers.ModelSerializer):
 
 
 
-class MineralListRelationsSerializer(serializers.Serializer):
-    
-    def to_representation(self, instance):
-        # output = super().to_representation(instance)
-        print(instance)
-        return [{'some': 'asfsa'}]
-
-
-
 class MineralListSerializer(serializers.ModelSerializer):
 
     formula = serializers.CharField(source='formula_html')
@@ -41,6 +30,7 @@ class MineralListSerializer(serializers.ModelSerializer):
 
     isostructural_minerals_count = serializers.IntegerField()
     varieties_count = serializers.IntegerField()
+    polytypes_count = serializers.IntegerField()
 
     discovery_countries = CountryListSerializer(many=True)
     discovery_year = MineralHistorySerializer(source='history')
@@ -58,15 +48,11 @@ class MineralListSerializer(serializers.ModelSerializer):
 
             'isostructural_minerals_count',
             'varieties_count',
+            'polytypes_count',
 
             'discovery_countries',
             'discovery_year',
             ]
-
-
-    def get_relation_stats(self, instance):
-        return {'some': 3} # MineralListRelationsSerializer(instance, many=True).data
-
 
     @staticmethod
     def setup_eager_loading(**kwargs):

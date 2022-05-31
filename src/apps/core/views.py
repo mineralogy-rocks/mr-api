@@ -70,14 +70,25 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         if hasattr(serializer_class, 'setup_eager_loading'):
             queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
 
-        isostructural_minerals = NsFamily.objects.values('ns_family').annotate(isostructural_minerals_count=models.Count('minerals')) \
-                                                        .filter(ns_family=models.OuterRef('ns_family'))
+        isostructural_minerals = NsFamily.objects.values('ns_family') \
+                                                 .annotate(count=models.Count('minerals')) \
+                                                 .filter(ns_family=models.OuterRef('ns_family'))
 
-        varieties_count = MineralRelation.objects.values('relation').filter(models.Q(direct_relation=True) & models.Q(status__status__status_group__name='varieties')) \
-                                                .annotate(varieties_count=models.Count('relation')).filter(mineral=models.OuterRef('id'))
+        varieties_count = MineralRelation.objects.values('relation') \
+                                                 .filter(models.Q(direct_relation=True) & models.Q(status__status__status_group__name='varieties')) \
+                                                 .annotate(count=models.Count('relation')) \
+                                                 .filter(mineral=models.OuterRef('id'))
+                                                
+        polytypes_count = MineralRelation.objects.values('relation') \
+                                                 .filter(models.Q(direct_relation=True) & models.Q(status__status__status_group__name='polytypes')) \
+                                                 .annotate(count=models.Count('relation')) \
+                                                 .filter(mineral=models.OuterRef('id'))
 
-        queryset = queryset.annotate(isostructural_minerals_count=models.Subquery(isostructural_minerals.values('isostructural_minerals_count')),
-                                     varieties_count=models.Subquery(varieties_count.values('varieties_count')))
+        queryset = queryset.annotate(
+            isostructural_minerals_count=models.Subquery(isostructural_minerals.values('count')),
+            varieties_count=models.Subquery(varieties_count.values('count')),
+            polytypes_count=models.Subquery(polytypes_count.values('count'))
+            )
         
         return queryset
 
