@@ -4,7 +4,7 @@ from rest_framework import serializers
 from ..models.core import StatusGroup, Status, Country, RelationType, NsFamily
 from ..models.mineral import Mineral, MineralStatus, MineralHistory
 from .core import StatusListSerializer, CountryListSerializer
-from .crystal import CrystalSystemSerializer
+from .crystal import CrystalSystemSerializer, CrystalSystemsStatsSerializer
 
 
 class MineralHistorySerializer(serializers.ModelSerializer):
@@ -21,6 +21,15 @@ class MineralHistorySerializer(serializers.ModelSerializer):
             ]
 
 
+class HistoryBaseSerializer(serializers.Serializer):
+
+    discovery_year_min = serializers.IntegerField()
+    discovery_year_max = serializers.IntegerField()
+
+    class Meta:
+        fields = ['discovery_year_min', 'discovery_year_max',]
+
+
 
 class MineralListSerializer(serializers.ModelSerializer):
 
@@ -33,7 +42,8 @@ class MineralListSerializer(serializers.ModelSerializer):
     polytypes_count = serializers.IntegerField()
 
     discovery_countries = CountryListSerializer(many=True)
-    discovery_year = MineralHistorySerializer(source='history')
+
+    history = serializers.SerializerMethodField()
 
     class Meta:
         model = Mineral
@@ -51,8 +61,22 @@ class MineralListSerializer(serializers.ModelSerializer):
             'polytypes_count',
 
             'discovery_countries',
-            'discovery_year',
+            'history'
             ]
+
+    def get_history(self, instance):
+        return HistoryBaseSerializer(instance).data
+
+
+    def to_representation(self, instance):
+        output = super().to_representation(instance)
+
+
+
+        print(instance.is_grouping())
+
+        return output
+
 
     @staticmethod
     def setup_eager_loading(**kwargs):

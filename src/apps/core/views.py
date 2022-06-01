@@ -8,7 +8,7 @@ from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.permissions import  AllowAny
 
 from .models.core import Status, NsFamily
-from .models.mineral import Mineral, MineralRelation
+from .models.mineral import Mineral, MineralRelation, MineralHierarchy
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import MineralListSerializer
 from .filters import StatusFilter, MineralFilter
@@ -22,7 +22,6 @@ class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     serializer_class = StatusListSerializer
 
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer, ]
-
     permission_classes = [AllowAny,]
     authentication_classes = []
 
@@ -30,7 +29,6 @@ class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     ordering = ['status_id',]
 
     filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend,]
-
     search_fields = ['description_short', 'description_long', 'status_group__name',]
     filterset_class = StatusFilter
 
@@ -74,20 +72,38 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                                  .annotate(count=models.Count('minerals')) \
                                                  .filter(ns_family=models.OuterRef('ns_family'))
 
-        varieties_count = MineralRelation.objects.values('relation') \
-                                                 .filter(models.Q(direct_relation=True) & models.Q(status__status__status_group__name='varieties')) \
-                                                 .annotate(count=models.Count('relation')) \
+        relations_count = MineralRelation.objects.values('relation') \
+                                                 .filter(models.Q(direct_relation=True)) \
+                                                 .annotate(
+                                                     varieties_count=models.Case(
+                                                         models.When(status__status__status_group__name='varieties', then=models.Count('relation')),
+                                                         default=models.Value(None)
+                                                     ),
+                                                     polytypes_count=models.Case(
+                                                        models.When(status__status__status_group__name='polytypes', then=models.Count('relation')),
+                                                        default=models.Value(None)
+                                                     )
+                                                 ) \
                                                  .filter(mineral=models.OuterRef('id'))
-                                                
-        polytypes_count = MineralRelation.objects.values('relation') \
-                                                 .filter(models.Q(direct_relation=True) & models.Q(status__status__status_group__name='polytypes')) \
-                                                 .annotate(count=models.Count('relation')) \
-                                                 .filter(mineral=models.OuterRef('id'))
+
+        groups_history = MineralHierarchy.objects.values('parent').filter(models.Q(parent=models.OuterRef('id'))) \
+                                                 .annotate(
+                                                     discovery_year_min=models.Min('mineral__history__discovery_year_min'),
+                                                     discovery_year_max=models.Max('mineral__history__discovery_year_max')
+                                                 )
 
         queryset = queryset.annotate(
             isostructural_minerals_count=models.Subquery(isostructural_minerals.values('count')),
-            varieties_count=models.Subquery(varieties_count.values('count')),
-            polytypes_count=models.Subquery(polytypes_count.values('count'))
+            varieties_count=models.Subquery(relations_count.values('varieties_count')),
+            polytypes_count=models.Subquery(relations_count.values('polytypes_count')),
+            discovery_year_min=models.Case(
+                    models.When(statuses__status_group__name='grouping', then=models.Subquery(groups_history.values('discovery_year_min'))),
+                    default=models.F('history__discovery_year_min')
+                ),
+            discovery_year_max=models.Case(
+                    models.When(statuses__status_group__name='grouping', then=models.Subquery(groups_history.values('discovery_year_max'))),
+                    default=models.F('history__discovery_year_max')
+                )
             )
         
         return queryset
