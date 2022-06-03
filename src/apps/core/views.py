@@ -106,6 +106,10 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                 )
             )
         
+        queryset = queryset.defer('history__mineral_id', 'history__discovery_year_min', 'history__discovery_year_max', 'history__discovery_year_note',
+                                  'history__certain', 'history__first_usage_date', 'history__first_known_use', 'crystal__crystal_class_id', 'crystal__space_group_id',
+                                  'crystal__a', 'crystal__b', 'crystal__c', 'crystal__alpha', 'crystal__gamma', 'crystal__z',)
+        
         return queryset
 
 
