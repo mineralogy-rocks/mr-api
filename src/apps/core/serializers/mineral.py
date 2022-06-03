@@ -18,32 +18,22 @@ class MineralHistorySerializer(serializers.ModelSerializer):
             'discovery_year_note',
             'first_usage_date',
             'first_known_use',
-            ]
-
-
-class HistoryBaseSerializer(serializers.Serializer):
-
-    discovery_year_min = serializers.IntegerField()
-    discovery_year_max = serializers.IntegerField()
-
-    class Meta:
-        fields = ['discovery_year_min', 'discovery_year_max',]
+            ]    
 
 
 
 class MineralListSerializer(serializers.ModelSerializer):
 
+    ns_index = serializers.CharField(source='ns_index_')
     formula = serializers.CharField(source='formula_html')
     crystal_system = CrystalSystemSerializer(source='crystal.crystal_system')
     statuses = StatusListSerializer(many=True)
 
-    isostructural_minerals_count = serializers.IntegerField()
-    varieties_count = serializers.IntegerField()
-    polytypes_count = serializers.IntegerField()
+    relations = serializers.JSONField(source='relations_')
 
     discovery_countries = CountryListSerializer(many=True)
-
-    history = serializers.SerializerMethodField()
+    
+    history = serializers.JSONField(source='history_')
 
     class Meta:
         model = Mineral
@@ -51,32 +41,20 @@ class MineralListSerializer(serializers.ModelSerializer):
             'id',
             
             'name',
+            'ns_index',
             'formula',
             'crystal_system',
-            'ns_index',
             'statuses',
 
-            'isostructural_minerals_count',
-            'varieties_count',
-            'polytypes_count',
+            'relations',
 
             'discovery_countries',
             'history'
             ]
-
-    def get_history(self, instance):
-        return HistoryBaseSerializer(instance).data
-
-
-    def to_representation(self, instance):
-        output = super().to_representation(instance)
-
-
-
-        print(instance.is_grouping())
-
-        return output
-
+        
+    def __init__(self, instance, *args, **kwargs):
+        print(instance)
+        super().__init__(instance, *args, **kwargs)
 
     @staticmethod
     def setup_eager_loading(**kwargs):
@@ -84,10 +62,6 @@ class MineralListSerializer(serializers.ModelSerializer):
         request = kwargs.get('request')
 
         select_related = [
-            'ns_class',
-            'ns_subclass',
-            'ns_family',
-
             'history',
             'crystal__crystal_system',
         ]

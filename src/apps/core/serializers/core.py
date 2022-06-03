@@ -17,7 +17,7 @@ class StatusListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Status
-        fields = ['id', 'status_id', 'status_group', 'description_short', 'description_long',]
+        fields = ['status_id', 'status_group', 'description_short', 'description_long',]
 
 
     @staticmethod
