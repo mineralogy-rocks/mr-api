@@ -24,6 +24,8 @@ class Mineral(Nameable, Creatable, Updatable):
 
     discovery_countries = models.ManyToManyField(Country, through='MineralCountry')
     statuses = models.ManyToManyField(Status, through='MineralStatus')
+    crystal_systems = models.ManyToManyField(CrystalSystem, through='MineralCrystallography')
+    
     impurities = models.ManyToManyField(Ion, through='MineralImpurity', related_name='impurities')
     ions_theoretical = models.ManyToManyField(Ion, through='MineralIonTheoretical')
 
@@ -150,8 +152,8 @@ class MineralIonTheoretical(BaseModel):
 
 class MineralCrystallography(BaseModel):
     
-    mineral = models.OneToOneField(Mineral, models.CASCADE, db_column='mineral_id', related_name='crystal')
-    crystal_system = models.ForeignKey(CrystalSystem, models.CASCADE, db_column='crystal_system_id')
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id')
+    crystal_system = models.ForeignKey(CrystalSystem, models.CASCADE, db_column='crystal_system_id', related_name='minerals')
     crystal_class = models.ForeignKey(CrystalClass, models.CASCADE, db_column='crystal_class_id', null=True, default=None)
     space_group = models.ForeignKey(SpaceGroup, models.CASCADE, db_column='space_group_id', null=True, default=None)
     a = models.FloatField(blank=True, null=True, default=None)

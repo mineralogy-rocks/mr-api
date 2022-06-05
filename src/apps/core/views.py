@@ -88,18 +88,23 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                                  ) \
                                                  .filter(mineral=models.OuterRef('id'))
 
-        groups_history = MineralHierarchy.objects.values('parent').filter(models.Q(parent=models.OuterRef('id'))) \
+        # groups_history = MineralHierarchy.objects.values('parent').filter(models.Q(parent=models.OuterRef('id'))) \
+        #                                          .annotate(
+        #                                              discovery_year_min=models.Min('mineral__history__discovery_year_min'),
+        #                                              discovery_year_max=models.Max('mineral__history__discovery_year_max')
+        #                                          )
+                  
+        history_ = MineralHierarchy.objects.values('parent').filter(models.Q(parent=models.OuterRef('id'))) \
                                                  .annotate(
                                                      discovery_year_min=models.Min('mineral__history__discovery_year_min'),
                                                      discovery_year_max=models.Max('mineral__history__discovery_year_max')
                                                  )
-                                                 
+                                                                                
         status_groups_ = queryset.values('id').annotate(status_groups=ArrayAgg('statuses__status_group', default=models.Value([])))
         
         print(status_groups_)
 
         queryset = queryset.annotate(
-            # status_groups_=models.Subquery(status_groups_.values('status_groups')),
             ns_index_=models.Case(
                 models.When(
                     ns_class__isnull=False, 
@@ -121,23 +126,26 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                 polytypes=models.Subquery(relations_count.values('polytypes_count')),
             ),
             history_=JSONObject(
-                discovery_year_min=models.Case(
-                    models.When(statuses__status_group__name='grouping', then=models.Subquery(groups_history.values('discovery_year_min'))),
-                    default=models.F('history__discovery_year_min')
-                ),
-                discovery_year_max=models.Case(
-                        models.When(statuses__status_group__name='grouping', then=models.Subquery(groups_history.values('discovery_year_max'))),
-                        default=models.F('history__discovery_year_max')
-                ),
+                discovery_year_min=models.Subquery(history_.values('discovery_year_min')),
             )
+            # history_=JSONObject(
+            #     discovery_year_min=models.Case(
+            #         models.When(statuses__status_group__name='grouping', then=models.Subquery(groups_history.values('discovery_year_min'))),
+            #         default=models.F('history__discovery_year_min')
+            #     ),
+            #     discovery_year_max=models.Case(
+            #             models.When(statuses__status_group__name='grouping', then=models.Subquery(groups_history.values('discovery_year_max'))),
+            #             default=models.F('history__discovery_year_max')
+            #     ),
+            # )
         )
         
         queryset = queryset.defer(
             'history__mineral_id', 'history__discovery_year_min', 'history__discovery_year_max', 'history__discovery_year_note',
             'history__certain', 'history__first_usage_date', 'history__first_known_use', 
             
-            'crystal__crystal_class_id', 'crystal__space_group_id','crystal__a', 'crystal__b', 'crystal__c', 'crystal__alpha', 
-            'crystal__gamma', 'crystal__z',
+            # 'crystal__crystal_class_id', 'crystal__space_group_id','crystal__a', 'crystal__b', 'crystal__c', 'crystal__alpha', 
+            # 'crystal__gamma', 'crystal__z',
             )
         
         return queryset

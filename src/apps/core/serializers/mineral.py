@@ -1,8 +1,9 @@
 from django.db import models
 from rest_framework import serializers
 
-from ..models.core import StatusGroup, Status, Country, RelationType, NsFamily
-from ..models.mineral import Mineral, MineralStatus, MineralHistory
+from ..models.core import Status
+from ..models.crystal import CrystalSystem
+from ..models.mineral import Mineral, MineralStatus, MineralHistory, MineralCrystallography
 from .core import StatusListSerializer, CountryListSerializer
 from .crystal import CrystalSystemSerializer, CrystalSystemsStatsSerializer
 
@@ -26,14 +27,14 @@ class MineralListSerializer(serializers.ModelSerializer):
 
     ns_index = serializers.CharField(source='ns_index_')
     formula = serializers.CharField(source='formula_html')
-    crystal_system = CrystalSystemSerializer(source='crystal.crystal_system')
+    crystal_systems = CrystalSystemSerializer(many=True)
     statuses = StatusListSerializer(many=True)
 
-    relations = serializers.JSONField(source='relations_')
+    # relations = serializers.JSONField(source='relations_')
 
-    discovery_countries = CountryListSerializer(many=True)
+    # discovery_countries = CountryListSerializer(many=True)
     
-    history = serializers.JSONField(source='history_')
+    # history = serializers.JSONField(source='history_')
 
     class Meta:
         model = Mineral
@@ -43,13 +44,13 @@ class MineralListSerializer(serializers.ModelSerializer):
             'name',
             'ns_index',
             'formula',
-            'crystal_system',
+            'crystal_systems',
             'statuses',
 
-            'relations',
+            # 'relations',
 
-            'discovery_countries',
-            'history'
+            # 'discovery_countries',
+            # 'history'
             ]
         
     def __init__(self, instance, *args, **kwargs):
@@ -63,11 +64,11 @@ class MineralListSerializer(serializers.ModelSerializer):
 
         select_related = [
             'history',
-            'crystal__crystal_system',
         ]
 
         prefetch_related = [
             models.Prefetch('statuses', Status.objects.select_related('status_group')),
+            'crystal_systems',
             'discovery_countries',
         ]
         
