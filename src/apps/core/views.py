@@ -10,7 +10,7 @@ from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.permissions import  AllowAny
 
 from .models.core import Status, StatusGroup, NsFamily
-from .models.mineral import Mineral, MineralRelation, MineralHierarchy
+from .models.mineral import Mineral, MineralHistory, MineralRelation, MineralHierarchy, MineralCountry, MineralStatus
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import MineralListSerializer
 from .filters import StatusFilter, MineralFilter
@@ -87,24 +87,18 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                                      )
                                                  ) \
                                                  .filter(mineral=models.OuterRef('id'))
-
-        # groups_history = MineralHierarchy.objects.values('parent').filter(models.Q(parent=models.OuterRef('id'))) \
-        #                                          .annotate(
-        #                                              discovery_year_min=models.Min('mineral__history__discovery_year_min'),
-        #                                              discovery_year_max=models.Max('mineral__history__discovery_year_max')
-        #                                          )
+                  
                   
         history_ = MineralHierarchy.objects.values('parent').filter(models.Q(parent=models.OuterRef('id'))) \
                                                  .annotate(
                                                      discovery_year_min=models.Min('mineral__history__discovery_year_min'),
                                                      discovery_year_max=models.Max('mineral__history__discovery_year_max')
-                                                 )
-                                                                                
-        status_groups_ = queryset.values('id').annotate(status_groups=ArrayAgg('statuses__status_group', default=models.Value([])))
-        
-        print(status_groups_)
-
+                                                 )                                                                                                         
+                
+        is_grouping_ = MineralStatus.objects.filter(models.Q(mineral=models.OuterRef('id')) & models.Q(status__status_group=1))
+                
         queryset = queryset.annotate(
+            is_grouping=models.Exists(is_grouping_),
             ns_index_=models.Case(
                 models.When(
                     ns_class__isnull=False, 
@@ -126,18 +120,15 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                 polytypes=models.Subquery(relations_count.values('polytypes_count')),
             ),
             history_=JSONObject(
-                discovery_year_min=models.Subquery(history_.values('discovery_year_min')),
+                discovery_year_min=models.Case(
+                    models.When(is_grouping=True, then=models.Subquery(history_.values('discovery_year_min'))),
+                    default=models.F('history__discovery_year_min')
+                ),
+                discovery_year_max=models.Case(
+                        models.When(is_grouping=True, then=models.Subquery(history_.values('discovery_year_max'))),
+                        default=models.F('history__discovery_year_max')
+                ),
             )
-            # history_=JSONObject(
-            #     discovery_year_min=models.Case(
-            #         models.When(statuses__status_group__name='grouping', then=models.Subquery(groups_history.values('discovery_year_min'))),
-            #         default=models.F('history__discovery_year_min')
-            #     ),
-            #     discovery_year_max=models.Case(
-            #             models.When(statuses__status_group__name='grouping', then=models.Subquery(groups_history.values('discovery_year_max'))),
-            #             default=models.F('history__discovery_year_max')
-            #     ),
-            # )
         )
         
         queryset = queryset.defer(

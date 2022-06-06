@@ -9,7 +9,7 @@ class CrystalSystemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CrystalSystem
         fields = ['id', 'name',]
-
+        
 
 
 class CrystalSystemsStatsSerializer(CrystalSystemSerializer):

@@ -30,11 +30,11 @@ class MineralListSerializer(serializers.ModelSerializer):
     crystal_systems = CrystalSystemSerializer(many=True)
     statuses = StatusListSerializer(many=True)
 
-    # relations = serializers.JSONField(source='relations_')
+    relations = serializers.JSONField(source='relations_')
 
-    # discovery_countries = CountryListSerializer(many=True)
+    discovery_countries = CountryListSerializer(many=True)
     
-    # history = serializers.JSONField(source='history_')
+    history = serializers.JSONField(source='history_')
 
     class Meta:
         model = Mineral
@@ -47,15 +47,11 @@ class MineralListSerializer(serializers.ModelSerializer):
             'crystal_systems',
             'statuses',
 
-            # 'relations',
+            'relations',
 
-            # 'discovery_countries',
-            # 'history'
+            'discovery_countries',
+            'history'
             ]
-        
-    def __init__(self, instance, *args, **kwargs):
-        print(instance)
-        super().__init__(instance, *args, **kwargs)
 
     @staticmethod
     def setup_eager_loading(**kwargs):
