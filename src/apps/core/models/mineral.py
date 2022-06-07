@@ -61,10 +61,6 @@ class Mineral(Nameable, Creatable, Updatable):
         if self.statuses:
             return '; '.join([str(status.status.status_id) for status in self.statuses.all()])
 
-    
-    def is_grouping(self):
-        return 'grouping' in self.statuses.all().values_list('status_group__name', flat=True)
-
 
     ns_index.short_description = 'Nickel-Strunz Index'
     formula_html.short_description = 'Formula'

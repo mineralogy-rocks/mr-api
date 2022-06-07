@@ -5,13 +5,14 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import filters
+from rest_framework.response import Response
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.permissions import  AllowAny
 
-from .models.core import Status, StatusGroup, NsFamily
-from .models.mineral import Mineral, MineralHistory, MineralRelation, MineralHierarchy, MineralCountry, MineralStatus
+from .models.core import Status, NsFamily
+from .models.mineral import Mineral, MineralRelation, MineralHierarchy, MineralCrystallography, MineralStatus
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import MineralListSerializer
 from .filters import StatusFilter, MineralFilter
@@ -90,58 +91,17 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                                  .filter(mineral=OuterRef('id'))
                   
                   
-        history_ = MineralHierarchy.objects.values('parent').filter(Q(parent=OuterRef('id'))) \
-                                                 .annotate(
-                                                     discovery_year_min=Min('mineral__history__discovery_year_min'),
-                                                     discovery_year_max=Max('mineral__history__discovery_year_max')
-                                                 )                                                                                                         
+        history_ = MineralHierarchy.objects.values('parent') \
+                                           .filter(Q(parent=OuterRef('id'))) \
+                                           .annotate(
+                                             discovery_year_min=Min('mineral__history__discovery_year_min'),
+                                             discovery_year_max=Max('mineral__history__discovery_year_max')
+                                           )                                                                                                         
                             
-        is_grouping_ = MineralStatus.objects.filter(Q(mineral=OuterRef('id')) & Q(status__status_group=1))
-
-        queryset = queryset.annotate(is_grouping=Exists(is_grouping_))
-
-        sql, params = queryset.query.sql_with_params()
-        queryset_ = Mineral.objects.raw('''
-            SELECT * FROM ({ sql }) AS ml;
-        ''', params)
-
-        # with connection.cursor() as cursor:
-        #     cursor.execute('''
-        #         SELECT ml.*,
-        #             JSONB_BUILD_OBJECT(
-        #             'discovery_year_min', 
-        #             CASE WHEN ml.is_grouping
-        #                     THEN (
-        #                         SELECT MIN(U3."discovery_year_min") AS "discovery_year_min" 
-        #                         FROM "mineral_hierarchy" U0 
-        #                         INNER JOIN "mineral_log" U2 ON (U0."mineral_id" = U2."id") AND U0."parent_id" = ("ml"."id")
-        #                         LEFT OUTER JOIN "mineral_history" U3 ON (U2."id" = U3."mineral_id") 
-        #                         GROUP BY U0."parent_id"
-        #                         ) 
-        #                     ELSE "ml"."discovery_year_min"
-        #                 END,
-        #                 'discovery_year_max', 
-        #                 CASE WHEN ml.is_grouping
-        #                     THEN (
-        #                         SELECT MAX(U3."discovery_year_max") AS "discovery_year_max" 
-        #                         FROM "mineral_hierarchy" U0 
-        #                         INNER JOIN "mineral_log" U2 ON (U0."mineral_id" = U2."id") AND U0."parent_id" = ("ml"."id")
-        #                         LEFT OUTER JOIN "mineral_history" U3 ON (U2."id" = U3."mineral_id") 
-        #                         GROUP BY U0."parent_id"
-        #                         ) 
-        #                     ELSE "ml"."discovery_year_max" 
-        #                 END
-        #             ) AS history_
-        #         FROM (
-        #             ''' + str(queryset.query) +
-        #             '''
-        #         ) ml;
-        #     ''')
-
-        #     rows = cursor.fetch_all()
-        #     print(rows)
+        is_grouping_ = MineralStatus.objects.filter(Q(mineral=OuterRef('id')) & Q(status__status_group=1))   
 
         queryset = queryset.annotate(
+            is_grouping=Exists(is_grouping_),
             ns_index_=Case(
                 When(
                     ns_class__isnull=False, 
@@ -168,8 +128,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                     default=F('history__discovery_year_min')
                 ),
                 discovery_year_max=Case(
-                        When(is_grouping=True, then=Subquery(history_.values('discovery_year_max'))),
-                        default=F('history__discovery_year_max')
+                    When(is_grouping=True, then=Subquery(history_.values('discovery_year_max'))),
+                    default=F('history__discovery_year_max')
                 ),
             )
         )
@@ -198,11 +158,3 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             return MineralListSerializer
 
         return super().get_serializer_class()
-
-
-    def retrieve(self, request, *args, **kwargs):
-        return super().retrieve(request, *args, **kwargs)
-
-
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)

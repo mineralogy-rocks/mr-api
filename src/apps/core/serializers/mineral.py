@@ -46,7 +46,6 @@ class MineralListSerializer(serializers.ModelSerializer):
             'formula',
             'crystal_systems',
             'statuses',
-
             'relations',
 
             'discovery_countries',
@@ -64,7 +63,7 @@ class MineralListSerializer(serializers.ModelSerializer):
 
         prefetch_related = [
             models.Prefetch('statuses', Status.objects.select_related('status_group')),
-            'crystal_systems',
+            models.Prefetch('crystal_systems', CrystalSystem.objects.all().distinct()),
             'discovery_countries',
         ]
         
