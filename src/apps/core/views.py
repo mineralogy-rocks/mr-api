@@ -1,4 +1,5 @@
-from django.db import models
+from django.db import connection
+from django.db.models import Q, OuterRef, F, Subquery, Min, Max, Value, Case, When, Count, Exists, CharField
 from django.db.models.functions import JSONObject, Concat, Right, Coalesce
 from django.contrib.postgres.aggregates import ArrayAgg
 from django_filters.rest_framework import DjangoFilterBackend
@@ -71,62 +72,104 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
 
         isostructural_minerals = NsFamily.objects.values('ns_family') \
-                                                 .annotate(count=models.Count('minerals')) \
-                                                 .filter(ns_family=models.OuterRef('ns_family'))
+                                                 .annotate(count=Count('minerals')) \
+                                                 .filter(ns_family=OuterRef('ns_family'))
         
         relations_count = MineralRelation.objects.values('relation') \
-                                                 .filter(models.Q(direct_relation=True)) \
+                                                 .filter(Q(direct_relation=True)) \
                                                  .annotate(
-                                                     varieties_count=models.Case(
-                                                         models.When(status__status__status_group__name='varieties', then=models.Count('relation')),
-                                                         default=models.Value(None)
+                                                     varieties_count=Case(
+                                                         When(status__status__status_group__name='varieties', then=Count('relation')),
+                                                         default=Value(None)
                                                      ),
-                                                     polytypes_count=models.Case(
-                                                        models.When(status__status__status_group__name='polytypes', then=models.Count('relation')),
-                                                        default=models.Value(None)
+                                                     polytypes_count=Case(
+                                                        When(status__status__status_group__name='polytypes', then=Count('relation')),
+                                                        default=Value(None)
                                                      )
                                                  ) \
-                                                 .filter(mineral=models.OuterRef('id'))
+                                                 .filter(mineral=OuterRef('id'))
                   
                   
-        history_ = MineralHierarchy.objects.values('parent').filter(models.Q(parent=models.OuterRef('id'))) \
+        history_ = MineralHierarchy.objects.values('parent').filter(Q(parent=OuterRef('id'))) \
                                                  .annotate(
-                                                     discovery_year_min=models.Min('mineral__history__discovery_year_min'),
-                                                     discovery_year_max=models.Max('mineral__history__discovery_year_max')
+                                                     discovery_year_min=Min('mineral__history__discovery_year_min'),
+                                                     discovery_year_max=Max('mineral__history__discovery_year_max')
                                                  )                                                                                                         
-                
-        is_grouping_ = MineralStatus.objects.filter(models.Q(mineral=models.OuterRef('id')) & models.Q(status__status_group=1))
-                
+                            
+        is_grouping_ = MineralStatus.objects.filter(Q(mineral=OuterRef('id')) & Q(status__status_group=1))
+
+        queryset = queryset.annotate(is_grouping=Exists(is_grouping_))
+
+        sql, params = queryset.query.sql_with_params()
+        queryset_ = Mineral.objects.raw('''
+            SELECT * FROM ({ sql }) AS ml;
+        ''', params)
+
+        # with connection.cursor() as cursor:
+        #     cursor.execute('''
+        #         SELECT ml.*,
+        #             JSONB_BUILD_OBJECT(
+        #             'discovery_year_min', 
+        #             CASE WHEN ml.is_grouping
+        #                     THEN (
+        #                         SELECT MIN(U3."discovery_year_min") AS "discovery_year_min" 
+        #                         FROM "mineral_hierarchy" U0 
+        #                         INNER JOIN "mineral_log" U2 ON (U0."mineral_id" = U2."id") AND U0."parent_id" = ("ml"."id")
+        #                         LEFT OUTER JOIN "mineral_history" U3 ON (U2."id" = U3."mineral_id") 
+        #                         GROUP BY U0."parent_id"
+        #                         ) 
+        #                     ELSE "ml"."discovery_year_min"
+        #                 END,
+        #                 'discovery_year_max', 
+        #                 CASE WHEN ml.is_grouping
+        #                     THEN (
+        #                         SELECT MAX(U3."discovery_year_max") AS "discovery_year_max" 
+        #                         FROM "mineral_hierarchy" U0 
+        #                         INNER JOIN "mineral_log" U2 ON (U0."mineral_id" = U2."id") AND U0."parent_id" = ("ml"."id")
+        #                         LEFT OUTER JOIN "mineral_history" U3 ON (U2."id" = U3."mineral_id") 
+        #                         GROUP BY U0."parent_id"
+        #                         ) 
+        #                     ELSE "ml"."discovery_year_max" 
+        #                 END
+        #             ) AS history_
+        #         FROM (
+        #             ''' + str(queryset.query) +
+        #             '''
+        #         ) ml;
+        #     ''')
+
+        #     rows = cursor.fetch_all()
+        #     print(rows)
+
         queryset = queryset.annotate(
-            is_grouping=models.Exists(is_grouping_),
-            ns_index_=models.Case(
-                models.When(
+            ns_index_=Case(
+                When(
                     ns_class__isnull=False, 
                     then=Concat(
                         'ns_class__id',
-                        models.Value('.'),
-                        Coalesce(Right('ns_subclass', 1), models.Value('0')),
-                        Coalesce(Right('ns_family', 1), models.Value('0')),
-                        models.Value('.'),
-                        Coalesce('ns_mineral', models.Value('0')),
-                        output_field=models.CharField()
+                        Value('.'),
+                        Coalesce(Right('ns_subclass', 1), Value('0')),
+                        Coalesce(Right('ns_family', 1), Value('0')),
+                        Value('.'),
+                        Coalesce('ns_mineral', Value('0')),
+                        output_field=CharField()
                     ),
                 ),
                 default=None
             ),
             relations_=JSONObject(
-                isostructural_minerals=models.Subquery(isostructural_minerals.values('count')),
-                varieties=models.Subquery(relations_count.values('varieties_count')),
-                polytypes=models.Subquery(relations_count.values('polytypes_count')),
+                isostructural_minerals=Subquery(isostructural_minerals.values('count')),
+                varieties=Subquery(relations_count.values('varieties_count')),
+                polytypes=Subquery(relations_count.values('polytypes_count')),
             ),
             history_=JSONObject(
-                discovery_year_min=models.Case(
-                    models.When(is_grouping=True, then=models.Subquery(history_.values('discovery_year_min'))),
-                    default=models.F('history__discovery_year_min')
+                discovery_year_min=Case(
+                    When(is_grouping=True, then=Subquery(history_.values('discovery_year_min'))),
+                    default=F('history__discovery_year_min')
                 ),
-                discovery_year_max=models.Case(
-                        models.When(is_grouping=True, then=models.Subquery(history_.values('discovery_year_max'))),
-                        default=models.F('history__discovery_year_max')
+                discovery_year_max=Case(
+                        When(is_grouping=True, then=Subquery(history_.values('discovery_year_max'))),
+                        default=F('history__discovery_year_max')
                 ),
             )
         )
@@ -134,9 +177,6 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         queryset = queryset.defer(
             'history__mineral_id', 'history__discovery_year_min', 'history__discovery_year_max', 'history__discovery_year_note',
             'history__certain', 'history__first_usage_date', 'history__first_known_use', 
-            
-            # 'crystal__crystal_class_id', 'crystal__space_group_id','crystal__a', 'crystal__b', 'crystal__c', 'crystal__alpha', 
-            # 'crystal__gamma', 'crystal__z',
             )
         
         return queryset
