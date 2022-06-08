@@ -1,7 +1,7 @@
 from django.db import connection
 from django.db.models import Q, OuterRef, F, Subquery, Min, Max, Value, Case, When, Count, Exists, CharField
 from django.db.models.functions import JSONObject, Concat, Right, Coalesce
-from django.contrib.postgres.aggregates import ArrayAgg
+from django.contrib.postgres.aggregates import JSONBAgg, ArrayAgg
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import filters
@@ -12,6 +12,7 @@ from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.permissions import  AllowAny
 
 from .models.core import Status, NsFamily
+from .models.crystal import CrystalSystem
 from .models.mineral import Mineral, MineralRelation, MineralHierarchy, MineralCrystallography, MineralStatus
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import MineralListSerializer
@@ -99,40 +100,42 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                            )                                                                                                         
                             
         is_grouping_ = MineralStatus.objects.filter(Q(mineral=OuterRef('id')) & Q(status__status_group=1))   
+        is_variety_or_polytype_ = MineralStatus.objects.filter(Q(mineral=OuterRef('id')) & Q(status__status_group__in=[3, 4])) 
+        is_mixture_ = MineralStatus.objects.filter(Q(mineral=OuterRef('id')) & Q(status__status_group=10)) 
 
         queryset = queryset.annotate(
-            is_grouping=Exists(is_grouping_),
-            ns_index_=Case(
-                When(
-                    ns_class__isnull=False, 
-                    then=Concat(
-                        'ns_class__id',
-                        Value('.'),
-                        Coalesce(Right('ns_subclass', 1), Value('0')),
-                        Coalesce(Right('ns_family', 1), Value('0')),
-                        Value('.'),
-                        Coalesce('ns_mineral', Value('0')),
-                        output_field=CharField()
-                    ),
-                ),
-                default=None
-            ),
-            relations_=JSONObject(
-                isostructural_minerals=Subquery(isostructural_minerals.values('count')),
-                varieties=Subquery(relations_count.values('varieties_count')),
-                polytypes=Subquery(relations_count.values('polytypes_count')),
-            ),
-            history_=JSONObject(
-                discovery_year_min=Case(
-                    When(is_grouping=True, then=Subquery(history_.values('discovery_year_min'))),
-                    default=F('history__discovery_year_min')
-                ),
-                discovery_year_max=Case(
-                    When(is_grouping=True, then=Subquery(history_.values('discovery_year_max'))),
-                    default=F('history__discovery_year_max')
-                ),
-            )
-        )
+                                is_grouping=Exists(is_grouping_),
+                                ns_index_=Case(
+                                    When(
+                                        ns_class__isnull=False, 
+                                        then=Concat(
+                                            'ns_class__id',
+                                            Value('.'),
+                                            Coalesce(Right('ns_subclass', 1), Value('0')),
+                                            Coalesce(Right('ns_family', 1), Value('0')),
+                                            Value('.'),
+                                            Coalesce('ns_mineral', Value('0')),
+                                            output_field=CharField()
+                                        ),
+                                    ),
+                                    default=None
+                                ),
+                                relations_=JSONObject(
+                                    isostructural_minerals=Subquery(isostructural_minerals.values('count')),
+                                    varieties=Subquery(relations_count.values('varieties_count')),
+                                    polytypes=Subquery(relations_count.values('polytypes_count')),
+                                ),
+                                history_=JSONObject(
+                                    discovery_year_min=Case(
+                                        When(is_grouping=True, then=Subquery(history_.values('discovery_year_min'))),
+                                        default=F('history__discovery_year_min')
+                                    ),
+                                    discovery_year_max=Case(
+                                        When(is_grouping=True, then=Subquery(history_.values('discovery_year_max'))),
+                                        default=F('history__discovery_year_max')
+                                    ),
+                                )
+                            )
         
         queryset = queryset.defer(
             'history__mineral_id', 'history__discovery_year_min', 'history__discovery_year_max', 'history__discovery_year_note',
@@ -158,3 +161,4 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             return MineralListSerializer
 
         return super().get_serializer_class()
+

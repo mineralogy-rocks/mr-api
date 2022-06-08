@@ -1,11 +1,13 @@
 from django.db import models
+from django.db.models import Q, Count, F
 from rest_framework import serializers
 
 from ..models.core import Status
 from ..models.crystal import CrystalSystem
-from ..models.mineral import Mineral, MineralStatus, MineralHistory, MineralCrystallography
+from ..models.mineral import Mineral, MineralStatus, MineralHistory, MineralCrystallography, MineralHierarchy
 from .core import StatusListSerializer, CountryListSerializer
 from .crystal import CrystalSystemSerializer, CrystalSystemsStatsSerializer
+from .base import BaseSerializer
 
 
 class MineralHistorySerializer(serializers.ModelSerializer):
@@ -28,12 +30,10 @@ class MineralListSerializer(serializers.ModelSerializer):
     ns_index = serializers.CharField(source='ns_index_')
     formula = serializers.CharField(source='formula_html')
     crystal_systems = CrystalSystemSerializer(many=True)
+
     statuses = StatusListSerializer(many=True)
-
     relations = serializers.JSONField(source='relations_')
-
     discovery_countries = CountryListSerializer(many=True)
-    
     history = serializers.JSONField(source='history_')
 
     class Meta:
@@ -74,3 +74,24 @@ class MineralListSerializer(serializers.ModelSerializer):
 
         queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
         return queryset
+
+
+    def get_crystal_systems(self, instance):
+        if (instance.is_grouping):
+            crystal_systems = instance.children_hierarchy.values('mineral__crystal_systems') \
+                                                         .annotate(
+                                                            id=F('mineral__crystal_systems__id'),
+                                                            name=F('mineral__crystal_systems__name'),
+                                                            count=Count('mineral', distinct=True)
+                                                          ) \
+                                                          .filter(Q(mineral__crystal_systems__isnull=False))
+
+            return crystal_systems.values('id', 'name', 'count')
+        
+        return CrystalSystemSerializer(instance.crystal_systems, many=True).data 
+
+
+    def to_representation(self, instance):
+        output = super().to_representation(instance)
+
+        return output
