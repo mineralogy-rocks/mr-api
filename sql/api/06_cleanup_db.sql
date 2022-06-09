@@ -73,6 +73,9 @@ ALTER TABLE chemical_group_list RENAME COLUMN chemical_group_name TO name;
 
 ALTER TABLE element_list RENAME COLUMN element_id TO id;
 
+
+/* ions cleanup */
+
 ALTER TABLE ion_class_list  ALTER COLUMN ion_class_name TYPE varchar(200) USING ion_class_name::varchar;
 ALTER TABLE ion_class_list RENAME COLUMN ion_class_id TO id;
 ALTER TABLE ion_class_list RENAME COLUMN ion_class_name TO name;
@@ -99,6 +102,12 @@ ALTER TABLE ion_log  ALTER COLUMN ion_name TYPE varchar(200) USING ion_name::var
 ALTER TABLE ion_log RENAME COLUMN ion_id TO id;
 ALTER TABLE ion_log RENAME COLUMN ion_name TO name;
 
+ALTER TABLE ion_position_list RENAME COLUMN ion_position_id TO id;
+ALTER TABLE ion_position_list RENAME COLUMN ion_position_name TO name;
+
+
+/* mineral_log cleanup */
+
 ALTER TABLE mineral_log RENAME COLUMN mineral_id TO id;
 ALTER TABLE mineral_log RENAME COLUMN mineral_name TO name;
 ALTER TABLE mineral_log RENAME COLUMN id_class TO ns_class;
@@ -117,6 +126,9 @@ DROP TABLE IF EXISTS mineral_name_person;
 
 ALTER TABLE mineral_country DROP COLUMN created_at;
 ALTER TABLE mineral_country DROP COLUMN updated_at;
+
+
+/* crystallography cleanup */
 
 ALTER TABLE crystal_system_list RENAME COLUMN crystal_system_id TO id;
 ALTER TABLE crystal_system_list RENAME COLUMN crystal_system_name TO name;
@@ -152,3 +164,10 @@ SELECT mco.mineral_id, mco.crystal_system_id, mco.crystal_class_id, mco.space_gr
 	   mco.beta, mco.gamma, mco.z FROM mineral_crystallography_old mco;
 	  
 DROP TABLE IF EXISTS mineral_crystallography_old;
+
+
+/* group ions cleanup */
+
+ALTER TABLE gr_ions RENAME to mineral_ion_position;
+ALTER TABLE mineral_ion_position ADD CONSTRAINT mineral_ion_position_ion_log_id_fkey 
+FOREIGN KEY (ion_id) REFERENCES ion_log(id) ON UPDATE cascade on delete cascade;

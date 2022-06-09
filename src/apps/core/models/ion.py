@@ -75,6 +75,21 @@ class IonType(BaseModel, Nameable):
 
 
 
+class IonPosition(BaseModel, Nameable):
+
+    class Meta:
+        managed = False
+        db_table = 'ion_position_list'
+        ordering = ['name',]
+
+        verbose_name = 'Ion Position'
+        verbose_name_plural = 'Ion Positions'
+
+    def __str__(self):
+        return self.name
+
+
+
 class Ion(BaseModel, Nameable):
 
     formula = models.CharField(max_length=100, null=False)

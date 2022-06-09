@@ -1,7 +1,8 @@
 from django.db import connection
-from django.db.models import Q, OuterRef, F, Subquery, Min, Max, Value, Case, When, Count, Exists, CharField
+from django.db.models import Q, OuterRef, F, Subquery, Min, Max, Value, Case, When, Count, Exists, CharField, JSONField
 from django.db.models.functions import JSONObject, Concat, Right, Coalesce
 from django.contrib.postgres.aggregates import JSONBAgg, ArrayAgg
+from django.contrib.postgres.expressions import ArraySubquery
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import filters
@@ -13,7 +14,7 @@ from rest_framework.permissions import  AllowAny
 
 from .models.core import Status, NsFamily
 from .models.crystal import CrystalSystem
-from .models.mineral import Mineral, MineralRelation, MineralHierarchy, MineralCrystallography, MineralStatus
+from .models.mineral import Mineral, MineralRelation, MineralHierarchy, MineralCrystallography, MineralStatus, MineralIonPosition
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import MineralListSerializer
 from .filters import StatusFilter, MineralFilter
@@ -73,13 +74,13 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         if hasattr(serializer_class, 'setup_eager_loading'):
             queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
 
-        isostructural_minerals = NsFamily.objects.values('ns_family') \
-                                                 .annotate(count=Count('minerals')) \
-                                                 .filter(ns_family=OuterRef('ns_family'))
+        isostructural_minerals_ = NsFamily.objects.values('ns_family') \
+                                                  .annotate(count=Count('minerals')) \
+                                                  .filter(ns_family=OuterRef('ns_family'))
         
-        relations_count = MineralRelation.objects.values('relation') \
-                                                 .filter(Q(direct_relation=True)) \
-                                                 .annotate(
+        relations_count_ = MineralRelation.objects.values('relation') \
+                                                  .filter(Q(direct_relation=True)) \
+                                                  .annotate(
                                                      varieties_count=Case(
                                                          When(status__status__status_group__name='varieties', then=Count('relation')),
                                                          default=Value(None)
@@ -88,8 +89,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                                         When(status__status__status_group__name='polytypes', then=Count('relation')),
                                                         default=Value(None)
                                                      )
-                                                 ) \
-                                                 .filter(mineral=OuterRef('id'))
+                                                  ) \
+                                                  .filter(mineral=OuterRef('id'))
                   
                   
         history_ = MineralHierarchy.objects.values('parent') \
@@ -98,10 +99,28 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                              discovery_year_min=Min('mineral__history__discovery_year_min'),
                                              discovery_year_max=Max('mineral__history__discovery_year_max')
                                            )                                                                                                         
-                            
+                      
+        ion_positions_ = MineralIonPosition.objects.all().values('position') \
+                                                         .filter(Q(mineral=OuterRef('id'))) \
+                                                         .annotate(
+                                                             ions_= JSONObject(
+                                                                id=F('position__id'),
+                                                                name=F('position__name'),
+                                                                ions=ArrayAgg('ion__formula')
+                                                             )
+                                                         ).order_by('position__name')
+                                                          
+        crystal_systems_ = MineralCrystallography.objects.all().values('crystal_system') \
+                                                               .filter(Q(mineral__parents_hierarchy__parent=OuterRef('id'))) \
+                                                               .annotate(
+                                                                   crystal_systems_=JSONObject(
+                                                                        id=F('crystal_system__id'),
+                                                                        name=F('crystal_system__name'),
+                                                                        count=Count('mineral', distinct=True)
+                                                                   )
+                                                               )
+                    
         is_grouping_ = MineralStatus.objects.filter(Q(mineral=OuterRef('id')) & Q(status__status_group=1))   
-        is_variety_or_polytype_ = MineralStatus.objects.filter(Q(mineral=OuterRef('id')) & Q(status__status_group__in=[3, 4])) 
-        is_mixture_ = MineralStatus.objects.filter(Q(mineral=OuterRef('id')) & Q(status__status_group=10)) 
 
         queryset = queryset.annotate(
                                 is_grouping=Exists(is_grouping_),
@@ -120,10 +139,12 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                     ),
                                     default=None
                                 ),
+                                ion_positions_=ArraySubquery(ion_positions_.values('ions_')),
+                                crystal_systems_=ArraySubquery(crystal_systems_.values('crystal_systems_')),
                                 relations_=JSONObject(
-                                    isostructural_minerals=Subquery(isostructural_minerals.values('count')),
-                                    varieties=Subquery(relations_count.values('varieties_count')),
-                                    polytypes=Subquery(relations_count.values('polytypes_count')),
+                                    isostructural_minerals=Subquery(isostructural_minerals_.values('count')),
+                                    varieties=Subquery(relations_count_.values('varieties_count')),
+                                    polytypes=Subquery(relations_count_.values('polytypes_count')),
                                 ),
                                 history_=JSONObject(
                                     discovery_year_min=Case(
@@ -138,6 +159,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                             )
         
         queryset = queryset.defer(
+            'ns_class', 'ns_subclass', 'ns_family', 'ns_mineral', 'note', 'created_at', 'updated_at',
+            
             'history__mineral_id', 'history__discovery_year_min', 'history__discovery_year_max', 'history__discovery_year_note',
             'history__certain', 'history__first_usage_date', 'history__first_known_use', 
             )
@@ -161,4 +184,3 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             return MineralListSerializer
 
         return super().get_serializer_class()
-

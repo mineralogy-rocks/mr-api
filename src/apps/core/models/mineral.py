@@ -1,11 +1,13 @@
 import uuid
 
 from django.db import models
+from django.db.models import F
+from django.contrib.postgres.aggregates import ArrayAgg
 
 from ..utils import formula_to_html
 from .base import BaseModel, Nameable, Creatable, Updatable
 from .core import NsClass, NsSubclass, NsFamily, Status, Country, RelationType
-from .ion import Ion
+from .ion import Ion, IonPosition
 from .crystal import CrystalSystem, CrystalClass, SpaceGroup
 
 
@@ -51,7 +53,7 @@ class Mineral(Nameable, Creatable, Updatable):
             )
         else:
             return None
-
+                                   
 
     def formula_html(self):
         return formula_to_html(self.formula)
@@ -228,6 +230,26 @@ class MineralHierarchy(BaseModel):
 
         verbose_name = 'Hierarchy'
         verbose_name_plural = 'Hierarchies'
+
+    def __str__(self):
+        return self.mineral.name
+
+
+
+class MineralIonPosition(BaseModel):
+
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', to_field='id', related_name='ions')
+    position = models.ForeignKey(IonPosition, models.CASCADE, db_column='ion_position_id', to_field='id')
+    ion = models.ForeignKey(Ion, models.CASCADE, db_column='ion_id', to_field='id')
+    quantity = models.TextField(blank=True, null=True, db_column='ion_quantity')
+
+    class Meta:
+        managed = False
+        db_table = 'mineral_ion_position'
+        ordering = ['mineral',]
+
+        verbose_name = 'Mineral Ions'
+        verbose_name_plural = 'Minerals Ions'
 
     def __str__(self):
         return self.mineral.name
