@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import uuid
 
 from django.db import models

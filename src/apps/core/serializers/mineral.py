@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from django.db import models
 from django.db.models import Q, Count, F
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -30,12 +31,12 @@ class MineralListSerializer(serializers.ModelSerializer):
 
     ns_index = serializers.CharField(source='ns_index_')
     formula = serializers.CharField(source='formula_html')
-    formula_ions = serializers.JSONField(source='ion_positions_')
-    crystal_systems = serializers.SerializerMethodField()
+    ions = serializers.JSONField(source='ions_')
+    # crystal_systems = serializers.SerializerMethodField()
 
-    statuses = StatusListSerializer(many=True)
-    relations = serializers.JSONField(source='relations_')
-    discovery_countries = CountryListSerializer(many=True)
+    statuses = serializers.JSONField(source='statuses_')
+    # relations = serializers.JSONField(source='relations_')
+    discovery_countries = serializers.JSONField(source='discovery_countries_')
     history = serializers.JSONField(source='history_')
 
     class Meta:
@@ -46,11 +47,11 @@ class MineralListSerializer(serializers.ModelSerializer):
             'name',
             'ns_index',
             'formula',
-            'formula_ions',
-            'crystal_systems',
+            'ions',
+            # 'crystal_systems',
             
             'statuses',
-            'relations',
+            # 'relations',
             'discovery_countries',
             'history'
             ]
@@ -65,9 +66,9 @@ class MineralListSerializer(serializers.ModelSerializer):
         ]
 
         prefetch_related = [
-            models.Prefetch('statuses', Status.objects.select_related('status_group')),
-            models.Prefetch('crystal_systems', CrystalSystem.objects.all().distinct()),
-            'discovery_countries',
+            # models.Prefetch('statuses', Status.objects.select_related('status_group')),
+            # models.Prefetch('crystal_systems', CrystalSystem.objects.all().distinct()),
+            # 'discovery_countries',
         ]
         
         for query_param in request.query_params.keys():
