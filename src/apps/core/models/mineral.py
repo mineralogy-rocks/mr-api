@@ -27,10 +27,10 @@ class Mineral(Nameable, Creatable, Updatable):
 
     discovery_countries = models.ManyToManyField(Country, through='MineralCountry')
     statuses = models.ManyToManyField(Status, through='MineralStatus')
-    crystal_systems = models.ManyToManyField(CrystalSystem, through='MineralCrystallography')
     
     impurities = models.ManyToManyField(Ion, through='MineralImpurity', related_name='impurities')
-    ions_theoretical = models.ManyToManyField(Ion, through='MineralIonTheoretical')
+    ion_positions = models.ManyToManyField(IonPosition, through='MineralIonPosition')
+    crystal_systems = models.ManyToManyField(CrystalSystem, through='MineralCrystallography')
 
     class Meta:
         managed = False
@@ -63,7 +63,7 @@ class Mineral(Nameable, Creatable, Updatable):
     def _statuses(self):
         if self.statuses:
             return '; '.join([str(status.status.status_id) for status in self.statuses.all()])
-
+        
 
     ns_index.short_description = 'Nickel-Strunz Index'
     formula_html.short_description = 'Formula'
@@ -133,8 +133,8 @@ class MineralImpurity(BaseModel):
 
 class MineralIonTheoretical(BaseModel):
 
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id')
-    ion = models.ForeignKey(Ion, models.CASCADE, db_column='ion_id')
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', related_name='ions_theoretical')
+    ion = models.ForeignKey(Ion, models.CASCADE, db_column='ion_id', related_name='minerals_theoretical')
 
     class Meta:
         managed = False
@@ -151,7 +151,7 @@ class MineralIonTheoretical(BaseModel):
 
 class MineralCrystallography(BaseModel):
     
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id')
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', related_name='crystallography')
     crystal_system = models.ForeignKey(CrystalSystem, models.CASCADE, db_column='crystal_system_id', related_name='minerals')
     crystal_class = models.ForeignKey(CrystalClass, models.CASCADE, db_column='crystal_class_id', null=True, default=None)
     space_group = models.ForeignKey(SpaceGroup, models.CASCADE, db_column='space_group_id', null=True, default=None)
@@ -241,7 +241,7 @@ class MineralIonPosition(BaseModel):
 
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', to_field='id', related_name='ions')
     position = models.ForeignKey(IonPosition, models.CASCADE, db_column='ion_position_id', to_field='id')
-    ion = models.ForeignKey(Ion, models.CASCADE, db_column='ion_id', to_field='id')
+    ion = models.ForeignKey(Ion, models.CASCADE, db_column='ion_id', to_field='id', related_name='mineral_positions')
     quantity = models.TextField(blank=True, null=True, db_column='ion_quantity')
 
     class Meta:

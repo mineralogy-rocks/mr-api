@@ -171,3 +171,17 @@ DROP TABLE IF EXISTS mineral_crystallography_old;
 ALTER TABLE gr_ions RENAME to mineral_ion_position;
 ALTER TABLE mineral_ion_position ADD CONSTRAINT mineral_ion_position_ion_log_id_fkey 
 FOREIGN KEY (ion_id) REFERENCES ion_log(id) ON UPDATE cascade on delete cascade;
+
+/* physical properties tables */
+
+CREATE TABLE color_list(
+	id serial PRIMARY KEY,
+	name varchar(100) NOT NULL,
+	code varchar(100) DEFAULT NULL
+);
+
+CREATE TABLE mineral_color (
+	id serial PRIMARY KEY,
+	mineral_id uuid NOT NULL REFERENCES mineral_log(id) ON UPDATE CASCADE,
+	color_id int NOT NULL REFERENCES color_list(id) ON UPDATE CASCADE
+);

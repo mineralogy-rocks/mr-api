@@ -14,7 +14,7 @@ class CrystalSystemSerializer(serializers.ModelSerializer):
 
 class CrystalSystemsStatsSerializer(CrystalSystemSerializer):
 
-    percentage = serializers.IntegerField()
+    count = serializers.IntegerField()
 
     class Meta:
-        fields = CrystalSystemSerializer.Meta.fields + ['percentage']
+        fields = CrystalSystemSerializer.Meta.fields + ['count']
