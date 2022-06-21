@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 from django.db import models
-from django.db.models import Q, Count, F, OuterRef, Subquery, Value
+from django.db.models import Q, Count, F, OuterRef, Subquery, Value, Case, When
 from django.db.models.functions import JSONObject
 from rest_framework import serializers
 
@@ -73,18 +73,12 @@ class MineralListSerializer(serializers.ModelSerializer):
         prefetch_related = [
             models.Prefetch('statuses', Status.objects.select_related('status_group')),
             # models.Prefetch('crystal_systems', CrystalSystem.objects.all().distinct()),
-            models.Prefetch('crystal_systems', CrystalSystem.objects.filter(Q(minerals__mineral__parents_hierarchy__parent__in=queryset.values('id'))).distinct(),
+            models.Prefetch('crystal_systems', CrystalSystem.objects.filter(Q(minerals__mineral__parents_hierarchy__parent__in=queryset.values('id'))),
                             to_attr='crystal_system_counts'
                             ),
-            # models.Prefetch('crystallography', MineralCrystallography.objects.filter(Q(mineral__parents_hierarchy__parent__in=queryset.values('id'))) \
+            # models.Prefetch('crystallography', MineralCrystallography.objects.filter(Q(mineral__parents_hierarchy__parent__in=queryset.values('id')) | 
+            #                                                                          Q(mineral__in=queryset.values('id'))) \
             #                                                                  .select_related('crystal_system') \
-            #                                                                  .annotate(
-            #                                                                     crystal_systems_=JSONObject(
-            #                                                                         id=F('crystal_system__id'),
-            #                                                                         name=F('crystal_system__name'),
-            #                                                                         count=Count('mineral', distinct=True)
-            #                                                                     )
-            #                                                                  ) \
             #                                                                  .defer('crystal_class', 'space_group', 'a', 'b', 'c', 'alpha', 'gamma', 'z'),
             #                                                                  to_attr='crystal_system_counts'
             #                                                                  ),
