@@ -1,9 +1,11 @@
 # -*- coding: UTF-8 -*-
 import uuid
 
+from django.urls import reverse
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Q, Count, OuterRef
 from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models.functions import JSONObject
 
 from ..utils import formula_to_html
 from .base import BaseModel, Nameable, Creatable, Updatable
@@ -42,7 +44,16 @@ class Mineral(Nameable, Creatable, Updatable):
 
     def __str__(self):
         return self.name
-
+    
+    
+    def get_absolute_url(self):
+        return reverse('core:mineral-detail', kwargs={'pk': self.id})
+    
+    
+    @property
+    def get_groups_urls(self):
+        return Mineral.objects.filter(id__in=self.parents_hierarchy.values('mineral__id'))
+                                             
 
     def ns_index(self):
         if self.ns_class:
@@ -62,8 +73,7 @@ class Mineral(Nameable, Creatable, Updatable):
 
     def _statuses(self):
         if self.statuses:
-            return '; '.join([str(status.status.status_id) for status in self.statuses.all()])
-        
+            return '; '.join([str(status.status.status_id) for status in self.statuses.all()])  
 
     ns_index.short_description = 'Nickel-Strunz Index'
     formula_html.short_description = 'Formula'
@@ -234,7 +244,7 @@ class MineralHierarchy(BaseModel):
 
     def __str__(self):
         return self.mineral.name
-
+    
 
 
 class MineralIonPosition(BaseModel):

@@ -14,7 +14,8 @@ class CrystalSystemSerializer(serializers.ModelSerializer):
 
 class CrystalSystemsStatsSerializer(CrystalSystemSerializer):
 
-    count = serializers.IntegerField()
+    counts = serializers.IntegerField()
 
     class Meta:
-        fields = CrystalSystemSerializer.Meta.fields + ['count']
+        model = CrystalSystem
+        fields = CrystalSystemSerializer.Meta.fields + ['counts']

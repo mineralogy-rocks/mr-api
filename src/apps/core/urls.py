@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from . import views as views
 
 
-app_name = 'mr'
+app_name = 'core'
 
 router = DefaultRouter()
 
