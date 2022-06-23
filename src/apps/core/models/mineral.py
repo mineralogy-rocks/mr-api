@@ -48,11 +48,6 @@ class Mineral(Nameable, Creatable, Updatable):
     
     def get_absolute_url(self):
         return reverse('core:mineral-detail', kwargs={'pk': self.id})
-    
-    
-    @property
-    def get_groups_urls(self):
-        return Mineral.objects.filter(id__in=self.parents_hierarchy.values('mineral__id'))
                                              
 
     def ns_index(self):

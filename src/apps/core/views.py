@@ -17,7 +17,7 @@ from .models.core import Status, NsFamily
 from .models.crystal import CrystalSystem
 from .models.mineral import Mineral, MineralRelation, MineralHierarchy, MineralCrystallography, MineralStatus, MineralIonPosition
 from .serializers.core import StatusListSerializer
-from .serializers.mineral import MineralListSerializer
+from .serializers.mineral import MineralListSerializer, MineralRawListSerializer
 from .filters import StatusFilter, MineralFilter
 
 
@@ -55,7 +55,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     http_method_names = ['get', 'options', 'head',]
 
     queryset = Mineral.objects.all()
-    serializer_class = MineralListSerializer
+    serializer_class = MineralRawListSerializer
 
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer, ]
     pagination_class = CustomLimitOffsetPagination
@@ -120,10 +120,10 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                                                         name=F('crystal_system__name'),
                                                                         count=Count('mineral', distinct=True)
                                                                    )
-                                                               )
-                                                                   
+                                                               )          
+
         is_grouping_ = MineralStatus.objects.filter(Q(mineral=OuterRef('id')) & Q(status__status_group=1))   
-        
+
         queryset = queryset.annotate(
             is_grouping=Exists(is_grouping_),
             ns_index_=Case(
@@ -141,7 +141,6 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                 ),
                 default=None
             ),
-            id_=F('id'),
         )
 
         # queryset = queryset.annotate(
@@ -190,7 +189,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     def get_serializer_class(self):
         
         if self.action in ['list']:
-            return MineralListSerializer
+            return MineralRawListSerializer
 
         return super().get_serializer_class()
 
@@ -208,17 +207,82 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                 '''
                 SELECT ml.*,
                 CASE 
-                    WHEN NOT ml.is_grouping
+                WHEN ml.is_grouping
+                THEN (
+                    ARRAY(
+                            SELECT JSONB_BUILD_OBJECT(
+                                'id', ml_.id, 'name', ml_.name, 'url', concat('/mineral/', ml_.id) 
+                            )::json 
+                            FROM mineral_hierarchy mh
+                            INNER JOIN mineral_log ml_ ON mh.mineral_id = ml_.id
+                            INNER JOIN mineral_status ms ON mh.mineral_id = ms.mineral_id
+                            INNER JOIN status_list sl ON ms.status_id = sl.id
+                            WHERE mh.parent_id = ml.id
+                            ORDER BY sl.status_id 
+                        )
+                    )
+                ELSE (
+                        ARRAY(
+                            SELECT JSONB_BUILD_OBJECT(
+                                'id', ml_.id, 'name', ml_.name, 'url', concat('/mineral/', ml_.id) 
+                            )::json 
+                            FROM mineral_hierarchy mh
+                            INNER JOIN mineral_log ml_ ON mh.parent_id = ml_.id
+                            INNER JOIN mineral_status ms ON mh.parent_id  = ms.mineral_id
+                            INNER JOIN status_list sl ON ms.status_id = sl.id
+                            WHERE mh.mineral_id = ml.id
+                            ORDER BY sl.status_id 
+                        )
+                    )
+                END AS hierarchy_,
+                CASE 
+                    WHEN ml.is_grouping
                     THEN 
+                        ( 
+                            WITH RECURSIVE hierarchy AS (
+                                SELECT id, mineral_id, parent_id
+                                FROM mineral_hierarchy
+                                WHERE mineral_id = ml.id
+                                UNION
+                                SELECT e.id, e.mineral_id, e.parent_id
+                                FROM mineral_hierarchy e
+                                INNER JOIN hierarchy h on h.mineral_id = e.parent_id
+                            )
+                            SELECT JSONB_BUILD_OBJECT(
+                                'minerals',
+                                (
+                                    SELECT COUNT(h.id)
+                                    FROM hierarchy h 
+                                    WHERE sgl.id = 11
+                                ),
+                                'varieties', 
+                                (
+                                    SELECT COUNT(h.id)
+                                    FROM hierarchy h 
+                                    WHERE sgl.id = 3
+                                ),
+                                'polytypes', 
+                                (
+                                    SELECT COUNT(h.id)
+                                    FROM hierarchy h 
+                                    WHERE sgl.id = 4
+                                )
+                            )::json 
+                            FROM hierarchy h
+                            INNER JOIN mineral_status ms ON ms.mineral_id = ml.id 
+                            INNER JOIN status_list sl ON sl.id = ms.status_id 
+                            INNER JOIN status_group_list sgl ON sgl.id = sl.status_group_id 
+                            GROUP BY sgl.id
+                        )
+                    ELSE 
                         (
                             SELECT JSONB_BUILD_OBJECT(
-                                'isostructural_minerals', 
+                                'minerals', 
                                 (
                                     SELECT COUNT(ml_.id) AS count
                                     FROM ns_family nf
                                     LEFT OUTER JOIN mineral_log ml_ ON nf.ns_family = ml_.ns_family
-                                    WHERE nf.ns_family = ml.ns_family AND ml_.id != ml.id_
-                                    GROUP BY nf.ns_family
+                                    WHERE nf.ns_family = ml.ns_family AND ml_.id != ml.id
                                 ),
                                 'varieties', 
                                 ( 
@@ -228,8 +292,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                     INNER JOIN status_list sl ON ms.status_id = sl.id
                                     INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
                                     WHERE mr.direct_relation AND 
-                                          mr.mineral_id = ml.id_ AND 
-                                          sgl.name = 'varieties' AND 
+                                          mr.mineral_id = ml.id AND 
+                                          sgl.id = 3 AND 
                                           mr.relation_type_id = 1
                                 ),
                                 'polytypes',
@@ -240,14 +304,12 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                     INNER JOIN status_list sl ON ms.status_id = sl.id
                                     INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
                                     WHERE mr.direct_relation AND 
-                                          mr.mineral_id = ml.id_ AND 
-                                          sgl.name = 'polytypes' AND 
+                                          mr.mineral_id = ml.id AND 
+                                          sgl.id = 4 AND 
                                           mr.relation_type_id = 1
                                 )
                             )::json 
                         )
-                    ELSE 
-                        JSONB_BUILD_OBJECT()::json
                 END AS relations_,
                 ARRAY(
                     SELECT JSONB_BUILD_OBJECT(
@@ -257,7 +319,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                     )::json
                     FROM mineral_status ms
                     INNER JOIN status_list sl ON ms.status_id = sl.id
-                    WHERE ms.mineral_id = ml.id_
+                    WHERE ms.mineral_id = ml.id
                 ) AS statuses_,
                 ARRAY(
                     SELECT JSONB_BUILD_OBJECT(
@@ -267,7 +329,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                     )::json
                     FROM mineral_country mc
                     INNER JOIN country_list cl ON mc.country_id = cl.id
-                    WHERE mc.mineral_id = ml.id_
+                    WHERE mc.mineral_id = ml.id
                 ) AS discovery_countries_,
                 CASE 
                     WHEN ml.is_grouping
@@ -279,7 +341,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                             ON mc.color_id = cl.id
                             INNER JOIN mineral_hierarchy mh
                             ON mh.mineral_id = mc.mineral_id 
-                            WHERE mh.parent_id  = ml.id_
+                            WHERE mh.parent_id  = ml.id
                             GROUP BY cl.id
                         )
                     ELSE 
@@ -288,7 +350,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                             FROM mineral_color mc
                             INNER JOIN color_list cl
                             ON mc.color_id = cl.id
-                            WHERE mc.mineral_id  = ml.id_
+                            WHERE mc.mineral_id  = ml.id
                         )
                 END AS colors_,
                 CASE 
@@ -301,7 +363,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                             ON mc.crystal_system_id = csl.id
                             INNER JOIN mineral_hierarchy mh
                             ON mh.mineral_id = mc.mineral_id 
-                            WHERE mh.parent_id  = ml.id_
+                            WHERE mh.parent_id  = ml.id
                             GROUP BY csl.id
                         ) 
                     ELSE 
@@ -310,7 +372,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                             FROM mineral_crystallography mc
                             INNER JOIN crystal_system_list csl
                             ON mc.crystal_system_id = csl.id
-                            WHERE mc.mineral_id = ml.id_
+                            WHERE mc.mineral_id = ml.id
                         )
                 END AS crystal_systems_,
                 ARRAY(
@@ -326,7 +388,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                         ON (mip.ion_position_id = iol.id)
                     INNER JOIN ion_log io
                         ON (mip.ion_id = io.id)
-                    WHERE mip.mineral_id = (ml.id_)
+                    WHERE mip.mineral_id = (ml.id)
                     GROUP BY mip.ion_position_id,
                         iol.name
                     ORDER BY iol.name ASC
@@ -339,15 +401,17 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                             'discovery_year_max', MAX(mhis.discovery_year_max)
                         )::json 
                         FROM mineral_hierarchy mh 
-                        INNER JOIN mineral_log ml1 ON mh.mineral_id = ml1.id AND mh.parent_id = ml.id_
-                        LEFT OUTER JOIN mineral_history mhis ON ml1.id = mhis.mineral_id 
+                        INNER JOIN mineral_log ml_ ON mh.mineral_id = ml_.id AND mh.parent_id = ml.id
+                        LEFT OUTER JOIN mineral_history mhis ON ml_.id = mhis.mineral_id 
                     ) 
                     ELSE 
                     ( 
                         SELECT JSONB_BUILD_OBJECT(
-                            'discovery_year_min', ml.discovery_year_min,
-                            'discovery_year_max', ml.discovery_year_max
+                            'discovery_year_min', mhis.discovery_year_min,
+                            'discovery_year_max', mhis.discovery_year_max
                         )::json
+                        FROM mineral_history mhis 
+                        WHERE mhis.mineral_id = ml.id
                     ) 
                 END AS history_
                 FROM (''' + sql + ''') ml;
