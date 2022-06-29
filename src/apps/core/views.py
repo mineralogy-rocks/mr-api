@@ -209,9 +209,9 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                 CASE 
                 WHEN ml.is_grouping
                 THEN (
-                        SELECT json_agg(
+                        SELECT COALESCE(json_agg(
                             JSONB_BUILD_OBJECT('id', ml_.id, 'name', ml_.name, 'url', concat('/mineral/', ml_.id)
-                        )  ORDER BY sl.status_id)
+                        )  ORDER BY sl.status_id), '[]'::json)
                         FROM mineral_hierarchy mh
                         INNER JOIN mineral_log ml_ ON mh.mineral_id = ml_.id
                         INNER JOIN mineral_status ms ON mh.mineral_id = ms.mineral_id
@@ -219,9 +219,9 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                         WHERE mh.parent_id = ml.id
                     )
                 ELSE (
-                        SELECT json_agg(
+                        SELECT COALESCE(json_agg(
                             JSONB_BUILD_OBJECT('id', ml_.id, 'name', ml_.name, 'url', concat('/mineral/', ml_.id)
-                            )  ORDER BY sl.status_id)
+                            )  ORDER BY sl.status_id), '[]'::json)
                         FROM mineral_hierarchy mh
                         INNER JOIN mineral_log ml_ ON mh.parent_id = ml_.id
                         INNER JOIN mineral_status ms ON mh.parent_id  = ms.mineral_id
@@ -234,7 +234,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                     WHEN ml.is_grouping
                     THEN 
                         (
-                            SELECT json_agg(temp_)
+                            SELECT COALESCE(json_agg(temp_), '[]'::json)
                             FROM (
                                     WITH RECURSIVE hierarchy as (
                                         SELECT
@@ -264,7 +264,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                         )
                     ELSE 
                         (
-                            SELECT json_agg(temp_) FROM (
+                            SELECT COALESCE(json_agg(temp_), '[]'::json)
+                            FROM (
                                 SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id, counts, status_group FROM (
                                     SELECT COUNT(mr.mineral_id) AS counts, to_jsonb(sgl) AS status_group 
                                     FROM mineral_relation mr
@@ -279,8 +280,11 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                     UNION 
                                     SELECT count(ml_.id) AS counts, (SELECT to_jsonb(sgl) AS status_group FROM status_group_list sgl WHERE sgl.id = 11)
                                     FROM ns_family nf
-                                    LEFT OUTER JOIN mineral_log ml_ ON nf.ns_family = ml_.ns_family
-                                    WHERE nf.ns_family = '5.BE' and ml_.id != ml.id
+                                    INNER  JOIN mineral_log ml_ ON nf.ns_family = ml_.ns_family
+                                    INNER JOIN mineral_status ms ON ms.mineral_id = ml_.id
+                                    INNER JOIN status_list sl ON ms.status_id = sl.id
+                                    INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id 
+                                    WHERE sgl.id = 11 and nf.ns_family = ml.ns_family and ml_.id <> ml.id
                                     HAVING count(ml_.id) > 0
                                 ) inner_
                             ) temp_
@@ -288,24 +292,24 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                 END AS relations_,
                 
                 (
-                    SELECT json_agg(
+                    SELECT COALESCE(json_agg(
                         JSONB_BUILD_OBJECT(
                             'id', sl.status_id, 
                             'description_short', sl.description_short,
                             'description_long', sl.description_long
-                        ) ORDER BY sl.status_id ) AS statuses_
+                        ) ORDER BY sl.status_id), '[]'::json ) AS statuses_
                     FROM mineral_status ms
                     INNER JOIN status_list sl ON ms.status_id = sl.id
                     WHERE ms.mineral_id = ml.id
                 ),
                 
                 (
-                    SELECT json_agg(
+                    SELECT COALESCE(json_agg(
                         JSONB_BUILD_OBJECT(
                             'id', cl.id, 
                             'name', cl.name,
                             'iso_code', cl.alpha_2
-                        ) ORDER BY cl.id ) AS discovery_countries_
+                        ) ORDER BY cl.id), '[]'::json ) AS discovery_countries_
                     FROM mineral_country mc
                     INNER JOIN country_list cl ON mc.country_id = cl.id
                     WHERE mc.mineral_id = ml.id
@@ -315,23 +319,25 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                     WHEN ml.is_grouping
                     THEN 
                         (
-                            SELECT json_agg(temp_) FROM (
+                            SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
                                 SELECT cl.id, cl.name, cl.code, COUNT(cl.id) AS counts
                                 FROM mineral_color mc
                                 INNER JOIN color_list cl ON mc.color_id = cl.id
                                 INNER JOIN mineral_hierarchy mh ON mh.mineral_id = mc.mineral_id 
                                 WHERE mh.parent_id  = ml.id
                                 GROUP BY cl.id
+                                ORDER BY counts DESC
                             ) temp_
                         )
                     ELSE 
                         (
-                           SELECT json_agg(temp_) FROM (
-                                SELECT cl.id, cl.name, cl.code, count(cl.id) AS counts
+                           SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
+                                SELECT cl.id, cl.name, cl.code, COUNT(cl.id) AS counts
                                 FROM mineral_color mc
                                 INNER JOIN color_list cl ON mc.color_id = cl.id
                                 WHERE mc.mineral_id  = ml.id
                                 GROUP BY cl.id
+                                ORDER BY id
                             ) temp_
                         )
                 END AS colors_,
@@ -340,7 +346,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                     WHEN ml.is_grouping
                     THEN 
                         (
-                            SELECT json_agg(temp_) FROM (
+                            SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
                                 SELECT csl.id, csl.name, COUNT(DISTINCT mh.mineral_id) AS counts
                                 FROM mineral_crystallography mc
                                 INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
@@ -352,7 +358,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                         )
                     ELSE 
                         (
-                            SELECT json_agg(temp_) FROM (
+                            SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
                                 SELECT csl.id, csl.name, COUNT(DISTINCT mc.mineral_id) AS counts
                                 FROM mineral_crystallography mc
                                 INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
