@@ -303,23 +303,41 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                     WHERE ms.mineral_id = ml.id
                 ),
                 
-                (
-                    SELECT COALESCE(json_agg(
-                        JSONB_BUILD_OBJECT(
-                            'id', cl.id, 
-                            'name', cl.name,
-                            'iso_code', cl.alpha_2
-                        ) ORDER BY cl.id), '[]'::json ) AS discovery_countries_
-                    FROM mineral_country mc
-                    INNER JOIN country_list cl ON mc.country_id = cl.id
-                    WHERE mc.mineral_id = ml.id
-                ),
-                
                 CASE 
                     WHEN ml.is_grouping
                     THEN 
                         (
                             SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
+                                SELECT cl.id, cl.name, cl.alpha_2 AS iso_code, count(cl.id) AS counts
+                                FROM mineral_country mc
+                                INNER JOIN country_list cl ON mc.country_id = cl.id
+                                INNER JOIN mineral_hierarchy mh ON mh.mineral_id = mc.mineral_id 
+                                WHERE mh.parent_id = ml.id
+                                AND cl.id <> 250
+                                GROUP BY cl.id
+                                ORDER BY counts DESC
+                            ) temp_
+                        )
+                    ELSE
+                        (
+                            SELECT COALESCE(json_agg(
+                                JSONB_BUILD_OBJECT(
+                                    'id', cl.id, 
+                                    'name', cl.name,
+                                    'iso_code', cl.alpha_2
+                                ) ORDER BY cl.id), '[]'::json ) AS discovery_countries_
+                            FROM mineral_country mc
+                            INNER JOIN country_list cl ON mc.country_id = cl.id
+                            WHERE mc.mineral_id = ml.id
+                        )
+                    END AS discovery_countries_,
+                
+                CASE 
+                    WHEN ml.is_grouping
+                    THEN 
+                        (
+                            SELECT COALESCE(json_agg(temp_), '[]'::json) 
+                            FROM (
                                 SELECT cl.id, cl.name, cl.code, COUNT(cl.id) AS counts
                                 FROM mineral_color mc
                                 INNER JOIN color_list cl ON mc.color_id = cl.id
@@ -331,7 +349,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                         )
                     ELSE 
                         (
-                           SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
+                           SELECT COALESCE(json_agg(temp_), '[]'::json) 
+                           FROM (
                                 SELECT cl.id, cl.name, cl.code, COUNT(cl.id) AS counts
                                 FROM mineral_color mc
                                 INNER JOIN color_list cl ON mc.color_id = cl.id
@@ -346,7 +365,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                     WHEN ml.is_grouping
                     THEN 
                         (
-                            SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
+                            SELECT COALESCE(json_agg(temp_), '[]'::json) 
+                            FROM (
                                 SELECT csl.id, csl.name, COUNT(DISTINCT mh.mineral_id) AS counts
                                 FROM mineral_crystallography mc
                                 INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
@@ -358,7 +378,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                         )
                     ELSE 
                         (
-                            SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
+                            SELECT COALESCE(json_agg(temp_), '[]'::json) 
+                            FROM (
                                 SELECT csl.id, csl.name, COUNT(DISTINCT mc.mineral_id) AS counts
                                 FROM mineral_crystallography mc
                                 INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
@@ -369,45 +390,41 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                         )
                 END AS crystal_systems_,
                 
-                ARRAY(
-                    SELECT JSONB_BUILD_OBJECT(
-                        'id', mip.ion_position_id, 
-                        'name', iol.name, 
-                        'ions', ARRAY_AGG(
-                            JSONB_BUILD_OBJECT('id', io.id, 'name', io.name, 'formula', io.formula)
-                        )
-                    )::json
-                    FROM mineral_ion_position mip
-                    INNER JOIN ion_position_list iol
-                        ON (mip.ion_position_id = iol.id)
-                    INNER JOIN ion_log io
-                        ON (mip.ion_id = io.id)
-                    WHERE mip.mineral_id = (ml.id)
-                    GROUP BY mip.ion_position_id,
-                        iol.name
-                    ORDER BY iol.name ASC
-                ) AS ions_,
+                (
+                    SELECT COALESCE(json_agg(temp_), '[]'::json) AS ions_ 
+                    FROM (
+                        SELECT mip.ion_position_id AS id, iol.name AS name,
+                        array_agg(
+                                    JSONB_BUILD_OBJECT('id', io.id, 'name', io.name, 'formula', io.formula) 
+                                    ORDER BY io.id DESC
+                                )  AS ions
+                        FROM mineral_ion_position mip
+                        INNER JOIN ion_position_list iol ON (mip.ion_position_id = iol.id)
+                        INNER JOIN ion_log io ON (mip.ion_id = io.id)
+                        WHERE mip.mineral_id = ml.id
+                        GROUP BY mip.ion_position_id, iol.name
+                        ORDER BY mip.ion_position_id
+                    ) temp_
+                ),
                 
                 CASE 
                     WHEN ml.is_grouping
                     THEN (
-                        SELECT JSONB_BUILD_OBJECT (
-                            'discovery_year_min', MIN(mhis.discovery_year_min), 
-                            'discovery_year_max', MAX(mhis.discovery_year_max)
-                        )::json 
-                        FROM mineral_hierarchy mh 
-                        INNER JOIN mineral_log ml_ ON mh.mineral_id = ml_.id AND mh.parent_id = ml.id
-                        LEFT OUTER JOIN mineral_history mhis ON ml_.id = mhis.mineral_id 
-                    ) 
+                           SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
+                                SELECT min(mhis.discovery_year_min) AS discovery_year_min, max(mhis.discovery_year_max) AS discovery_year_max
+                                FROM mineral_hierarchy mh 
+                                INNER JOIN mineral_log ml_ ON mh.mineral_id = ml_.id AND mh.parent_id = ml.id
+                                LEFT OUTER JOIN mineral_history mhis ON ml_.id = mhis.mineral_id
+                            ) temp_
+                        ) 
                     ELSE 
-                    ( 
-                        SELECT JSONB_BUILD_OBJECT(
-                            'discovery_year_min', mhis.discovery_year_min,
-                            'discovery_year_max', mhis.discovery_year_max
-                        )::json
-                        FROM mineral_history mhis 
-                        WHERE mhis.mineral_id = ml.id
-                    ) 
+                        ( 
+                            SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
+                                SELECT mhis.discovery_year_min, mhis.discovery_year_max
+                                FROM mineral_history mhis 
+                                WHERE mhis.mineral_id = ml.id
+                            ) temp_
+                        ) 
                 END AS history_
                 FROM (''' + sql + ''') ml;
                 ''', params)
