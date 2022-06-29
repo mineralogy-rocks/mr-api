@@ -15,8 +15,8 @@ CREATE TABLE status_group_list(
 	id serial PRIMARY KEY,
 	name varchar(200) UNIQUE NOT NULL
 );
-INSERT INTO status_group_list (name) VALUES ('grouping'), ('synonyms'), ('varieties'), ('polytypes'), ('obsolete nomenclature'), 
-											('anthropotype'), ('mineraloids'), ('rocks'), ('unnamed'), ('mixtures'), ('IMA minerals');
+INSERT INTO status_group_list (name) VALUES ('Grouping'), ('Synonyms'), ('Varieties'), ('Polytypes'), ('Obsolete nomenclature'), 
+											('Anthropotype'), ('Mineraloids'), ('Rocks'), ('Unnamed'), ('Mixtures'), ('IMA minerals');
 ALTER TABLE status_list RENAME TO status_list_old;
 CREATE TABLE status_list (
 	id SERIAL PRIMARY KEY,

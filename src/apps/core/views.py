@@ -209,172 +209,160 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                 CASE 
                 WHEN ml.is_grouping
                 THEN (
-                    ARRAY(
-                            SELECT JSONB_BUILD_OBJECT(
-                                'id', ml_.id, 'name', ml_.name, 'url', concat('/mineral/', ml_.id) 
-                            )::json 
-                            FROM mineral_hierarchy mh
-                            INNER JOIN mineral_log ml_ ON mh.mineral_id = ml_.id
-                            INNER JOIN mineral_status ms ON mh.mineral_id = ms.mineral_id
-                            INNER JOIN status_list sl ON ms.status_id = sl.id
-                            WHERE mh.parent_id = ml.id
-                            ORDER BY sl.status_id 
-                        )
+                        SELECT json_agg(
+                            JSONB_BUILD_OBJECT('id', ml_.id, 'name', ml_.name, 'url', concat('/mineral/', ml_.id)
+                        )  ORDER BY sl.status_id)
+                        FROM mineral_hierarchy mh
+                        INNER JOIN mineral_log ml_ ON mh.mineral_id = ml_.id
+                        INNER JOIN mineral_status ms ON mh.mineral_id = ms.mineral_id
+                        INNER JOIN status_list sl ON ms.status_id = sl.id
+                        WHERE mh.parent_id = ml.id
                     )
                 ELSE (
-                        ARRAY(
-                            SELECT JSONB_BUILD_OBJECT(
-                                'id', ml_.id, 'name', ml_.name, 'url', concat('/mineral/', ml_.id) 
-                            )::json 
-                            FROM mineral_hierarchy mh
-                            INNER JOIN mineral_log ml_ ON mh.parent_id = ml_.id
-                            INNER JOIN mineral_status ms ON mh.parent_id  = ms.mineral_id
-                            INNER JOIN status_list sl ON ms.status_id = sl.id
-                            WHERE mh.mineral_id = ml.id
-                            ORDER BY sl.status_id 
-                        )
+                        SELECT json_agg(
+                            JSONB_BUILD_OBJECT('id', ml_.id, 'name', ml_.name, 'url', concat('/mineral/', ml_.id)
+                            )  ORDER BY sl.status_id)
+                        FROM mineral_hierarchy mh
+                        INNER JOIN mineral_log ml_ ON mh.parent_id = ml_.id
+                        INNER JOIN mineral_status ms ON mh.parent_id  = ms.mineral_id
+                        INNER JOIN status_list sl ON ms.status_id = sl.id
+                        WHERE mh.mineral_id = ml.id
                     )
                 END AS hierarchy_,
+                
                 CASE 
                     WHEN ml.is_grouping
                     THEN 
-                        ( 
-                            WITH RECURSIVE hierarchy AS (
-                                SELECT id, mineral_id, parent_id
-                                FROM mineral_hierarchy
-                                WHERE mineral_id = ml.id
-                                UNION
-                                SELECT e.id, e.mineral_id, e.parent_id
-                                FROM mineral_hierarchy e
-                                INNER JOIN hierarchy h on h.mineral_id = e.parent_id
-                            )
-                            SELECT JSONB_BUILD_OBJECT(
-                                'minerals',
-                                (
-                                    SELECT COUNT(h.id)
-                                    FROM hierarchy h 
-                                    WHERE sgl.id = 11
-                                ),
-                                'varieties', 
-                                (
-                                    SELECT COUNT(h.id)
-                                    FROM hierarchy h 
-                                    WHERE sgl.id = 3
-                                ),
-                                'polytypes', 
-                                (
-                                    SELECT COUNT(h.id)
-                                    FROM hierarchy h 
-                                    WHERE sgl.id = 4
-                                )
-                            )::json 
-                            FROM hierarchy h
-                            INNER JOIN mineral_status ms ON ms.mineral_id = ml.id 
-                            INNER JOIN status_list sl ON sl.id = ms.status_id 
-                            INNER JOIN status_group_list sgl ON sgl.id = sl.status_group_id 
-                            GROUP BY sgl.id
+                        (
+                            SELECT json_agg(temp_)
+                            FROM (
+                                    WITH RECURSIVE hierarchy as (
+                                        SELECT
+                                            id,
+                                            mineral_id,
+                                            parent_id
+                                        FROM mineral_hierarchy
+                                        WHERE mineral_id = ml.id
+                                        UNION
+                                        SELECT
+                                            e.id,
+                                            e.mineral_id,
+                                            e.parent_id
+                                        FROM mineral_hierarchy e
+                                        INNER JOIN hierarchy h ON h.mineral_id = e.parent_id
+                                    ) 
+                                    SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id, 
+                                            count(h.mineral_id) AS counts, 
+                                            to_jsonb(sgl) AS status_group
+                                    FROM hierarchy h
+                                    INNER JOIN mineral_status ms ON ms.mineral_id = h.mineral_id 
+                                    INNER JOIN status_list sl ON sl.id = ms.status_id 
+                                    INNER JOIN status_group_list sgl ON sgl.id = sl.status_group_id
+                                    WHERE sgl.id IN (3, 4, 11)
+                                    GROUP BY sgl.id
+                            ) temp_
                         )
                     ELSE 
                         (
-                            SELECT JSONB_BUILD_OBJECT(
-                                'minerals', 
-                                (
-                                    SELECT COUNT(ml_.id) AS count
+                            SELECT json_agg(temp_) FROM (
+                                SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id, counts, status_group FROM (
+                                    SELECT COUNT(mr.mineral_id) AS counts, to_jsonb(sgl) AS status_group 
+                                    FROM mineral_relation mr
+                                    INNER JOIN mineral_status ms ON mr.mineral_status_id = ms.id
+                                    INNER JOIN status_list sl ON ms.status_id = sl.id
+                                    INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
+                                    WHERE mr.direct_relation AND 
+                                        mr.mineral_id = ml.id AND 
+                                        mr.relation_type_id = 1 AND 
+                                        sgl.id  IN (1, 4) 
+                                    GROUP BY sgl.id
+                                    UNION 
+                                    SELECT count(ml_.id) AS counts, (SELECT to_jsonb(sgl) AS status_group FROM status_group_list sgl WHERE sgl.id = 11)
                                     FROM ns_family nf
                                     LEFT OUTER JOIN mineral_log ml_ ON nf.ns_family = ml_.ns_family
-                                    WHERE nf.ns_family = ml.ns_family AND ml_.id != ml.id
-                                ),
-                                'varieties', 
-                                ( 
-                                    SELECT COUNT(mr.relation_id) 
-                                    FROM mineral_relation mr
-                                    INNER JOIN mineral_status ms ON mr.mineral_status_id = ms.id
-                                    INNER JOIN status_list sl ON ms.status_id = sl.id
-                                    INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
-                                    WHERE mr.direct_relation AND 
-                                          mr.mineral_id = ml.id AND 
-                                          sgl.id = 3 AND 
-                                          mr.relation_type_id = 1
-                                ),
-                                'polytypes',
-                                ( 
-                                    SELECT COUNT(mr.relation_id) 
-                                    FROM mineral_relation mr
-                                    INNER JOIN mineral_status ms ON mr.mineral_status_id = ms.id
-                                    INNER JOIN status_list sl ON ms.status_id = sl.id
-                                    INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
-                                    WHERE mr.direct_relation AND 
-                                          mr.mineral_id = ml.id AND 
-                                          sgl.id = 4 AND 
-                                          mr.relation_type_id = 1
-                                )
-                            )::json 
+                                    WHERE nf.ns_family = '5.BE' and ml_.id != ml.id
+                                    HAVING count(ml_.id) > 0
+                                ) inner_
+                            ) temp_
                         )
                 END AS relations_,
-                ARRAY(
-                    SELECT JSONB_BUILD_OBJECT(
-                        'id', sl.status_id, 
-                        'description_short', sl.description_short,
-                        'description_long', sl.description_long
-                    )::json
+                
+                (
+                    SELECT json_agg(
+                        JSONB_BUILD_OBJECT(
+                            'id', sl.status_id, 
+                            'description_short', sl.description_short,
+                            'description_long', sl.description_long
+                        ) ORDER BY sl.status_id ) AS statuses_
                     FROM mineral_status ms
                     INNER JOIN status_list sl ON ms.status_id = sl.id
                     WHERE ms.mineral_id = ml.id
-                ) AS statuses_,
-                ARRAY(
-                    SELECT JSONB_BUILD_OBJECT(
-                        'id', cl.id, 
-                        'name', cl.name,
-                        'iso_code', cl.alpha_2
-                    )::json
+                ),
+                
+                (
+                    SELECT json_agg(
+                        JSONB_BUILD_OBJECT(
+                            'id', cl.id, 
+                            'name', cl.name,
+                            'iso_code', cl.alpha_2
+                        ) ORDER BY cl.id ) AS discovery_countries_
                     FROM mineral_country mc
                     INNER JOIN country_list cl ON mc.country_id = cl.id
                     WHERE mc.mineral_id = ml.id
-                ) AS discovery_countries_,
+                ),
+                
                 CASE 
                     WHEN ml.is_grouping
                     THEN 
-                        ARRAY(
-                            SELECT JSONB_BUILD_OBJECT('id', cl.id, 'name', cl.name, 'code', cl.code)::json
-                            FROM mineral_color mc
-                            INNER JOIN color_list cl
-                            ON mc.color_id = cl.id
-                            INNER JOIN mineral_hierarchy mh
-                            ON mh.mineral_id = mc.mineral_id 
-                            WHERE mh.parent_id  = ml.id
-                            GROUP BY cl.id
+                        (
+                            SELECT json_agg(temp_) FROM (
+                                SELECT cl.id, cl.name, cl.code, COUNT(cl.id) AS counts
+                                FROM mineral_color mc
+                                INNER JOIN color_list cl ON mc.color_id = cl.id
+                                INNER JOIN mineral_hierarchy mh ON mh.mineral_id = mc.mineral_id 
+                                WHERE mh.parent_id  = ml.id
+                                GROUP BY cl.id
+                            ) temp_
                         )
                     ELSE 
-                        ARRAY(
-                            SELECT JSONB_BUILD_OBJECT('id', cl.id, 'name', cl.name, 'code', cl.code)::json
-                            FROM mineral_color mc
-                            INNER JOIN color_list cl
-                            ON mc.color_id = cl.id
-                            WHERE mc.mineral_id  = ml.id
+                        (
+                           SELECT json_agg(temp_) FROM (
+                                SELECT cl.id, cl.name, cl.code, count(cl.id) AS counts
+                                FROM mineral_color mc
+                                INNER JOIN color_list cl ON mc.color_id = cl.id
+                                WHERE mc.mineral_id  = ml.id
+                                GROUP BY cl.id
+                            ) temp_
                         )
                 END AS colors_,
+                
                 CASE 
                     WHEN ml.is_grouping
                     THEN 
-                        ARRAY(
-                            SELECT JSONB_BUILD_OBJECT('id', csl.id, 'name', csl.name, 'count', COUNT(DISTINCT mh.mineral_id))::json
-                            FROM mineral_crystallography mc
-                            INNER JOIN crystal_system_list csl
-                            ON mc.crystal_system_id = csl.id
-                            INNER JOIN mineral_hierarchy mh
-                            ON mh.mineral_id = mc.mineral_id 
-                            WHERE mh.parent_id  = ml.id
-                            GROUP BY csl.id
-                        ) 
+                        (
+                            SELECT json_agg(temp_) FROM (
+                                SELECT csl.id, csl.name, COUNT(DISTINCT mh.mineral_id) AS counts
+                                FROM mineral_crystallography mc
+                                INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
+                                INNER JOIN mineral_hierarchy mh ON mh.mineral_id = mc.mineral_id 
+                                WHERE mh.parent_id  = ml.id
+                                GROUP BY csl.id
+                                ORDER BY csl.id
+                            ) temp_
+                        )
                     ELSE 
-                        ARRAY(
-                            SELECT JSONB_BUILD_OBJECT('id', csl.id, 'name', csl.name)::json
-                            FROM mineral_crystallography mc
-                            INNER JOIN crystal_system_list csl
-                            ON mc.crystal_system_id = csl.id
-                            WHERE mc.mineral_id = ml.id
+                        (
+                            SELECT json_agg(temp_) FROM (
+                                SELECT csl.id, csl.name, COUNT(DISTINCT mc.mineral_id) AS counts
+                                FROM mineral_crystallography mc
+                                INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
+                                WHERE mc.mineral_id  = ml.id
+                                GROUP BY csl.id
+                                ORDER BY csl.id
+                            ) temp_
                         )
                 END AS crystal_systems_,
+                
                 ARRAY(
                     SELECT JSONB_BUILD_OBJECT(
                         'id', mip.ion_position_id, 
@@ -393,6 +381,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                         iol.name
                     ORDER BY iol.name ASC
                 ) AS ions_,
+                
                 CASE 
                     WHEN ml.is_grouping
                     THEN (
