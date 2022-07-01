@@ -182,7 +182,17 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         if 'q' in self.request.query_params:
             query = self.request.query_params.get('q', '')
             queryset = queryset.filter(name__unaccent__trigram_word_similar=query)
+            
+        discovery_countries = self.request.query_params.get('discovery_countries')
+        
+        if self.request.query_params.get('filter_group_members', False) == 'true':
+            if discovery_countries:
+                queryset = queryset.filter(Q(is_grouping=True) & Q(children_hierarchy__mineral__discovery_countries__in=discovery_countries.split(',')))
 
+        else:
+            if discovery_countries:
+                queryset = queryset.filter(Q(discovery_countries__in=discovery_countries.split(',')))
+                
         return queryset
 
 
@@ -258,7 +268,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                     INNER JOIN mineral_status ms ON ms.mineral_id = h.mineral_id 
                                     INNER JOIN status_list sl ON sl.id = ms.status_id 
                                     INNER JOIN status_group_list sgl ON sgl.id = sl.status_group_id
-                                    WHERE sgl.id IN (3, 4, 11)
+                                    WHERE h.parent_id IS NOT NULL AND sgl.id IN (3, 4, 11)
                                     GROUP BY sgl.id
                             ) temp_
                         )
@@ -410,20 +420,20 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                 CASE 
                     WHEN ml.is_grouping
                     THEN (
-                           SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
+                            SELECT to_json(temp_) AS history_ FROM (
                                 SELECT min(mhis.discovery_year_min) AS discovery_year_min, max(mhis.discovery_year_max) AS discovery_year_max
                                 FROM mineral_hierarchy mh 
                                 INNER JOIN mineral_log ml_ ON mh.mineral_id = ml_.id AND mh.parent_id = ml.id
                                 LEFT OUTER JOIN mineral_history mhis ON ml_.id = mhis.mineral_id
-                            ) temp_
+                            ) temp_ WHERE temp_.discovery_year_min IS NOT NULL OR temp_.discovery_year_max IS NOT NULL
                         ) 
                     ELSE 
                         ( 
-                            SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
+                            SELECT to_json(temp_) AS history_ FROM (
                                 SELECT mhis.discovery_year_min, mhis.discovery_year_max
                                 FROM mineral_history mhis 
                                 WHERE mhis.mineral_id = ml.id
-                            ) temp_
+                            ) temp_ WHERE temp_.discovery_year_min IS NOT NULL OR temp_.discovery_year_max IS NOT NULL
                         ) 
                 END AS history_
                 FROM (''' + sql + ''') ml;
