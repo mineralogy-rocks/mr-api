@@ -29,7 +29,9 @@ class MineralHistorySerializer(serializers.ModelSerializer):
 
 
 
-class HierarchyHyperlinkSerializer(serializers.ModelSerializer):
+class HierarchyParentsHyperlinkSerializer(serializers.ModelSerializer):
+    
+    id = serializers.PrimaryKeyRelatedField(source='parent', read_only=True)
 
     name = serializers.StringRelatedField(source='parent')
     url = serializers.HyperlinkedRelatedField(
@@ -41,94 +43,64 @@ class HierarchyHyperlinkSerializer(serializers.ModelSerializer):
     class Meta:
         model = MineralHierarchy
         fields = [
+            'id',
+            
             'name',
             'url',
         ]
 
-    def to_representation(self, instance):
-        output = super().to_representation(instance)
-        return output
 
 
+class HierarchyChildrenHyperlinkSerializer(serializers.ModelSerializer):
 
-class MineralRawListSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(source='mineral', read_only=True)
+    
+    name = serializers.StringRelatedField(source='mineral')
+    url = serializers.HyperlinkedRelatedField(
+        source='mineral',
+        read_only=True,
+        view_name='core:mineral-detail'
+        )
 
-    url = serializers.URLField(source='get_absolute_url')
+    class Meta:
+        model = MineralHierarchy
+        fields = [
+            'id',
+            
+            'name',
+            'url',
+        ]
+        
+
+
+class MineralRetrieveSerializer(serializers.ModelSerializer):
+    
     ns_index = serializers.CharField(source='ns_index_')
     formula = serializers.CharField(source='formula_html')
     is_grouping = serializers.BooleanField()
-
-    hierarchy = serializers.JSONField(source='hierarchy_')
     
-    crystal_systems = serializers.JSONField(source='crystal_systems_')
-    ions = serializers.JSONField(source='ions_')
-
-    statuses = serializers.JSONField(source='statuses_')
-    colors = serializers.JSONField(source='colors_')
-    relations = serializers.JSONField(source='relations_')
-    discovery_countries = serializers.JSONField(source='discovery_countries_')
-    history = serializers.JSONField(source='history_')
-
+    hierarchy = serializers.SerializerMethodField()
+    # hierarchy = HierarchyChildrenHyperlinkSerializer(source='children_hierarchy', many=True)
+    
     class Meta:
         model = Mineral
         fields = [
             'id',
             
             'name',
-            'url',
             'ns_index',
             'formula',
             'is_grouping',
 
             'hierarchy',
-            
-            'ions',
-            'crystal_systems',
-            'colors',
-            
-            'statuses',
-            'relations',
-            'discovery_countries',
-            'history'
-            ]
-
-
-
-class MineralListSerializer(serializers.ModelSerializer):
-
-    ns_index = serializers.CharField(source='ns_index_')
-    formula = serializers.CharField(source='formula_html')
-    statuses = StatusListSerializer(many=True)
-    ions = serializers.SerializerMethodField()
-    crystal_systems = serializers.SerializerMethodField()
-
-    groups = HierarchyHyperlinkSerializer(source='parents_hierarchy', many=True)
-
-    # statuses = serializers.JSONField(source='statuses_')
-    # crystal_systems = serializers.JSONField(source='crystal_systems_')
-    # colors = serializers.JSONField(source='colors_')
-    # relations = serializers.JSONField(source='relations_')
-    # discovery_countries = serializers.JSONField(source='discovery_countries_')
-    # history = serializers.JSONField(source='history_')
-
-    class Meta:
-        model = Mineral
-        fields = [
-            'id',
-            
-            'name',
-            'ns_index',
-            'formula',
-            'statuses',
-            'ions',
-            'crystal_systems',
-            'groups',
+            # 'ions',
+            # 'crystal_systems',
             # 'colors',
-            
+            # 'statuses',
             # 'relations',
             # 'discovery_countries',
-            # 'history'
-            ]
+            # 'history',
+        ]
 
     @staticmethod
     def setup_eager_loading(**kwargs):
@@ -157,15 +129,53 @@ class MineralListSerializer(serializers.ModelSerializer):
             models.Prefetch('ions', MineralIonPosition.objects.select_related('ion', 'position').order_by('position', 'ion__formula'), to_attr='positions'),
             'discovery_countries',
         ]
-        
-        for query_param in request.query_params.keys(): 
-            
-            if query_param in ['anions', 'cations', 'silicates', 'other_compounds']:
-                prefetch_related.append('ions_theoretical')
 
         queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
         return queryset
 
+
+    def get_hierarchy(self, instance):
+        if instance.is_grouping:
+            return HierarchyChildrenHyperlinkSerializer(instance.children_hierarchy, context=self.context, many=True).data
+        return HierarchyParentsHyperlinkSerializer(instance.parents_hierarchy, context=self.context, many=True).data
+
+
+class MineralListSerializer(serializers.ModelSerializer):
+
+    url = serializers.URLField(source='get_absolute_url')
+    ns_index = serializers.CharField(source='ns_index_')
+    formula = serializers.CharField(source='formula_html')
+    is_grouping = serializers.BooleanField()
+
+    hierarchy = serializers.JSONField(source='hierarchy_')
+    ions = serializers.JSONField(source='ions_')
+    crystal_systems = serializers.JSONField(source='crystal_systems_')
+    colors = serializers.JSONField(source='colors_')
+    statuses = serializers.JSONField(source='statuses_')
+    relations = serializers.JSONField(source='relations_')
+    discovery_countries = serializers.JSONField(source='discovery_countries_')
+    history = serializers.JSONField(source='history_')
+
+    class Meta:
+        model = Mineral
+        fields = [
+            'id',
+            
+            'name',
+            'url',
+            'ns_index',
+            'formula',
+            'is_grouping',
+
+            'hierarchy',
+            'ions',
+            'crystal_systems',
+            'colors',
+            'statuses',
+            'relations',
+            'discovery_countries',
+            'history',
+            ]
 
     def get_ions(self, instance):
         output = MineralIonPositionSerializer(instance.positions, many=True).data

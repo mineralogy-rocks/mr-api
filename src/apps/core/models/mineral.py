@@ -23,8 +23,8 @@ class Mineral(Nameable, Creatable, Updatable):
     note = models.TextField(blank=True, null=True)
 
     ns_class = models.ForeignKey(NsClass, models.CASCADE, db_column='ns_class', to_field='id', blank=True, null=True)
-    ns_subclass = models.ForeignKey(NsSubclass, models.CASCADE, db_column='ns_subclass', to_field='ns_subclass', blank=True, null=True)
-    ns_family = models.ForeignKey(NsFamily, models.CASCADE, db_column='ns_family', to_field='ns_family', blank=True, null=True, related_name='minerals')
+    ns_subclass = models.ForeignKey(NsSubclass, models.CASCADE, db_column='ns_subclass', to_field='id', blank=True, null=True)
+    ns_family = models.ForeignKey(NsFamily, models.CASCADE, db_column='ns_family', to_field='id', blank=True, null=True, related_name='minerals')
     ns_mineral = models.CharField(max_length=10, blank=True, null=True)
 
     discovery_countries = models.ManyToManyField(Country, through='MineralCountry')

@@ -44,7 +44,7 @@ class NsSubclass(BaseModel):
 class NsFamily(BaseModel):
     
     ns_class = models.ForeignKey(NsClass, models.CASCADE, db_column='ns_class', to_field='id')
-    ns_subclass = models.ForeignKey(NsSubclass, models.CASCADE, db_column='ns_subclass', to_field='ns_subclass')
+    ns_subclass = models.ForeignKey(NsSubclass, models.CASCADE, db_column='ns_subclass', to_field='id')
     ns_family = models.CharField(max_length=5, unique=True)
     description = models.TextField()
 
@@ -136,4 +136,3 @@ class Country(BaseModel, Nameable):
 
     def __str__(self):
         return self.name
-

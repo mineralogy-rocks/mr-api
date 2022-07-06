@@ -17,7 +17,7 @@ from .models.core import Status, NsFamily
 from .models.crystal import CrystalSystem
 from .models.mineral import Mineral, MineralRelation, MineralHierarchy, MineralCrystallography, MineralStatus, MineralIonPosition
 from .serializers.core import StatusListSerializer
-from .serializers.mineral import MineralListSerializer, MineralRawListSerializer
+from .serializers.mineral import MineralListSerializer, MineralRetrieveSerializer
 from .filters import StatusFilter, MineralFilter
 
 
@@ -55,7 +55,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     http_method_names = ['get', 'options', 'head',]
 
     queryset = Mineral.objects.all()
-    serializer_class = MineralRawListSerializer
+    serializer_class = MineralListSerializer
 
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer, ]
     pagination_class = CustomLimitOffsetPagination
@@ -132,8 +132,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                     then=Concat(
                         'ns_class__id',
                         Value('.'),
-                        Coalesce(Right('ns_subclass', 1), Value('0')),
-                        Coalesce(Right('ns_family', 1), Value('0')),
+                        Coalesce(Right('ns_subclass__ns_subclass', 1), Value('0')),
+                        Coalesce(Right('ns_family__ns_family', 1), Value('0')),
                         Value('.'),
                         Coalesce('ns_mineral', Value('0')),
                         output_field=CharField()
@@ -185,7 +185,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             
         discovery_countries = self.request.query_params.get('discovery_countries')
         
-        if self.request.query_params.get('filter_group_members', False) == 'true':
+        if self.request.query_params.get('filter_related', False) == 'true':
             if discovery_countries:
                 queryset = queryset.filter(Q(is_grouping=True) & Q(children_hierarchy__mineral__discovery_countries__in=discovery_countries.split(',')))
 
@@ -198,8 +198,10 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
     def get_serializer_class(self):
         
-        if self.action in ['list']:
-            return MineralRawListSerializer
+        if self.action in ['list',]:
+            return MineralListSerializer
+        elif self.action in ['retrieve',]:
+            return MineralRetrieveSerializer
 
         return super().get_serializer_class()
 
@@ -290,11 +292,11 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                     UNION 
                                     SELECT count(ml_.id) AS counts, (SELECT to_jsonb(sgl) AS status_group FROM status_group_list sgl WHERE sgl.id = 11)
                                     FROM ns_family nf
-                                    INNER  JOIN mineral_log ml_ ON nf.ns_family = ml_.ns_family
+                                    INNER  JOIN mineral_log ml_ ON nf.id = ml_.ns_family
                                     INNER JOIN mineral_status ms ON ms.mineral_id = ml_.id
                                     INNER JOIN status_list sl ON ms.status_id = sl.id
                                     INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id 
-                                    WHERE sgl.id = 11 and nf.ns_family = ml.ns_family and ml_.id <> ml.id
+                                    WHERE sgl.id = 11 and nf.id = ml.ns_family and ml_.id <> ml.id
                                     HAVING count(ml_.id) > 0
                                 ) inner_
                             ) temp_
