@@ -66,7 +66,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     ordering_fields = ['name',]
     ordering = ['name',]
 
-    filter_backends = [filters.OrderingFilter, DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [filters.OrderingFilter, DjangoFilterBackend, filters.SearchFilter,]
     filterset_class = MineralFilter
 
     def get_queryset(self):

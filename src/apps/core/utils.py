@@ -15,12 +15,3 @@ def formula_to_html(formula):
         [parsed := re.sub(replacement['to_replace'], replacement['replacement'], parsed) for replacement in replacements]
         return mark_safe(parsed)
     return None
-
-
-def dictfetchall(cursor):
-    "Return all rows from a cursor as a dict"
-    columns = [col[0] for col in cursor.description]
-    return [
-        dict(zip(columns, row))
-        for row in cursor.fetchall()
-    ]

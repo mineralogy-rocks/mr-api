@@ -9,50 +9,6 @@ ALTER TABLE ns_subclass RENAME COLUMN id_subclass TO ns_subclass;
 ALTER TABLE ns_family RENAME COLUMN id_class TO ns_class;
 ALTER TABLE ns_family RENAME COLUMN id_subclass TO ns_subclass;
 ALTER TABLE ns_family RENAME COLUMN id_family TO ns_family;
-
-
--- convert mineral_log.ns_subclass to int
-ALTER TABLE mineral_log DROP CONSTRAINT fk_ns_subclass;    
-WITH temp_ AS (
-    SELECT ml.id AS id_, ns.id AS ns_subclass_id FROM mineral_log ml
-	INNER JOIN ns_subclass ns ON ml.ns_subclass = ns.ns_subclass
-)
-UPDATE mineral_log
-SET ns_subclass = temp_.ns_subclass_id
-FROM temp_
-WHERE id = temp_.id_;
-ALTER TABLE mineral_log ALTER COLUMN ns_subclass SET DEFAULT NULL::integer;
-ALTER TABLE mineral_log ALTER COLUMN ns_subclass TYPE integer USING (ns_subclass::integer);
-ALTER TABLE mineral_log ADD CONSTRAINT mineral_log_ns_subclass_fk FOREIGN KEY (ns_subclass) REFERENCES ns_subclass(id) ON UPDATE CASCADE ON DELETE CASCADE;      
-
--- convert mineral_log.ns_family to int
-ALTER TABLE mineral_log DROP CONSTRAINT fk_ns_family;    
-WITH temp_ AS (
-    SELECT ml.id AS id_, ns.id AS ns_family_id FROM mineral_log ml
-	INNER JOIN ns_family ns ON ml.ns_family = ns.ns_family
-)
-UPDATE mineral_log
-SET ns_family = temp_.ns_family_id
-FROM temp_
-WHERE id = temp_.id_;
-ALTER TABLE mineral_log ALTER COLUMN ns_family SET DEFAULT NULL::integer;
-ALTER TABLE mineral_log ALTER COLUMN ns_family TYPE integer USING (ns_family::integer);
-ALTER TABLE mineral_log ADD CONSTRAINT mineral_log_ns_family_fk FOREIGN KEY (ns_family) REFERENCES ns_family(id) ON UPDATE CASCADE ON DELETE CASCADE;  
-
--- convert ns_family.ns_subclass to int and change FK
-ALTER TABLE ns_family DROP CONSTRAINT fk_ns_subclass;   
-WITH temp_ AS (
-    SELECT nf.id AS id_, ns.id AS ns_subclass_id FROM ns_family nf 
-    INNER JOIN ns_subclass ns ON ns.ns_subclass = nf.ns_subclass
-)
-UPDATE ns_family
-SET ns_subclass = temp_.ns_subclass_id
-FROM temp_
-WHERE id = temp_.id_;
-ALTER TABLE ns_family ALTER COLUMN ns_subclass SET DEFAULT NULL::integer;
-ALTER TABLE ns_family ALTER COLUMN ns_subclass TYPE integer USING (ns_subclass::integer);
-ALTER TABLE ns_family ADD CONSTRAINT ns_family_ns_subclass_fk FOREIGN KEY (ns_subclass) REFERENCES ns_subclass(id) ON UPDATE CASCADE ON DELETE CASCADE; 
-      
    
 
 CREATE TABLE status_group_list(
@@ -159,6 +115,47 @@ ALTER TABLE mineral_log RENAME COLUMN id_subclass TO ns_subclass;
 ALTER TABLE mineral_log RENAME COLUMN id_family TO ns_family;
 ALTER TABLE mineral_log RENAME COLUMN id_mineral TO ns_mineral;
 
+-- convert mineral_log.ns_subclass to int
+ALTER TABLE mineral_log DROP CONSTRAINT fk_ns_subclass;    
+WITH temp_ AS (
+    SELECT ml.id AS id_, ns.id AS ns_subclass_id FROM mineral_log ml
+	INNER JOIN ns_subclass ns ON ml.ns_subclass = ns.ns_subclass
+)
+UPDATE mineral_log
+SET ns_subclass = temp_.ns_subclass_id
+FROM temp_
+WHERE id = temp_.id_;
+ALTER TABLE mineral_log ALTER COLUMN ns_subclass SET DEFAULT NULL::integer;
+ALTER TABLE mineral_log ALTER COLUMN ns_subclass TYPE integer USING (ns_subclass::integer);
+ALTER TABLE mineral_log ADD CONSTRAINT mineral_log_ns_subclass_fk FOREIGN KEY (ns_subclass) REFERENCES ns_subclass(id) ON UPDATE CASCADE ON DELETE CASCADE;      
+
+-- convert mineral_log.ns_family to int
+ALTER TABLE mineral_log DROP CONSTRAINT fk_ns_family;    
+WITH temp_ AS (
+    SELECT ml.id AS id_, ns.id AS ns_family_id FROM mineral_log ml
+	INNER JOIN ns_family ns ON ml.ns_family = ns.ns_family
+)
+UPDATE mineral_log
+SET ns_family = temp_.ns_family_id
+FROM temp_
+WHERE id = temp_.id_;
+ALTER TABLE mineral_log ALTER COLUMN ns_family SET DEFAULT NULL::integer;
+ALTER TABLE mineral_log ALTER COLUMN ns_family TYPE integer USING (ns_family::integer);
+ALTER TABLE mineral_log ADD CONSTRAINT mineral_log_ns_family_fk FOREIGN KEY (ns_family) REFERENCES ns_family(id) ON UPDATE CASCADE ON DELETE CASCADE;  
+
+-- convert ns_family.ns_subclass to int and change FK
+ALTER TABLE ns_family DROP CONSTRAINT fk_ns_subclass;   
+WITH temp_ AS (
+    SELECT nf.id AS id_, ns.id AS ns_subclass_id FROM ns_family nf 
+    INNER JOIN ns_subclass ns ON ns.ns_subclass = nf.ns_subclass
+)
+UPDATE ns_family
+SET ns_subclass = temp_.ns_subclass_id
+FROM temp_
+WHERE id = temp_.id_;
+ALTER TABLE ns_family ALTER COLUMN ns_subclass SET DEFAULT NULL::integer;
+ALTER TABLE ns_family ALTER COLUMN ns_subclass TYPE integer USING (ns_subclass::integer);
+ALTER TABLE ns_family ADD CONSTRAINT ns_family_ns_subclass_fk FOREIGN KEY (ns_subclass) REFERENCES ns_subclass(id) ON UPDATE CASCADE ON DELETE CASCADE; 
 
 
 DROP TABLE IF EXISTS mineral_ion_real;
