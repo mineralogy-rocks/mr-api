@@ -13,26 +13,20 @@ import os
 import sys
 import environ
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = (environ.Path(__file__) - 2)()
 
 sys.path.append(os.path.join(BASE_DIR, 'apps'))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', default=0) == 'True'
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', default=[]).split(",")
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', default='').split(',')
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-CORS_ALLOWED_ORIGINS = os.environ.get('DJANGO_CORS_ALLOWED_ORIGINS', default=[]).split(",")
+CORS_ALLOWED_ORIGINS = os.environ.get('DJANGO_CORS_ALLOWED_ORIGINS', default='').split(',')
 
 
 LOGGING = {
@@ -54,8 +48,6 @@ LOGGING = {
     },
 }
 
-# Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -63,25 +55,20 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'django_filters',
 
     'rest_framework',
-
     'drf_spectacular',
-    'django_extensions',
-    'django_elasticsearch_dsl',
-    'django_elasticsearch_dsl_drf',
     'storages',
     'corsheaders',
 
-    'api',
-    'stats',
-    'search',  # Elasticsearch integration with the Django REST
+    'core',
 ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -131,7 +118,7 @@ WSGI_APPLICATION = 'wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': os.environ.get('DATABASE_ENGINE'),  # 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': os.environ.get('DATABASE_ENGINE'),
         'NAME': os.environ.get('POSTGRES_DB'),
         'USER': os.environ.get('POSTGRES_USER'),
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
@@ -139,21 +126,6 @@ DATABASES = {
         'PORT': os.environ.get('POSTGRES_PORT')
     }
 }
-
-# Redis
-
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://redis:6379/0",
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#         }
-#     }
-# }
-
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
 
 
 # Password validation
@@ -189,15 +161,6 @@ USE_L10N = True
 USE_TZ = True
 
 
-# Elasticsearch
-
-ELASTICSEARCH_DSL = {
-    'default': {
-        'hosts': 'elasticsearch:9200'
-    },
-}
-
-
 # Settings for REST Framework
 
 REST_FRAMEWORK = {
@@ -210,16 +173,23 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend'
     ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        "rest_framework.authentication.SessionAuthentication", 
+    ],
     'SEARCH_PARAM': 'q',
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-# Settings for Documentation
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'mineralogy.rocks API',
     'DESCRIPTION': 'This project is funded by SASPRO2, Marie Skłodowska-Curie Cofund.',
     'VERSION': '1.0.0',
-
+    # 'TOS': '',
+    # 'SCHEMA_PATH_PREFIX': '',
+    # 'SERVE_INCLUDE_SCHEMA': False
     "SWAGGER_UI_DIST": "//unpkg.com/swagger-ui-dist@3.52.2",
 }
