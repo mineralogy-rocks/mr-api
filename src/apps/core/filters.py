@@ -13,7 +13,7 @@ class StatusFilter(filters.FilterSet):
 
     status_group = filters.ModelMultipleChoiceFilter(
         label='Status Groups',
-        field_name="status_group", 
+        field_name="status_group",
         to_field_name='id',
         queryset=StatusGroup.objects.all()
         )
@@ -34,26 +34,26 @@ class MineralFilter(filters.FilterSet):
     #     queryset=Country.objects.all()
     # )
     # filter_group_members = filters.BooleanFilter(field_name='', widget=widgets.BooleanWidget, method='filter_group_members_')
-    
+
 
     anion = filters.ModelMultipleChoiceFilter(
             label='Anions',
-            field_name='ions_theoretical__ion', 
+            field_name='ions_theoretical__ion',
             queryset=Ion.objects.filter(ion_type__name='Anion')
         )
     cation = filters.ModelMultipleChoiceFilter(
             label='Cations',
-            field_name='ions_theoretical__ion', 
+            field_name='ions_theoretical__ion',
             queryset=Ion.objects.filter(ion_type__name='Cation')
         )
     silicate = filters.ModelMultipleChoiceFilter(
             label='Silicates',
-            field_name='ions_theoretical__ion', 
+            field_name='ions_theoretical__ion',
             queryset=Ion.objects.filter(ion_type__name='Silicate')
         )
     other_compound = filters.ModelMultipleChoiceFilter(
             label='Other compounds',
-            field_name='ions_theoretical__ion', 
+            field_name='ions_theoretical__ion',
             queryset=Ion.objects.filter(ion_type__name='Other')
         )
 
@@ -75,7 +75,7 @@ class MineralFilter(filters.FilterSet):
     def filter_group_members_(self, queryset, name, value):
 
         discovery_countries = self.data.get('discovery_countries', None)
-        
+
         if value:
             if discovery_countries:
                 queryset = queryset.filter(Q(is_grouping=True) & Q(children_hierarchy__mineral__discovery_countries__in=discovery_countries.split(',')))
@@ -83,5 +83,5 @@ class MineralFilter(filters.FilterSet):
         else:
             if discovery_countries:
                 queryset = queryset.filter(Q(discovery_countries__in=discovery_countries.split(',')))
-                
+
         return queryset

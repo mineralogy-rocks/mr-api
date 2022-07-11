@@ -76,7 +76,7 @@ class IonType(BaseModel, Nameable):
 
 
 class IonPosition(BaseModel, Nameable):
-    
+
     ions = models.ManyToManyField('core.Ion', through='MineralIonPosition')
 
     class Meta:

@@ -7,8 +7,8 @@ VALUES ('e49ccbc5-3214-4f1f-846a-446f5fe7fca7', 1899, NULL),
 
 DELETE FROM mineral_status WHERE mineral_id = '3b4131be-0640-4443-ae34-908587a511c8';
 INSERT INTO mineral_status (mineral_id, status_id) VALUES ('3b4131be-0640-4443-ae34-908587a511c8', 5);
-INSERT INTO mineral_status (mineral_id, status_id) VALUES ('37068d22-e699-4488-a67d-7e2282627175', 4), 
-('6b9d1e7e-9bbf-49ce-bf1f-0ec73d2a2162', 4), ('8976b504-69a1-4161-b3bb-c8452f2ce9ca', 4), ('9d9b8c5f-ab06-47e3-b4c7-be8709ce52fb', 4), 
+INSERT INTO mineral_status (mineral_id, status_id) VALUES ('37068d22-e699-4488-a67d-7e2282627175', 4),
+('6b9d1e7e-9bbf-49ce-bf1f-0ec73d2a2162', 4), ('8976b504-69a1-4161-b3bb-c8452f2ce9ca', 4), ('9d9b8c5f-ab06-47e3-b4c7-be8709ce52fb', 4),
 ('3bc5bcc3-eeb8-46aa-98cf-a00fb8288651', 4), ('10f99e04-a05b-4358-accb-c0a31752a29b', 4), ('04d280af-da3a-4408-bf12-b2edc36afc14', 4);
 
 INSERT INTO color_list(name, code) VALUES ('Red', '#FF0000'), ('White', '#FFFFFF'),

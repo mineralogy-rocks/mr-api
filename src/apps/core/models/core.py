@@ -4,7 +4,7 @@ from .base import BaseModel, Nameable
 
 
 class NsClass(models.Model):
-    
+
     id = models.SmallIntegerField(primary_key=True)
     description = models.TextField()
 
@@ -12,17 +12,17 @@ class NsClass(models.Model):
         managed = False
         db_table = 'ns_class'
         ordering = ['id',]
-        
+
         verbose_name = 'Nickel-Strunz Class'
         verbose_name_plural = 'Nickel-Strunz Classes'
-    
+
     def __str__(self):
         return '{} - {}'.format(str(self.id), self.description)
 
 
 
 class NsSubclass(BaseModel):
-    
+
     ns_class = models.ForeignKey(NsClass, models.CASCADE, db_column='ns_class', to_field='id')
     ns_subclass = models.CharField(max_length=4, unique=True)
     description = models.TextField()
@@ -32,17 +32,17 @@ class NsSubclass(BaseModel):
         db_table = 'ns_subclass'
         unique_together = (('ns_class', 'ns_subclass'),)
         ordering = ['ns_class', 'ns_subclass',]
-        
+
         verbose_name = 'Nickel-Strunz Subclass'
         verbose_name_plural = 'Nickel-Strunz Subclasses'
 
     def __str__(self):
         return '{} - {}'.format(self.ns_subclass, self.description)
-        
-        
-        
+
+
+
 class NsFamily(BaseModel):
-    
+
     ns_class = models.ForeignKey(NsClass, models.CASCADE, db_column='ns_class', to_field='id')
     ns_subclass = models.ForeignKey(NsSubclass, models.CASCADE, db_column='ns_subclass', to_field='id')
     ns_family = models.CharField(max_length=5, unique=True)
@@ -53,7 +53,7 @@ class NsFamily(BaseModel):
         db_table = 'ns_family'
         unique_together = (('ns_class', 'ns_subclass', 'ns_family'),)
         ordering = ['ns_class', 'ns_family',]
-        
+
         verbose_name = 'Nickel-Strunz Family'
         verbose_name_plural = 'Nickel-Strunz Families'
 
@@ -78,7 +78,7 @@ class StatusGroup(BaseModel, Nameable):
 
 
 class Status(BaseModel):
-    
+
     status_id = models.FloatField(null=False)
     status_group = models.ForeignKey(StatusGroup, models.CASCADE, db_column='status_group_id', to_field='id')
     description_long = models.TextField(blank=True, null=True)
@@ -88,10 +88,10 @@ class Status(BaseModel):
         managed = False
         db_table = 'status_list'
         ordering = ['status_id',]
-        
+
         verbose_name = 'Status'
         verbose_name_plural = 'Statuses'
-    
+
     @property
     def group(self):
         return self.status_group.name
@@ -103,13 +103,13 @@ class Status(BaseModel):
 
 
 class RelationType(BaseModel, Nameable):
-    
+
     note = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'relation_type_list'
-        
+
         verbose_name = 'Relation Type'
         verbose_name_plural = 'Relation Types'
 

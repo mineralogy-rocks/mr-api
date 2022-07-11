@@ -5,17 +5,17 @@ ALTER TABLE ns_class RENAME COLUMN id_class TO id;
 
 ALTER TABLE ns_subclass RENAME COLUMN id_class TO ns_class;
 ALTER TABLE ns_subclass RENAME COLUMN id_subclass TO ns_subclass;
-                       
+
 ALTER TABLE ns_family RENAME COLUMN id_class TO ns_class;
 ALTER TABLE ns_family RENAME COLUMN id_subclass TO ns_subclass;
 ALTER TABLE ns_family RENAME COLUMN id_family TO ns_family;
-   
+
 
 CREATE TABLE status_group_list(
 	id serial PRIMARY KEY,
 	name varchar(200) UNIQUE NOT NULL
 );
-INSERT INTO status_group_list (name) VALUES ('Grouping'), ('Synonyms'), ('Varieties'), ('Polytypes'), ('Obsolete nomenclature'), 
+INSERT INTO status_group_list (name) VALUES ('Grouping'), ('Synonyms'), ('Varieties'), ('Polytypes'), ('Obsolete nomenclature'),
 											('Anthropotype'), ('Mineraloids'), ('Rocks'), ('Unnamed'), ('Mixtures'), ('IMA minerals');
 ALTER TABLE status_list RENAME TO status_list_old;
 CREATE TABLE status_list (
@@ -26,7 +26,7 @@ CREATE TABLE status_list (
 	description_long TEXT DEFAULT NULL
 );
 
-INSERT INTO status_list (status_id, status_group_id, description_short, description_long) 
+INSERT INTO status_list (status_id, status_group_id, description_short, description_long)
 SELECT status_id, status_group_list.id, description_short, description_long FROM status_list_old
 LEFT JOIN status_group_list ON status_list_old.description_group = status_group_list.name;
 
@@ -39,12 +39,12 @@ CREATE TABLE mineral_status (
   	updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   	UNIQUE (mineral_id, status_id)
 );
-INSERT INTO mineral_status (mineral_id, status_id, created_at, updated_at) 
+INSERT INTO mineral_status (mineral_id, status_id, created_at, updated_at)
 SELECT mso.mineral_id, sl.id, mso.created_at, mso.updated_at FROM mineral_status_old mso
 INNER JOIN status_list sl ON sl.status_id = mso.status_id;
 
 ALTER TABLE mineral_relation DROP CONSTRAINT mineral_relation_mineral_status_id_fkey;
-DROP TABLE mineral_status_old, status_list_old;                    
+DROP TABLE mineral_status_old, status_list_old;
 ALTER TABLE mineral_relation ADD CONSTRAINT mineral_relation_mineral_status_id_fkey FOREIGN KEY (mineral_status_id) REFERENCES mineral_status(id) ON UPDATE cascade on delete cascade;
 
 ALTER TABLE relation_type_list RENAME COLUMN relation_type_id TO id;
@@ -116,7 +116,7 @@ ALTER TABLE mineral_log RENAME COLUMN id_family TO ns_family;
 ALTER TABLE mineral_log RENAME COLUMN id_mineral TO ns_mineral;
 
 -- convert mineral_log.ns_subclass to int
-ALTER TABLE mineral_log DROP CONSTRAINT fk_ns_subclass;    
+ALTER TABLE mineral_log DROP CONSTRAINT fk_ns_subclass;
 WITH temp_ AS (
     SELECT ml.id AS id_, ns.id AS ns_subclass_id FROM mineral_log ml
 	INNER JOIN ns_subclass ns ON ml.ns_subclass = ns.ns_subclass
@@ -127,10 +127,10 @@ FROM temp_
 WHERE id = temp_.id_;
 ALTER TABLE mineral_log ALTER COLUMN ns_subclass SET DEFAULT NULL::integer;
 ALTER TABLE mineral_log ALTER COLUMN ns_subclass TYPE integer USING (ns_subclass::integer);
-ALTER TABLE mineral_log ADD CONSTRAINT mineral_log_ns_subclass_fk FOREIGN KEY (ns_subclass) REFERENCES ns_subclass(id) ON UPDATE CASCADE ON DELETE CASCADE;      
+ALTER TABLE mineral_log ADD CONSTRAINT mineral_log_ns_subclass_fk FOREIGN KEY (ns_subclass) REFERENCES ns_subclass(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 -- convert mineral_log.ns_family to int
-ALTER TABLE mineral_log DROP CONSTRAINT fk_ns_family;    
+ALTER TABLE mineral_log DROP CONSTRAINT fk_ns_family;
 WITH temp_ AS (
     SELECT ml.id AS id_, ns.id AS ns_family_id FROM mineral_log ml
 	INNER JOIN ns_family ns ON ml.ns_family = ns.ns_family
@@ -141,12 +141,12 @@ FROM temp_
 WHERE id = temp_.id_;
 ALTER TABLE mineral_log ALTER COLUMN ns_family SET DEFAULT NULL::integer;
 ALTER TABLE mineral_log ALTER COLUMN ns_family TYPE integer USING (ns_family::integer);
-ALTER TABLE mineral_log ADD CONSTRAINT mineral_log_ns_family_fk FOREIGN KEY (ns_family) REFERENCES ns_family(id) ON UPDATE CASCADE ON DELETE CASCADE;  
+ALTER TABLE mineral_log ADD CONSTRAINT mineral_log_ns_family_fk FOREIGN KEY (ns_family) REFERENCES ns_family(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 -- convert ns_family.ns_subclass to int and change FK
-ALTER TABLE ns_family DROP CONSTRAINT fk_ns_subclass;   
+ALTER TABLE ns_family DROP CONSTRAINT fk_ns_subclass;
 WITH temp_ AS (
-    SELECT nf.id AS id_, ns.id AS ns_subclass_id FROM ns_family nf 
+    SELECT nf.id AS id_, ns.id AS ns_subclass_id FROM ns_family nf
     INNER JOIN ns_subclass ns ON ns.ns_subclass = nf.ns_subclass
 )
 UPDATE ns_family
@@ -155,7 +155,7 @@ FROM temp_
 WHERE id = temp_.id_;
 ALTER TABLE ns_family ALTER COLUMN ns_subclass SET DEFAULT NULL::integer;
 ALTER TABLE ns_family ALTER COLUMN ns_subclass TYPE integer USING (ns_subclass::integer);
-ALTER TABLE ns_family ADD CONSTRAINT ns_family_ns_subclass_fk FOREIGN KEY (ns_subclass) REFERENCES ns_subclass(id) ON UPDATE CASCADE ON DELETE CASCADE; 
+ALTER TABLE ns_family ADD CONSTRAINT ns_family_ns_subclass_fk FOREIGN KEY (ns_subclass) REFERENCES ns_subclass(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 DROP TABLE IF EXISTS mineral_ion_real;
@@ -202,17 +202,17 @@ CREATE TABLE mineral_crystallography (
 	gamma decimal default null,
 	z int default null
 );
-INSERT INTO mineral_crystallography (mineral_id, crystal_system_id, crystal_class_id, space_group_id, a, b, c, alpha, beta, gamma, z) 
-SELECT mco.mineral_id, mco.crystal_system_id, mco.crystal_class_id, mco.space_group_id, mco.a, mco.b, mco.c, mco.alpha, 
+INSERT INTO mineral_crystallography (mineral_id, crystal_system_id, crystal_class_id, space_group_id, a, b, c, alpha, beta, gamma, z)
+SELECT mco.mineral_id, mco.crystal_system_id, mco.crystal_class_id, mco.space_group_id, mco.a, mco.b, mco.c, mco.alpha,
 	   mco.beta, mco.gamma, mco.z FROM mineral_crystallography_old mco;
-	  
+
 DROP TABLE IF EXISTS mineral_crystallography_old;
 
 
 /* group ions cleanup */
 
 ALTER TABLE gr_ions RENAME to mineral_ion_position;
-ALTER TABLE mineral_ion_position ADD CONSTRAINT mineral_ion_position_ion_log_id_fkey 
+ALTER TABLE mineral_ion_position ADD CONSTRAINT mineral_ion_position_ion_log_id_fkey
 FOREIGN KEY (ion_id) REFERENCES ion_log(id) ON UPDATE cascade on delete cascade;
 
 /* physical properties tables */

@@ -183,7 +183,6 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-
 SPECTACULAR_SETTINGS = {
     'TITLE': 'mineralogy.rocks API',
     'DESCRIPTION': 'This project is funded by SASPRO2, Marie Skłodowska-Curie Cofund.',

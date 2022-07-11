@@ -10,7 +10,7 @@ from .models.core import Status, StatusGroup, NsClass, NsSubclass, NsFamily
 
 @admin.register(StatusGroup)
 class StatusGroupAdmin(admin.ModelAdmin):
-    
+
     list_display = ['id', 'name',]
 
     list_display_links = ['name',]
@@ -31,7 +31,7 @@ class StatusAdmin(admin.ModelAdmin):
 
 @admin.register(NsClass)
 class NsClassAdmin(admin.ModelAdmin):
-    
+
     list_display = ['id', 'description',]
 
     list_display_links = ['id',]
@@ -40,7 +40,7 @@ class NsClassAdmin(admin.ModelAdmin):
 
 @admin.register(NsSubclass)
 class NsSubclassAdmin(admin.ModelAdmin):
-    
+
     list_display = ['ns_subclass', 'description',]
 
     list_display_links = ['ns_subclass',]
@@ -51,7 +51,7 @@ class NsSubclassAdmin(admin.ModelAdmin):
 
 @admin.register(NsFamily)
 class NsFamilyAdmin(admin.ModelAdmin):
-    
+
     list_display = ['ns_family', 'description',]
 
     list_display_links = ['ns_family',]
@@ -169,7 +169,7 @@ class NsFamilyAdmin(admin.ModelAdmin):
 
 # class MineralIonTheoreticalForm(forms.ModelForm):
 #     anions = forms.ModelChoiceField(queryset=IonList.objects.filter(ion_type_id__ion_type_name__exact='Anion'))
-    
+
 #     class Meta:
 #         model = IonList
 #         fields = ('ion_id',)
@@ -330,7 +330,7 @@ class NsFamilyAdmin(admin.ModelAdmin):
 #             MineralNameInstitutionInline(self.model, self.admin_site),
 #             # MsNamesPersonInline(self.model, self.admin_site),
 #             # MsNamesLanguageInline(self.model, self.admin_site),
-#             # GrHierarchyInline(fk_name)(self.model, self.admin_site), 
+#             # GrHierarchyInline(fk_name)(self.model, self.admin_site),
 #        ]
 
 #     # def get_form(self, request, obj=None, **kwargs):

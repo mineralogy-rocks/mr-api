@@ -6,29 +6,29 @@ from ..models.mineral import MineralIonPosition
 
 
 class IonPositionSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
         model = IonPosition
         fields = [
             'id',
-            
+
             'name',
         ]
 
 class IonPrimitiveSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
         model = Ion
         fields = [
             'id',
-            
+
             'formula',
         ]
 
 
 
 class MineralIonPositionSerializer(serializers.ModelSerializer):
-    
+
     ion = IonPrimitiveSerializer()
     position = IonPositionSerializer()
 
@@ -37,5 +37,4 @@ class MineralIonPositionSerializer(serializers.ModelSerializer):
         fields = [
             'ion',
             'position',
-        ]   
-
+        ]

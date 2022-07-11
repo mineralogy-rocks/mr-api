@@ -29,7 +29,7 @@ class Mineral(Nameable, Creatable, Updatable):
 
     discovery_countries = models.ManyToManyField(Country, through='MineralCountry')
     statuses = models.ManyToManyField(Status, through='MineralStatus')
-    
+
     impurities = models.ManyToManyField(Ion, through='MineralImpurity', related_name='impurities')
     ion_positions = models.ManyToManyField(IonPosition, through='MineralIonPosition')
     crystal_systems = models.ManyToManyField(CrystalSystem, through='MineralCrystallography')
@@ -44,11 +44,11 @@ class Mineral(Nameable, Creatable, Updatable):
 
     def __str__(self):
         return self.name
-    
-    
+
+
     def get_absolute_url(self):
         return reverse('core:mineral-detail', kwargs={'pk': self.id})
-                                             
+
 
     def ns_index(self):
         if self.ns_class:
@@ -60,7 +60,7 @@ class Mineral(Nameable, Creatable, Updatable):
             )
         else:
             return None
-                                   
+
 
     def formula_html(self):
         return formula_to_html(self.formula)
@@ -68,7 +68,7 @@ class Mineral(Nameable, Creatable, Updatable):
 
     def _statuses(self):
         if self.statuses:
-            return '; '.join([str(status.status.status_id) for status in self.statuses.all()])  
+            return '; '.join([str(status.status.status_id) for status in self.statuses.all()])
 
     ns_index.short_description = 'Nickel-Strunz Index'
     formula_html.short_description = 'Formula'
@@ -155,7 +155,7 @@ class MineralIonTheoretical(BaseModel):
 
 
 class MineralCrystallography(BaseModel):
-    
+
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column='mineral_id', related_name='crystallography')
     crystal_system = models.ForeignKey(CrystalSystem, models.CASCADE, db_column='crystal_system_id', related_name='minerals')
     crystal_class = models.ForeignKey(CrystalClass, models.CASCADE, db_column='crystal_class_id', null=True, default=None)
@@ -239,7 +239,7 @@ class MineralHierarchy(BaseModel):
 
     def __str__(self):
         return self.mineral.name
-    
+
 
 
 class MineralIonPosition(BaseModel):

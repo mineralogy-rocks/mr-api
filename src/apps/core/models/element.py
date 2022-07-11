@@ -8,21 +8,21 @@ class GoldschmidtClass(BaseModel, Nameable):
     class Meta:
         managed = False
         db_table = 'goldschmidt_class_list'
-        
+
         verbose_name = 'Goldschmidt Class'
         verbose_name_plural = 'Goldschmidt Classes'
 
     def __str__(self):
         return self.name
-    
-    
+
+
 
 class BondingType(BaseModel, Nameable):
 
     class Meta:
         managed = False
         db_table = 'bonding_type_list'
-        
+
         verbose_name = 'Bonding Type'
         verbose_name_plural = 'Bonding Types'
 
@@ -85,7 +85,7 @@ class Element(BaseModel):
     melting_point = models.IntegerField(null=True)
     boiling_point = models.IntegerField(null=True)
     density = models.DecimalField(max_digits=8, decimal_places=6, null=True)
-    
+
     crust_crc_handbook = models.DecimalField(max_digits=11, decimal_places=10, null=True)
     crust_kaye_laby = models.DecimalField(max_digits=11, decimal_places=10, null=True)
     crust_greenwood = models.DecimalField(max_digits=11, decimal_places=10, null=True)

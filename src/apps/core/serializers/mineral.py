@@ -20,17 +20,17 @@ class MineralHistorySerializer(serializers.ModelSerializer):
         model = MineralHistory
         fields = [
             'id',
-            
+
             'discovery_year',
             'discovery_year_note',
             'first_usage_date',
             'first_known_use',
-            ]    
+            ]
 
 
 
 class HierarchyParentsHyperlinkSerializer(serializers.ModelSerializer):
-    
+
     id = serializers.PrimaryKeyRelatedField(source='parent', read_only=True)
 
     name = serializers.StringRelatedField(source='parent')
@@ -44,7 +44,7 @@ class HierarchyParentsHyperlinkSerializer(serializers.ModelSerializer):
         model = MineralHierarchy
         fields = [
             'id',
-            
+
             'name',
             'url',
         ]
@@ -54,7 +54,7 @@ class HierarchyParentsHyperlinkSerializer(serializers.ModelSerializer):
 class HierarchyChildrenHyperlinkSerializer(serializers.ModelSerializer):
 
     id = serializers.PrimaryKeyRelatedField(source='mineral', read_only=True)
-    
+
     name = serializers.StringRelatedField(source='mineral')
     url = serializers.HyperlinkedRelatedField(
         source='mineral',
@@ -66,27 +66,27 @@ class HierarchyChildrenHyperlinkSerializer(serializers.ModelSerializer):
         model = MineralHierarchy
         fields = [
             'id',
-            
+
             'name',
             'url',
         ]
-        
+
 
 
 class MineralRetrieveSerializer(serializers.ModelSerializer):
-    
+
     ns_index = serializers.CharField(source='ns_index_')
     formula = serializers.CharField(source='formula_html')
     is_grouping = serializers.BooleanField()
-    
+
     hierarchy = serializers.SerializerMethodField()
     # hierarchy = HierarchyChildrenHyperlinkSerializer(source='children_hierarchy', many=True)
-    
+
     class Meta:
         model = Mineral
         fields = [
             'id',
-            
+
             'name',
             'ns_index',
             'formula',
@@ -117,7 +117,7 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
             # models.Prefetch('crystal_systems', CrystalSystem.objects.filter(Q(minerals__mineral__parents_hierarchy__parent__in=queryset.values('id'))),
             #                 to_attr='crystal_system_counts'
             #                 ),
-            # models.Prefetch('crystallography', MineralCrystallography.objects.filter(Q(mineral__parents_hierarchy__parent__in=queryset.values('id')) | 
+            # models.Prefetch('crystallography', MineralCrystallography.objects.filter(Q(mineral__parents_hierarchy__parent__in=queryset.values('id')) |
             #                                                                          Q(mineral__in=queryset.values('id'))) \
             #                                                                  .select_related('crystal_system') \
             #                                                                  .defer('crystal_class', 'space_group', 'a', 'b', 'c', 'alpha', 'gamma', 'z'),
@@ -160,7 +160,7 @@ class MineralListSerializer(serializers.ModelSerializer):
         model = Mineral
         fields = [
             'id',
-            
+
             'name',
             'url',
             'ns_index',
@@ -179,10 +179,10 @@ class MineralListSerializer(serializers.ModelSerializer):
 
     def get_ions(self, instance):
         output = MineralIonPositionSerializer(instance.positions, many=True).data
-        
+
         output_ = []
         positions_ = []
-        
+
         for ion in output:
             position_ = ion['position']
             if position_['id'] not in positions_:
@@ -217,6 +217,6 @@ class MineralListSerializer(serializers.ModelSerializer):
             #                                         name=F('mineral__crystal_systems__name'),
             #                                         counts=Count('mineral', distinct=True)
             #                                     )
-            
+
             return crystal_systems.values('id', 'name', 'counts')
         return CrystalSystemSerializer(instance.crystal_systems, many=True).data
