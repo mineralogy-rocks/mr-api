@@ -4,59 +4,51 @@ from .base import BaseModel, Nameable
 
 
 class GoldschmidtClass(BaseModel, Nameable):
-
     class Meta:
         managed = False
-        db_table = 'goldschmidt_class_list'
+        db_table = "goldschmidt_class_list"
 
-        verbose_name = 'Goldschmidt Class'
-        verbose_name_plural = 'Goldschmidt Classes'
+        verbose_name = "Goldschmidt Class"
+        verbose_name_plural = "Goldschmidt Classes"
 
     def __str__(self):
         return self.name
-
 
 
 class BondingType(BaseModel, Nameable):
-
     class Meta:
         managed = False
-        db_table = 'bonding_type_list'
+        db_table = "bonding_type_list"
 
-        verbose_name = 'Bonding Type'
-        verbose_name_plural = 'Bonding Types'
+        verbose_name = "Bonding Type"
+        verbose_name_plural = "Bonding Types"
 
     def __str__(self):
         return self.name
-
 
 
 class PhaseState(BaseModel, Nameable):
-
     class Meta:
         managed = False
-        db_table = 'phase_state_list'
+        db_table = "phase_state_list"
 
-        verbose_name = 'Phase State'
-        verbose_name_plural = 'Phase States'
+        verbose_name = "Phase State"
+        verbose_name_plural = "Phase States"
 
     def __str__(self):
         return self.name
-
 
 
 class ChemicalGroup(BaseModel, Nameable):
-
     class Meta:
         managed = False
-        db_table = 'chemical_group_list'
+        db_table = "chemical_group_list"
 
-        verbose_name = 'Chemical Group'
-        verbose_name_plural = 'Chemical Groups'
+        verbose_name = "Chemical Group"
+        verbose_name_plural = "Chemical Groups"
 
     def __str__(self):
         return self.name
-
 
 
 class Element(BaseModel):
@@ -86,20 +78,42 @@ class Element(BaseModel):
     boiling_point = models.IntegerField(null=True)
     density = models.DecimalField(max_digits=8, decimal_places=6, null=True)
 
-    crust_crc_handbook = models.DecimalField(max_digits=11, decimal_places=10, null=True)
+    crust_crc_handbook = models.DecimalField(
+        max_digits=11, decimal_places=10, null=True
+    )
     crust_kaye_laby = models.DecimalField(max_digits=11, decimal_places=10, null=True)
     crust_greenwood = models.DecimalField(max_digits=11, decimal_places=10, null=True)
-    crust_ahrens_taylor = models.DecimalField(max_digits=11, decimal_places=10, null=True)
-    crust_ahrens_wanke = models.DecimalField(max_digits=11, decimal_places=10, null=True)
-    crust_ahrens_waver = models.DecimalField(max_digits=11, decimal_places=10, null=True)
-    upper_crust_ahrens_taylor = models.DecimalField(max_digits=11, decimal_places=10, null=True)
-    upper_crust_ahrens_shaw = models.DecimalField(max_digits=11, decimal_places=10, null=True)
-    sea_water_crc_handbook = models.DecimalField(max_digits=11, decimal_places=11, null=True)
-    sea_water_kaye_laby = models.DecimalField(max_digits=11, decimal_places=11, null=True)
+    crust_ahrens_taylor = models.DecimalField(
+        max_digits=11, decimal_places=10, null=True
+    )
+    crust_ahrens_wanke = models.DecimalField(
+        max_digits=11, decimal_places=10, null=True
+    )
+    crust_ahrens_waver = models.DecimalField(
+        max_digits=11, decimal_places=10, null=True
+    )
+    upper_crust_ahrens_taylor = models.DecimalField(
+        max_digits=11, decimal_places=10, null=True
+    )
+    upper_crust_ahrens_shaw = models.DecimalField(
+        max_digits=11, decimal_places=10, null=True
+    )
+    sea_water_crc_handbook = models.DecimalField(
+        max_digits=11, decimal_places=11, null=True
+    )
+    sea_water_kaye_laby = models.DecimalField(
+        max_digits=11, decimal_places=11, null=True
+    )
     sun_kaye_laby = models.DecimalField(max_digits=16, decimal_places=11, null=True)
-    solar_system_kaye_laby = models.DecimalField(max_digits=16, decimal_places=11, null=True)
-    solar_system_ahrens = models.DecimalField(max_digits=16, decimal_places=11, null=True)
-    solar_system_ahrens_with_uncertainty = models.DecimalField(max_digits=4, decimal_places=2, null=True)
+    solar_system_kaye_laby = models.DecimalField(
+        max_digits=16, decimal_places=11, null=True
+    )
+    solar_system_ahrens = models.DecimalField(
+        max_digits=16, decimal_places=11, null=True
+    )
+    solar_system_ahrens_with_uncertainty = models.DecimalField(
+        max_digits=4, decimal_places=2, null=True
+    )
 
     natural_isotopes = models.TextField(null=True)
     name_meaning = models.TextField(null=True)
@@ -109,17 +123,41 @@ class Element(BaseModel):
     safety = models.TextField(null=True)
     biological_role = models.TextField(null=True)
 
-    goldschmidt_class = models.ForeignKey(GoldschmidtClass, models.CASCADE, db_column='goldschmidt_class_id', to_field='id', related_name='elements')
-    phase_state = models.ForeignKey(PhaseState, models.CASCADE, db_column='phase_state_id', to_field='id', related_name='elements')
-    bonding_type = models.ForeignKey(BondingType, models.CASCADE, db_column='bonding_type_id', to_field='id', related_name='elements')
-    chemical_group = models.ForeignKey(ChemicalGroup, models.CASCADE, db_column='chemical_group_id', to_field='id', related_name='elements')
+    goldschmidt_class = models.ForeignKey(
+        GoldschmidtClass,
+        models.CASCADE,
+        db_column="goldschmidt_class_id",
+        to_field="id",
+        related_name="elements",
+    )
+    phase_state = models.ForeignKey(
+        PhaseState,
+        models.CASCADE,
+        db_column="phase_state_id",
+        to_field="id",
+        related_name="elements",
+    )
+    bonding_type = models.ForeignKey(
+        BondingType,
+        models.CASCADE,
+        db_column="bonding_type_id",
+        to_field="id",
+        related_name="elements",
+    )
+    chemical_group = models.ForeignKey(
+        ChemicalGroup,
+        models.CASCADE,
+        db_column="chemical_group_id",
+        to_field="id",
+        related_name="elements",
+    )
 
     class Meta:
         managed = False
-        db_table = 'element_list'
+        db_table = "element_list"
 
-        verbose_name = 'ELement'
-        verbose_name_plural = 'Elements'
+        verbose_name = "ELement"
+        verbose_name_plural = "Elements"
 
     def __str__(self):
         return self.element

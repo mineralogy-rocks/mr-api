@@ -1,62 +1,87 @@
 # -*- coding: UTF-8 -*-
 from django.contrib import admin
-from django.db import models
-from django.forms import TextInput, Textarea
-from django.utils.html import format_html
-from django.contrib.admin.filters import RelatedFieldListFilter
 
-from .models.core import Status, StatusGroup, NsClass, NsSubclass, NsFamily
+from .models.core import NsClass
+from .models.core import NsFamily
+from .models.core import NsSubclass
+from .models.core import Status
+from .models.core import StatusGroup
 
 
 @admin.register(StatusGroup)
 class StatusGroupAdmin(admin.ModelAdmin):
 
-    list_display = ['id', 'name',]
+    list_display = [
+        "id",
+        "name",
+    ]
 
-    list_display_links = ['name',]
-
+    list_display_links = [
+        "name",
+    ]
 
 
 @admin.register(Status)
 class StatusAdmin(admin.ModelAdmin):
-    list_display = ['status_id', 'group', 'description_short', 'description_long',]
+    list_display = [
+        "status_id",
+        "group",
+        "description_short",
+        "description_long",
+    ]
 
-    list_display_links = ['status_id']
+    list_display_links = ["status_id"]
 
-    list_select_related = ['status_group']
+    list_select_related = ["status_group"]
 
-    list_filter = ['status_group']
-
+    list_filter = ["status_group"]
 
 
 @admin.register(NsClass)
 class NsClassAdmin(admin.ModelAdmin):
 
-    list_display = ['id', 'description',]
+    list_display = [
+        "id",
+        "description",
+    ]
 
-    list_display_links = ['id',]
-
+    list_display_links = [
+        "id",
+    ]
 
 
 @admin.register(NsSubclass)
 class NsSubclassAdmin(admin.ModelAdmin):
 
-    list_display = ['ns_subclass', 'description',]
+    list_display = [
+        "ns_subclass",
+        "description",
+    ]
 
-    list_display_links = ['ns_subclass',]
+    list_display_links = [
+        "ns_subclass",
+    ]
 
-    list_filter = ['ns_class',]
-
+    list_filter = [
+        "ns_class",
+    ]
 
 
 @admin.register(NsFamily)
 class NsFamilyAdmin(admin.ModelAdmin):
 
-    list_display = ['ns_family', 'description',]
+    list_display = [
+        "ns_family",
+        "description",
+    ]
 
-    list_display_links = ['ns_family',]
+    list_display_links = [
+        "ns_family",
+    ]
 
-    list_filter = ['ns_class',]
+    list_filter = [
+        "ns_class",
+    ]
 
 
 # # Register your models here.
@@ -82,7 +107,8 @@ class NsFamilyAdmin(admin.ModelAdmin):
 #         in the right sidebar.
 #         """
 #         status_list = []
-#         [status_list.append((status.status_id, '{} - {}'.format(status.status_id, status.description_short),)) for status in StatusList.objects.all()]
+#         [status_list.append((status.status_id, '{} - {}'.format(status.status_id,
+#           status.description_short),)) for status in StatusList.objects.all()]
 #         return status_list
 
 #     def queryset(self, request, queryset):
@@ -113,7 +139,8 @@ class NsFamilyAdmin(admin.ModelAdmin):
 #         in the right sidebar.
 #         """
 #         ion_list = []
-#         [ion_list.append((ion.ion_id, '{} - {}'.format(ion.ion_id, ion.formula),)) for ion in IonList.objects.all()]
+#         [ion_list.append((ion.ion_id, '{} - {}'.format(ion.ion_id, ion.formula),))
+#           for ion in IonList.objects.all()]
 #         return ion_list
 
 #     def queryset(self, request, queryset):
@@ -142,7 +169,8 @@ class NsFamilyAdmin(admin.ModelAdmin):
 #         in the right sidebar.
 #         """
 #         statuses_list = []
-#         [statuses_list.append((status.status_id, '{} - {}'.format(status.status_id, status.description_short),)) for status in StatusList.objects.all()]
+#         [statuses_list.append((status.status_id, '{} - {}'.format(status.status_id,
+#           status.description_short),)) for status in StatusList.objects.all()]
 #         return statuses_list
 
 #     def queryset(self, request, queryset):
@@ -168,7 +196,9 @@ class NsFamilyAdmin(admin.ModelAdmin):
 #         return qs
 
 # class MineralIonTheoreticalForm(forms.ModelForm):
-#     anions = forms.ModelChoiceField(queryset=IonList.objects.filter(ion_type_id__ion_type_name__exact='Anion'))
+#     anions = forms.ModelChoiceField(
+#   queryset=IonList.objects.filter(ion_type_id__ion_type_name__exact='Anion')
+# )
 
 #     class Meta:
 #         model = IonList
@@ -239,7 +269,8 @@ class NsFamilyAdmin(admin.ModelAdmin):
 
 # class MineralHistoryInline(admin.TabularInline):
 #     model = MineralHistory
-#     fields = ('discovery_year_min', 'discovery_year_max', 'discovery_year_note', 'first_usage_date', 'first_known_use',)
+#     fields = ('discovery_year_min', 'discovery_year_max', 'discovery_year_note',
+# 'first_usage_date', 'first_known_use',)
 #     extra = 0
 #     formfield_overrides = {
 #         models.TextField: {'widget': Textarea(attrs={'rows':2, 'cols':20})},
@@ -290,7 +321,8 @@ class NsFamilyAdmin(admin.ModelAdmin):
 
 # @admin.register(MineralLog)
 # class MineralLogAdmin(admin.ModelAdmin):
-#     list_display = ('mineral_name', 'mineral_formula_html', 'get_statuses', 'get_ns_index',)
+#     list_display = ('mineral_name', 'mineral_formula_html', 'get_statuses',
+# 'get_ns_index',)
 #     list_filter = (StatusListFilter, 'id_class')
 #     ordering = ('mineral_name',)
 #     search_fields = ('mineral_name',)
@@ -351,7 +383,8 @@ class NsFamilyAdmin(admin.ModelAdmin):
 
 # @admin.register(StatusList)
 # class StatusListAdmin(admin.ModelAdmin):
-#     list_display = ('status_id', 'description_short', 'description_long', 'description_group',)
+#     list_display = ('status_id', 'description_short', 'description_long',
+# 'description_group',)
 #     search_fields = ('status_id', 'description_short',)
 
 # @admin.register(NsClass)
@@ -380,7 +413,8 @@ class NsFamilyAdmin(admin.ModelAdmin):
 
 # @admin.register(NsFamily)
 # class NsFamilyAdmin(admin.ModelAdmin):
-#     list_display = ('id_family', 'class_description', 'subclass_description', 'family_description')
+#     list_display = ('id_family', 'class_description', 'subclass_description',
+# 'family_description')
 #     ordering = ('id_class', 'id_subclass', 'id_family',)
 #     search_fields = ('id_family',)
 #     list_filter = ('id_class',)
@@ -401,21 +435,27 @@ class NsFamilyAdmin(admin.ModelAdmin):
 
 # @admin.register(IonList)
 # class IonListAdmin(admin.ModelAdmin):
-#     list_display = ('ion_id', 'ion_type', 'ion_formula_html', 'variety_formula_html', 'ion_name', 'ion_class_id', 'ion_subclass_id', 'ion_group_id', 'ion_subgroup_id',)
+#     list_display = ('ion_id', 'ion_type', 'ion_formula_html', 'variety_formula_html',
+# 'ion_name', 'ion_class_id', 'ion_subclass_id', 'ion_group_id', 'ion_subgroup_id',)
 #     search_fields = ('formula',)
 #     ordering = ('ion_type_id',)
-#     list_filter = ('ion_type_id',('ion_class_id', DropdownFilter),('ion_subclass_id', DropdownFilter),('ion_group_id', DropdownFilter),('ion_subgroup_id', DropdownFilter),)
-#     # list_filter = ('ion_type_id','ion_class_id','ion_subclass_id', 'ion_group_id','ion_subgroup_id',)
+#     list_filter = ('ion_type_id',('ion_class_id', DropdownFilter),
+# ('ion_subclass_id', DropdownFilter),('ion_group_id', DropdownFilter),
+# ('ion_subgroup_id', DropdownFilter),)
+#     # list_filter = ('ion_type_id','ion_class_id','ion_subclass_id',
+# 'ion_group_id','ion_subgroup_id',)
 
 #     def get_queryset(self, request):
 #         queryset = super().get_queryset(request)
-#         queryset = queryset.select_related('ion_type_id', 'ion_class_id', 'ion_subclass_id', 'ion_group_id', 'ion_subgroup_id')
+#         queryset = queryset.select_related('ion_type_id', 'ion_class_id',
+# 'ion_subclass_id', 'ion_group_id', 'ion_subgroup_id')
 #         return queryset
 
 # @admin.register(CountryList)
 # class CountryListAdmin(admin.ModelAdmin):
-#     list_display = ('country_id', 'country_name', 'alpha_2', 'alpha_3', 'country_code', 'region', 'sub_region', 'intermediate_region',)
+#     list_display = ('country_id', 'country_name', 'alpha_2', 'alpha_3',
+# 'intermediate_region',)
 #     search_fields = ('country_name',)
 
-admin.site.site_header = 'Mineralogy.rocks'
-admin.site.index_title = 'Administration'
+admin.site.site_header = "Mineralogy.rocks"
+admin.site.index_title = "Administration"

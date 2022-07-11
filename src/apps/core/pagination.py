@@ -20,4 +20,4 @@ class CustomLimitOffsetPagination(LimitOffsetPagination):
 
         if self.count == 0 or self.offset > self.count:
             return []
-        return queryset[self.offset:self.offset + self.limit]
+        return queryset[self.offset : self.offset + self.limit]
