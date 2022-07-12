@@ -1,7 +1,10 @@
 # -*- coding: UTF-8 -*-
 from rest_framework import serializers
 
-from ..models.core import StatusGroup, Status, Country, RelationType
+from ..models.core import Country
+from ..models.core import RelationType
+from ..models.core import Status
+from ..models.core import StatusGroup
 
 
 class StatusGroupSerializer(serializers.ModelSerializer):
@@ -29,7 +32,6 @@ class StatusListSerializer(serializers.ModelSerializer):
     @staticmethod
     def setup_eager_loading(**kwargs):
         queryset = kwargs.get("queryset")
-        request = kwargs.get("request")
 
         select_related = [
             "status_group",

@@ -1,7 +1,9 @@
+# -*- coding: UTF-8 -*-
 from django.db import models
 
 from ..utils import formula_to_html
-from .base import BaseModel, Nameable
+from .base import BaseModel
+from .base import Nameable
 from .element import Element
 
 

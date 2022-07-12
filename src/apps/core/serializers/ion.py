@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 from rest_framework import serializers
 
-from ..models.ion import Ion, IonPosition
-from ..models.mineral import MineralIonPosition
+from ..models.ion import Ion
+from ..models.ion import IonPosition
 
 
 class IonPositionSerializer(serializers.ModelSerializer):

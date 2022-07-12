@@ -1,8 +1,9 @@
-from django.urls import path, include
+# -*- coding: UTF-8 -*-
+from django.urls import include
+from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from . import views as views
-
 
 app_name = "core"
 
@@ -13,7 +14,7 @@ router.register(r"status", views.StatusViewSet, basename="status")
 
 
 def trigger_error(request):
-    division_by_zero = 1 / 0
+    return 1 / 0
 
 
 urlpatterns = [path("", include(router.urls)), path("sentry-debug/", trigger_error)]

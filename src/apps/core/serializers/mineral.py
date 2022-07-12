@@ -1,24 +1,17 @@
 # -*- coding: UTF-8 -*-
 from django.db import models
-from django.db.models import Q, Count, F, OuterRef, Subquery, Value, Case, When
-from django.db.models.functions import JSONObject
+from django.db.models import Count
+from django.db.models import F
 from rest_framework import serializers
 
 from ..models.core import Status
 from ..models.crystal import CrystalSystem
-from ..models.mineral import (
-    Mineral,
-    MineralStatus,
-    MineralHistory,
-    MineralCrystallography,
-    MineralHierarchy,
-    MineralIonPosition,
-)
-from ..models.ion import IonPosition, Ion
-from .core import StatusListSerializer, CountryListSerializer
-from .crystal import CrystalSystemSerializer, CrystalSystemsStatsSerializer
-from .base import BaseSerializer
-from .ion import MineralIonPositionSerializer, IonPrimitiveSerializer
+from ..models.mineral import Mineral
+from ..models.mineral import MineralHierarchy
+from ..models.mineral import MineralHistory
+from ..models.mineral import MineralIonPosition
+from .crystal import CrystalSystemSerializer
+from .ion import MineralIonPositionSerializer
 
 
 class MineralHistorySerializer(serializers.ModelSerializer):
@@ -99,7 +92,6 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
     @staticmethod
     def setup_eager_loading(**kwargs):
         queryset = kwargs.get("queryset")
-        request = kwargs.get("request")
 
         select_related = [
             "history",

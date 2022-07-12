@@ -1,9 +1,8 @@
-from .base import *
-import os
-
+# -*- coding: UTF-8 -*-
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
+from .base import *
 
 sentry_sdk.init(
     dsn=os.environ.get("DJANGO_SENTRY_DSN", default=None),

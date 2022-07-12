@@ -1,39 +1,33 @@
 # -*- coding: UTF-8 -*-
-from django.db.models import (
-    Q,
-    OuterRef,
-    F,
-    Min,
-    Max,
-    Value,
-    Case,
-    When,
-    Count,
-    Exists,
-    CharField,
-)
-from django.db.models.functions import JSONObject, Concat, Right, Coalesce
+from django.db.models import Case
+from django.db.models import CharField
+from django.db.models import Exists
+from django.db.models import OuterRef
+from django.db.models import Q
+from django.db.models import Value
+from django.db.models import When
+from django.db.models.functions import Coalesce
+from django.db.models.functions import Concat
+from django.db.models.functions import Right
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
-from rest_framework.response import Response
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
-from rest_framework.viewsets import GenericViewSet
-from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
+from rest_framework.mixins import ListModelMixin
+from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.permissions import AllowAny
+from rest_framework.renderers import BrowsableAPIRenderer
+from rest_framework.renderers import JSONRenderer
+from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 
+from .filters import MineralFilter
+from .filters import StatusFilter
+from .models.core import Status
+from .models.mineral import Mineral
+from .models.mineral import MineralStatus
 from .pagination import CustomLimitOffsetPagination
-from .models.core import Status, NsFamily
-from .models.mineral import (
-    Mineral,
-    MineralRelation,
-    MineralHierarchy,
-    MineralCrystallography,
-    MineralStatus,
-    MineralIonPosition,
-)
 from .serializers.core import StatusListSerializer
-from .serializers.mineral import MineralListSerializer, MineralRetrieveSerializer
-from .filters import StatusFilter, MineralFilter
+from .serializers.mineral import MineralListSerializer
+from .serializers.mineral import MineralRetrieveSerializer
 
 
 class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
@@ -270,13 +264,9 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
     def get_serializer_class(self):
 
-        if self.action in [
-            "list",
-        ]:
+        if self.action in ["list"]:
             return MineralListSerializer
-        elif self.action in [
-            "retrieve",
-        ]:
+        elif self.action in ["retrieve"]:
             return MineralRetrieveSerializer
 
         return super().get_serializer_class()

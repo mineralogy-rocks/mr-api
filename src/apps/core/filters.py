@@ -1,12 +1,7 @@
-from email.policy import default
-
-from django.db.models import Case
+# -*- coding: UTF-8 -*-
 from django.db.models import Q
-from django.db.models import When
 from django_filters import rest_framework as filters
-from django_filters import widgets
 
-from .models.core import Country
 from .models.core import Status
 from .models.core import StatusGroup
 from .models.ion import Ion
@@ -44,7 +39,9 @@ class MineralFilter(filters.FilterSet):
     #     label='Discovery countries',
     #     queryset=Country.objects.all()
     # )
-    # filter_group_members = filters.BooleanFilter(field_name='', widget=widgets.BooleanWidget, method='filter_group_members_')
+    # filter_group_members = filters.BooleanFilter(
+    #       field_name='',
+    #           widget=widgets.BooleanWidget, method='filter_group_members_')
 
     anion = filters.ModelMultipleChoiceFilter(
         label="Anions",

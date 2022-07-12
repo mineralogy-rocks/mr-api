@@ -1,4 +1,4 @@
-from django.db import models
+# -*- coding: UTF-8 -*-
 from rest_framework import serializers
 
 from ..models.crystal import CrystalSystem

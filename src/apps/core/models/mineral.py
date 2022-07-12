@@ -1,17 +1,25 @@
 # -*- coding: UTF-8 -*-
 import uuid
 
-from django.urls import reverse
 from django.db import models
-from django.db.models import F, Q, Count, OuterRef
-from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models.functions import JSONObject
+from django.urls import reverse
 
 from ..utils import formula_to_html
-from .base import BaseModel, Nameable, Creatable, Updatable
-from .core import NsClass, NsSubclass, NsFamily, Status, Country, RelationType
-from .ion import Ion, IonPosition
-from .crystal import CrystalSystem, CrystalClass, SpaceGroup
+from .base import BaseModel
+from .base import Creatable
+from .base import Nameable
+from .base import Updatable
+from .core import Country
+from .core import NsClass
+from .core import NsFamily
+from .core import NsSubclass
+from .core import RelationType
+from .core import Status
+from .crystal import CrystalClass
+from .crystal import CrystalSystem
+from .crystal import SpaceGroup
+from .ion import Ion
+from .ion import IonPosition
 
 
 class Mineral(Nameable, Creatable, Updatable):
@@ -80,12 +88,12 @@ class Mineral(Nameable, Creatable, Updatable):
             return "{ns_class}.{ns_subclass}{ns_family}.{ns_mineral}".format(
                 ns_class=str(self.ns_class.id),
                 ns_subclass=str(self.ns_subclass.ns_subclass)[-1]
-                if self.ns_subclass != None
+                if self.ns_subclass is not None
                 else "0",
                 ns_family=str(self.ns_family.ns_family)[-1]
-                if self.ns_family != None
+                if self.ns_family is not None
                 else "0",
-                ns_mineral=str(self.ns_mineral) if self.ns_mineral != None else "0",
+                ns_mineral=str(self.ns_mineral) if self.ns_mineral is not None else "0",
             )
         else:
             return None
