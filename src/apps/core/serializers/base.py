@@ -7,4 +7,7 @@ class BaseSerializer(serializers.Serializer):
     name = serializers.CharField()
 
     class Meta:
-        fields = ['id', 'name',]
+        fields = [
+            "id",
+            "name",
+        ]

@@ -1,15 +1,16 @@
-from django.db import models
+# -*- coding: UTF-8 -*-
 from rest_framework import serializers
 
 from ..models.crystal import CrystalSystem
 
 
 class CrystalSystemSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = CrystalSystem
-        fields = ['id', 'name',]
-        
+        fields = [
+            "id",
+            "name",
+        ]
 
 
 class CrystalSystemsStatsSerializer(CrystalSystemSerializer):
@@ -18,4 +19,4 @@ class CrystalSystemsStatsSerializer(CrystalSystemSerializer):
 
     class Meta:
         model = CrystalSystem
-        fields = CrystalSystemSerializer.Meta.fields + ['counts']
+        fields = CrystalSystemSerializer.Meta.fields + ["counts"]

@@ -79,7 +79,7 @@ services:
             - backend
         networks:
             - main
-            
+
 volumes:
     esdata:
     redisdata:

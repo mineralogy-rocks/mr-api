@@ -7,7 +7,7 @@ services:
         image: nginx:stable-alpine
         ports:
             - "80:80"
-        command: > 
+        command: >
             /bin/sh -c "envsubst '$${DOMAIN}' < /etc/nginx/nginx.template > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"
         env_file:
             - ./.dev.env
