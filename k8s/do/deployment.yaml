@@ -15,7 +15,7 @@ spec:
         app: mr-api
     spec:
       containers:
-        - image: registry.digitalocean.com/mr-project/backend:latest
+        - image: <IMAGE> #registry.digitalocean.com/mr-project/backend:latest
           # imagePullPolicy: Always
           name: mr-api
           command: ["gunicorn", "wsgi:application", "--pythonpath", "src", "--bind", "0.0.0.0:8000", "--worker-class", "gevent", "--worker-connections", "1000", "--workers", "3"]

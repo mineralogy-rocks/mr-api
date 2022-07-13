@@ -18,7 +18,7 @@ on:
   workflow_dispatch:
 
 env:
-  BACKEND_IMAGE: registry.digitalocean.com/mr-project/backend:latest
+  BACKEND_IMAGE: registry.digitalocean.com/mr-project/backend
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -44,24 +44,21 @@ jobs:
         with:
           token: ${{ secrets.DIGITAL_OCEAN_ACCESS_TOKEN }}
 
+      # build images
+      - name: Build images
+        run: |
+          docker build -f $GITHUB_WORKSPACE/Dockerfile.prod -t ${{ env.BACKEND_IMAGE }}:$(echo $GITHUB_SHA | head -c7) .
+
       # login into DO registry
       - name: Log in to DO Container Registry
         run: doctl registry login --expiry-seconds 800
 
-      # pull images
-      - name: Pull images
-        run: |
-          docker pull ${{ env.BACKEND_IMAGE }} || true
-
-      # build images
-      - name: Build images
-        run: |
-          docker build -f $GITHUB_WORKSPACE/Dockerfile.prod -t ${{ env.BACKEND_IMAGE }} .
-
       # push images
-      - name: Push images
-        run: |
-          docker push ${{ env.BACKEND_IMAGE }}
+      - name: Push image to DigitalOcean Container Registry
+        run: docker push ${{ env.BACKEND_IMAGE }}:$(echo $GITHUB_SHA | head -c7)
+
+      - name: Update deployment file
+        run: TAG=$(echo $GITHUB_SHA | head -c7) && sed -i 's|<IMAGE>|${{ env.BACKEND_IMAGE }}:'${TAG}'|' $GITHUB_WORKSPACE/k8s/do/deployment.yaml
 
       - name: Save DigitalOcean kubeconfig with short-lived credentials
         run: doctl kubernetes cluster kubeconfig save --expiry-seconds 800 ${{ secrets.DIGITAL_OCEAN_KUBERNETES_CLUSTER_ID }}
@@ -71,3 +68,32 @@ jobs:
 
       - name: Verify deployment
         run: kubectl rollout status deployment/mr-api
+
+
+      # # login into DO registry
+      # - name: Log in to DO Container Registry
+      #   run: doctl registry login --expiry-seconds 800
+
+      # # pull images
+      # - name: Pull images
+      #   run: |
+      #     docker pull ${{ env.BACKEND_IMAGE }} || true
+
+      # # build images
+      # - name: Build images
+      #   run: |
+      #     docker build -f $GITHUB_WORKSPACE/Dockerfile.prod -t ${{ env.BACKEND_IMAGE }} .
+
+      # # push images
+      # - name: Push images
+      #   run: |
+      #     docker push ${{ env.BACKEND_IMAGE }}
+
+      # - name: Save DigitalOcean kubeconfig with short-lived credentials
+      #   run: doctl kubernetes cluster kubeconfig save --expiry-seconds 800 ${{ secrets.DIGITAL_OCEAN_KUBERNETES_CLUSTER_ID }}
+
+      # - name: Deploy to DigitalOcean Kubernetes
+      #   run: kubectl apply -f $GITHUB_WORKSPACE/k8s/do/deployment.yaml
+
+      # - name: Verify deployment
+      #   run: kubectl rollout status deployment/mr-api
