@@ -11,20 +11,25 @@ from django.db.models.functions import Concat
 from django.db.models.functions import Right
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
+from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
 from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.permissions import AllowAny
 from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
+from rest_framework.reverse import reverse
 from rest_framework.viewsets import GenericViewSet
 
 from .filters import MineralFilter
 from .filters import StatusFilter
+from .models.core import NsClass
 from .models.core import Status
 from .models.mineral import Mineral
 from .models.mineral import MineralStatus
 from .pagination import CustomLimitOffsetPagination
+from .serializers.base import BaseSerializer
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRetrieveSerializer
@@ -80,6 +85,53 @@ class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             )
 
         return queryset
+
+
+class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
+
+    http_method_names = [
+        "get",
+        "options",
+        "head",
+    ]
+
+    queryset = []
+    serializer_class = BaseSerializer
+
+    renderer_classes = [
+        JSONRenderer,
+        BrowsableAPIRenderer,
+    ]
+    permission_classes = [
+        AllowAny,
+    ]
+    authentication_classes = []
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.action in ["classes"]:
+            queryset = NsClass.objects.all()
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = [
+            {
+                "id": 0,
+                "name": "Nickel-Strunz Classes",
+                "url": reverse("core:nickel-strunz-classes", request=self.request),
+            },
+            {
+                "id": 1,
+                "name": "Nickel-Strunz Subclasses",
+                "url": reverse("core:status-list", request=self.request),
+            },
+        ]
+
+        return Response(queryset, status=status.HTTP_200_OK)
+
+    @action(methods=["get"], detail=False, url_path="classes")
+    def classes(self, request, *args, **kwargs):
+        return Response({"some": "asfsa"}, status=status.HTTP_200_OK)
 
 
 class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):

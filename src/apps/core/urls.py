@@ -9,6 +9,7 @@ app_name = "core"
 
 router = DefaultRouter()
 
+router.register(r"nickel-strunz", views.NickelStrunzViewSet, basename="nickel-strunz")
 router.register(r"mineral", views.MineralViewSet, basename="mineral")
 router.register(r"status", views.StatusViewSet, basename="status")
 
