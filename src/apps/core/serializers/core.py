@@ -2,6 +2,7 @@
 from rest_framework import serializers
 
 from ..models.core import Country
+from ..models.core import NsClass
 from ..models.core import RelationType
 from ..models.core import Status
 from ..models.core import StatusGroup
@@ -52,6 +53,15 @@ class CountryListSerializer(serializers.ModelSerializer):
             "name",
             "region",
             "iso_code",
+        ]
+
+
+class NsClassListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NsClass
+        fields = [
+            "id",
+            "description",
         ]
 
 
