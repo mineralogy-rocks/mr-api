@@ -17,7 +17,7 @@ dump-prod-db:
 				--port=${POSTGRES_PORT} \
 				--dbname=${POSTGRES_DB} \
 				--user=${POSTGRES_USER} \
-				--clean --no-owner --no-privileges > ./db/backup/master_dump.sql
+				--clean --no-owner --no-privileges > ./db/backup/db__`date +%d.%m.%Y__%H-%M`.sql
 
 restore-local-db:
 	$(eval include .dev.env)
@@ -26,7 +26,7 @@ restore-local-db:
 	@echo "--> Restoring local database..."
 
 	docker-compose -f docker-compose.yml run --rm --no-deps database \
-		psql "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:${POSTGRES_PORT}/${POSTGRES_DB}" -Fc < ./db/backup/master_dump.sql
+		psql "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:${POSTGRES_PORT}/${POSTGRES_DB}" -Fc < ${file}
 
 run-sql:
 ifdef file
