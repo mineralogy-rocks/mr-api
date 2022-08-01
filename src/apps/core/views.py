@@ -12,15 +12,17 @@ from django.db.models.functions import Right
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework import status
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
 from rest_framework.mixins import RetrieveModelMixin
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.viewsets import GenericViewSet
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .filters import MineralFilter
 from .filters import StatusFilter
@@ -51,9 +53,12 @@ class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         BrowsableAPIRenderer,
     ]
     permission_classes = [
-        AllowAny,
+        IsAuthenticated,
     ]
-    authentication_classes = []
+    authentication_classes = [
+        SessionAuthentication,
+        JWTAuthentication,
+    ]
 
     ordering_fields = [
         "status_id",
@@ -103,9 +108,12 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
         BrowsableAPIRenderer,
     ]
     permission_classes = [
-        AllowAny,
+        IsAuthenticated,
     ]
-    authentication_classes = []
+    authentication_classes = [
+        SessionAuthentication,
+        JWTAuthentication,
+    ]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -152,9 +160,12 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     pagination_class = CustomLimitOffsetPagination
 
     permission_classes = [
-        AllowAny,
+        IsAuthenticated,
     ]
-    authentication_classes = []
+    authentication_classes = [
+        SessionAuthentication,
+        JWTAuthentication,
+    ]
 
     ordering_fields = [
         "name",
