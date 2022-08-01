@@ -1,8 +1,11 @@
 # -*- coding: UTF-8 -*-
+from django.db.models import Prefetch
 from rest_framework import serializers
 
 from ..models.core import Country
 from ..models.core import NsClass
+from ..models.core import NsFamily
+from ..models.core import NsSubclass
 from ..models.core import RelationType
 from ..models.core import Status
 from ..models.core import StatusGroup
@@ -56,13 +59,64 @@ class CountryListSerializer(serializers.ModelSerializer):
         ]
 
 
-class NsClassListSerializer(serializers.ModelSerializer):
+class CountsFieldMixin(object):
+    def get_counts(self, obj):
+        if hasattr(obj, "minerals"):
+            return obj.minerals.count()
+        else:
+            return None
+
+
+class NsFamilyListSerializer(CountsFieldMixin, serializers.ModelSerializer):
+    counts = serializers.SerializerMethodField()
+
     class Meta:
-        model = NsClass
+        model = NsFamily
         fields = [
             "id",
+            "ns_family",
             "description",
+            "counts",
         ]
+
+
+class NsSubclassListSerializer(CountsFieldMixin, serializers.ModelSerializer):
+
+    counts = serializers.SerializerMethodField()
+    families = NsFamilyListSerializer(many=True)
+
+    class Meta:
+        model = NsSubclass
+        fields = ["id", "ns_subclass", "description", "counts", "families"]
+
+
+class NsClassListSerializer(CountsFieldMixin, serializers.ModelSerializer):
+
+    counts = serializers.SerializerMethodField()
+    subclasses = NsSubclassListSerializer(many=True)
+
+    class Meta:
+        model = NsClass
+        fields = ["id", "description", "counts", "subclasses"]
+
+    @staticmethod
+    def setup_eager_loading(**kwargs):
+        queryset = kwargs.get("queryset")
+
+        select_related = []
+
+        prefetch_related = [
+            "minerals",
+            Prefetch(
+                "subclasses",
+                NsSubclass.objects.prefetch_related("minerals", "families__minerals"),
+            ),
+        ]
+
+        queryset = queryset.select_related(*select_related).prefetch_related(
+            *prefetch_related
+        )
+        return queryset
 
 
 class RelationListSerializer(serializers.ModelSerializer):

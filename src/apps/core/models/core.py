@@ -27,7 +27,11 @@ class NsClass(models.Model):
 class NsSubclass(BaseModel):
 
     ns_class = models.ForeignKey(
-        NsClass, models.CASCADE, db_column="ns_class", to_field="id"
+        NsClass,
+        models.CASCADE,
+        db_column="ns_class",
+        to_field="id",
+        related_name="subclasses",
     )
     ns_subclass = models.CharField(max_length=4, unique=True)
     description = models.TextField()
@@ -51,10 +55,18 @@ class NsSubclass(BaseModel):
 class NsFamily(BaseModel):
 
     ns_class = models.ForeignKey(
-        NsClass, models.CASCADE, db_column="ns_class", to_field="id"
+        NsClass,
+        models.CASCADE,
+        db_column="ns_class",
+        to_field="id",
+        related_name="families",
     )
     ns_subclass = models.ForeignKey(
-        NsSubclass, models.CASCADE, db_column="ns_subclass", to_field="id"
+        NsSubclass,
+        models.CASCADE,
+        db_column="ns_subclass",
+        to_field="id",
+        related_name="families",
     )
     ns_family = models.CharField(max_length=5, unique=True)
     description = models.TextField()

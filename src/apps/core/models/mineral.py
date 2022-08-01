@@ -36,6 +36,7 @@ class Mineral(Nameable, Creatable, Updatable):
         to_field="id",
         blank=True,
         null=True,
+        related_name="minerals",
     )
     ns_subclass = models.ForeignKey(
         NsSubclass,
@@ -44,6 +45,7 @@ class Mineral(Nameable, Creatable, Updatable):
         to_field="id",
         blank=True,
         null=True,
+        related_name="minerals",
     )
     ns_family = models.ForeignKey(
         NsFamily,
