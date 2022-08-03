@@ -79,21 +79,66 @@ class NsFamilyListSerializer(CountsFieldMixin, serializers.ModelSerializer):
             "counts",
         ]
 
+    @staticmethod
+    def setup_eager_loading(**kwargs):
+        queryset = kwargs.get("queryset")
+
+        select_related = []
+
+        prefetch_related = [
+            "minerals",
+        ]
+
+        queryset = queryset.select_related(*select_related).prefetch_related(
+            *prefetch_related
+        )
+        return queryset
+
 
 class NsSubclassListSerializer(CountsFieldMixin, serializers.ModelSerializer):
 
     counts = serializers.SerializerMethodField()
+
+    class Meta:
+        model = NsSubclass
+        fields = [
+            "id",
+            "ns_subclass",
+            "description",
+            "counts",
+        ]
+
+    @staticmethod
+    def setup_eager_loading(**kwargs):
+        queryset = kwargs.get("queryset")
+
+        select_related = []
+
+        prefetch_related = [
+            "minerals",
+        ]
+
+        queryset = queryset.select_related(*select_related).prefetch_related(
+            *prefetch_related
+        )
+        return queryset
+
+
+class NsSubclassFamilyListSerializer(NsSubclassListSerializer):
+
     families = NsFamilyListSerializer(many=True)
 
     class Meta:
         model = NsSubclass
-        fields = ["id", "ns_subclass", "description", "counts", "families"]
+        fields = NsSubclassListSerializer.Meta.fields + ["families"]
 
 
-class NsClassListSerializer(CountsFieldMixin, serializers.ModelSerializer):
+class NsClassSubclassFamilyListSerializer(
+    CountsFieldMixin, serializers.ModelSerializer
+):
 
     counts = serializers.SerializerMethodField()
-    subclasses = NsSubclassListSerializer(many=True)
+    subclasses = NsSubclassFamilyListSerializer(many=True)
 
     class Meta:
         model = NsClass

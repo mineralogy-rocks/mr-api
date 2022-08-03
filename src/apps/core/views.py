@@ -26,6 +26,7 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .filters import MineralFilter
+from .filters import NickelStrunzFilter
 from .filters import StatusFilter
 from .models.core import NsClass
 from .models.core import NsFamily
@@ -34,7 +35,7 @@ from .models.core import Status
 from .models.mineral import Mineral
 from .models.mineral import MineralStatus
 from .pagination import CustomLimitOffsetPagination
-from .serializers.core import NsClassListSerializer
+from .serializers.core import NsClassSubclassFamilyListSerializer
 from .serializers.core import NsFamilyListSerializer
 from .serializers.core import NsSubclassListSerializer
 from .serializers.core import StatusListSerializer
@@ -106,7 +107,7 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
     ]
 
     queryset = NsClass.objects.all()
-    serializer_class = NsClassListSerializer
+    serializer_class = NsClassSubclassFamilyListSerializer
 
     renderer_classes = [
         JSONRenderer,
@@ -122,7 +123,10 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
 
     pagination_class = LimitOffsetPagination
 
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [
+        filters.SearchFilter,
+        DjangoFilterBackend,
+    ]
     search_fields = [
         "id",
         "description",
@@ -131,6 +135,7 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
         "subclasses__ns_subclass",
         "families__ns_family",
     ]
+    filterset_class = NickelStrunzFilter
 
     def _get_paginated_response(self, queryset, serializer):
         page = self.paginate_queryset(queryset)
@@ -138,6 +143,44 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
             return self.get_paginated_response(serializer(page, many=True).data)
 
         return Response(serializer(queryset, many=True).data, status=status.HTTP_200_OK)
+
+    def _filter_queryset(self, queryset):
+        if "q" in self.request.query_params:
+            queryset = queryset.filter(
+                description__icontains=self.request.query_params.get("q", "")
+            )
+
+        if "class" in self.request.query_params:
+            queryset = queryset.filter(
+                ns_class=self.request.query_params.get("class", "")
+            )
+
+        if "subclass" in self.request.query_params:
+            if self.action in ["subclasses"]:
+                queryset = queryset.filter(
+                    ns_subclass=self.request.query_params.get("subclass", "")
+                )
+            elif self.action in ["families"]:
+                queryset = queryset.filter(
+                    ns_subclass__ns_subclass=self.request.query_params.get(
+                        "subclass", ""
+                    )
+                )
+            else:
+                pass
+
+        if "family" in self.request.query_params:
+            if self.action in ["subclasses"]:
+                queryset = queryset.filter(
+                    families__ns_family=self.request.query_params.get("family", "")
+                )
+            elif self.action in ["families"]:
+                queryset = queryset.filter(
+                    ns_family=self.request.query_params.get("family", "")
+                )
+            else:
+                pass
+        return queryset
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -150,35 +193,40 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
 
         return queryset
 
-    def filter_queryset(self, queryset):
-        queryset = super().filter_queryset(queryset)
-
-        return queryset
-
     @action(methods=["get"], detail=False, url_path="classes")
     def classes(self, request, *args, **kwargs):
         queryset = NsClass.objects.annotate(counts=Count("minerals", distinct=True))
+        queryset = self.filter_queryset(queryset)
         return Response(
             queryset.values("id", "description", "counts"), status=status.HTTP_200_OK
         )
 
     @action(methods=["get"], detail=False, url_path="subclasses")
     def subclasses(self, request, *args, **kwargs):
-        serializer = NsSubclassListSerializer
+        serializer_class = NsSubclassListSerializer
         queryset = (
             NsSubclass.objects.select_related("ns_class")
             .annotate(counts=Count("minerals", distinct=True))
             .order_by("ns_class__id", "ns_subclass")
         )
+        queryset = serializer_class.setup_eager_loading(
+            queryset=queryset, request=self.request
+        )
+        queryset = self._filter_queryset(queryset)
 
-        return self._get_paginated_response(queryset, serializer)
+        return self._get_paginated_response(queryset, serializer_class)
 
     @action(methods=["get"], detail=False, url_path="families")
     def families(self, request, *args, **kwargs):
-        serializer = NsFamilyListSerializer
+        serializer_class = NsFamilyListSerializer
         queryset = NsFamily.objects.annotate(counts=Count("minerals", distinct=True))
 
-        return self._get_paginated_response(queryset, serializer)
+        queryset = serializer_class.setup_eager_loading(
+            queryset=queryset, request=self.request
+        )
+        queryset = self._filter_queryset(queryset)
+
+        return self._get_paginated_response(queryset, serializer_class)
 
 
 class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):

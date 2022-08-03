@@ -2,6 +2,9 @@
 from django.db.models import Q
 from django_filters import rest_framework as filters
 
+from .models.core import NsClass
+from .models.core import NsFamily
+from .models.core import NsSubclass
 from .models.core import Status
 from .models.core import StatusGroup
 from .models.ion import Ion
@@ -21,6 +24,31 @@ class StatusFilter(filters.FilterSet):
         model = Status
         fields = [
             "status_group",
+        ]
+
+
+class NickelStrunzFilter(filters.FilterSet):
+
+    ns_class = filters.NumberFilter(field_name="id")
+    ns_subclass = filters.ModelChoiceFilter(
+        label="Nickel-Strunz Subclass",
+        field_name="subclasses",
+        to_field_name="ns_subclass",
+        queryset=NsSubclass.objects.all(),
+    )
+    ns_family = filters.ModelChoiceFilter(
+        label="Nickel-Strunz Family",
+        field_name="families",
+        to_field_name="ns_family",
+        queryset=NsFamily.objects.all(),
+    )
+
+    class Meta:
+        model = NsClass
+        fields = [
+            "ns_class",
+            "ns_subclass",
+            "ns_family",
         ]
 
 
