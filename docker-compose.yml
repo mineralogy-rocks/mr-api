@@ -1,7 +1,7 @@
 version: "3"
 services:
 
-    nginx-dev: # A Web Server
+    nginx-dev:
         container_name: nginx-dev
         restart: unless-stopped
         image: nginx:stable-alpine
@@ -10,7 +10,7 @@ services:
         command: >
             /bin/sh -c "envsubst '$${DOMAIN}' < /etc/nginx/nginx.template > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"
         env_file:
-            - ./.dev.env
+            - ./.envs/.local/.nginx
         volumes:
             - ./nginx/dev/nginx.template:/etc/nginx/nginx.template:ro
 
@@ -18,32 +18,37 @@ services:
             - ./nginx/_data/media:/var/www/media
             - ./nginx/_data/static:/var/www/static
 
-    database: # Local Development Database
+    database:
         container_name: database
-        image: postgres:13
+        build:
+          context: .
+          dockerfile: ./compose/local/db/Dockerfile
         restart: unless-stopped
-        ports:
-            - "5432:5432"
         volumes:
             - ./db/services/dump_db.sh:/dump_db.sh:ro
             - ./db/services/restore_db.sh:/restore_db.sh:ro
 
             - database-data:/var/lib/postgresql/data/
-            - ./db/backup:/backup
+            - ./db/backups:/backups
             - ./sql/:/sql
         env_file:
-            - ./.dev.env
+            - ./.envs/.local/.db
+        ports:
+            - "5432:5432"
 
-    backend: # The back-end of the project
+    backend:
         container_name: backend
         build:
             context: .
-            dockerfile: Dockerfile
+            dockerfile: ./compose/local/backend/Dockerfile
+        command: /start.sh
+        platform: linux/x86_64
         restart: unless-stopped
-        # command: gunicorn wsgi:application --pythonpath 'src' --bind 0.0.0.0:8000 --worker-class=gevent --worker-connections=1000 --workers=5 --log-level debug
-        # command: python manage.py runserver 0.0.0.0:8000
+        depends_on:
+            - database
         env_file:
-            - ./.dev.env
+            - ./.envs/.local/.backend
+            - ./.envs/.local/.db
         ports:
             - "8000:8000"
         volumes:
