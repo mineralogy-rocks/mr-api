@@ -2,7 +2,7 @@
 # BUILDER #
 ###########
 
-ARG PYTHON_VERSION=python:3.8.3-alpine
+ARG PYTHON_VERSION=3.8.3-alpine
 
 FROM python:${PYTHON_VERSION} as python
 
