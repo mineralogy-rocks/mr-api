@@ -11,7 +11,7 @@ on:
     paths:
       - '.github/workflows/**'
       - 'k8s/**'
-      - 'Dockerfile.prod'
+      - 'compose/production/**'
       - 'src/**'
 
   # Allows you to run this workflow manually from the Actions tab
@@ -40,7 +40,7 @@ jobs:
 
       - name: Build images
         run: |
-          docker build -f $GITHUB_WORKSPACE/Dockerfile.prod -t ${{ env.BACKEND_IMAGE }}:$(echo $GITHUB_SHA | head -c7) .
+          docker build -f $GITHUB_WORKSPACE/compose/production/backend/Dockerfile -t ${{ env.BACKEND_IMAGE }}:$(echo $GITHUB_SHA | head -c7) .
 
       - name: Log in to DO Container Registry
         run: doctl registry login --expiry-seconds 800

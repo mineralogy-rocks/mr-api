@@ -7,26 +7,21 @@ stop-db:
 	docker-compose stop database
 
 dump-prod-db:
-	$(eval include .prod.env)
-	$(eval export $(shell sed 's/=.*//' .prod.env))
+	$(eval include ./.envs/.prod/.db)
+	$(eval export $(shell sed 's/=.*//' ./.envs/.prod/.db))
 
-	@echo "--> Dumping prod database..."
+	docker-compose -f docker-compose.yml run \
+		-e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
+		-e POSTGRES_HOST=${POSTGRES_HOST} \
+		-e POSTGRES_PORT=${POSTGRES_PORT} \
+		-e POSTGRES_USER=${POSTGRES_USER} \
+		-e POSTGRES_DB=${POSTGRES_DB} --rm --no-deps database backup
 
-	docker-compose -f docker-compose.yml run -e PGPASSWORD=${POSTGRES_PASSWORD} --rm --no-deps database \
-		pg_dump --host=${POSTGRES_HOST} \
-				--port=${POSTGRES_PORT} \
-				--dbname=${POSTGRES_DB} \
-				--user=${POSTGRES_USER} \
-				--clean --no-owner --no-privileges > ./db/backup/db__`date +%d.%m.%Y__%H-%M`.sql
+backups:
+	docker-compose -f docker-compose.yml run --rm database backups
 
 restore-local-db:
-	$(eval include .dev.env)
-	$(eval export $(shell sed 's/=.*//' .dev.env))
-
-	@echo "--> Restoring local database..."
-
-	docker-compose -f docker-compose.yml run --rm --no-deps database \
-		psql "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:${POSTGRES_PORT}/${POSTGRES_DB}" -Fc < ${file}
+	docker-compose -f docker-compose.yml run --rm database restore "${backup}"
 
 run-sql:
 ifdef file

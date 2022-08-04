@@ -3,8 +3,7 @@ venv
 __pycache__/
 /static
 /media
-kubernetes/postgres/secrets.yaml
-kubernetes/aws/secrets.yaml
 /*.env
-db/backup/*.sql
+db/backups/*.sql
 nginx/_data/*
+.envs/
