@@ -114,7 +114,7 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
         BrowsableAPIRenderer,
     ]
     permission_classes = [
-        # IsAuthenticated,
+        IsAuthenticated,
     ]
     authentication_classes = [
         SessionAuthentication,
