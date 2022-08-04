@@ -60,6 +60,8 @@ COPY --chown=backend:backend ./compose/production/backend/start.sh /start.sh
 RUN sed -i 's/\r$//g' /start.sh
 RUN chmod +x /start.sh
 
+COPY . $APP_HOME
+
 # make backend owner of the WORKDIR directory as well.
 RUN chown backend:backend ${APP_HOME}
 
