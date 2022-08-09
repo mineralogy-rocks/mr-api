@@ -421,6 +421,13 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         return super().get_serializer_class()
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.seen += 1
+        instance.save()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 

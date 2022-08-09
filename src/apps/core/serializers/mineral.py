@@ -67,6 +67,7 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
     ns_index = serializers.CharField(source="ns_index_")
     formula = serializers.CharField(source="formula_html")
     is_grouping = serializers.BooleanField()
+    seen = serializers.IntegerField()
 
     hierarchy = serializers.SerializerMethodField()
     # hierarchy = HierarchyChildrenHyperlinkSerializer(source='children_hierarchy', many=True)
@@ -79,6 +80,7 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
             "ns_index",
             "formula",
             "is_grouping",
+            "seen",
             "hierarchy",
             # 'ions',
             # 'crystal_systems',
@@ -144,6 +146,7 @@ class MineralListSerializer(serializers.ModelSerializer):
     ns_index = serializers.CharField(source="ns_index_")
     formula = serializers.CharField(source="formula_html")
     is_grouping = serializers.BooleanField()
+    seen = serializers.IntegerField()
 
     hierarchy = serializers.JSONField(source="hierarchy_")
     ions = serializers.JSONField(source="ions_")
@@ -163,6 +166,7 @@ class MineralListSerializer(serializers.ModelSerializer):
             "ns_index",
             "formula",
             "is_grouping",
+            "seen",
             "hierarchy",
             "ions",
             "crystal_systems",

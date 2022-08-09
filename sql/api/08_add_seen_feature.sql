@@ -1,0 +1,1 @@
+ALTER TABLE mineral_log ADD COLUMN seen INT DEFAULT 0;
