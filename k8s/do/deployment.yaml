@@ -18,7 +18,7 @@ spec:
         - image: <IMAGE>
           imagePullPolicy: IfNotPresent
           name: mr-api
-          command: ['start.sh']
+          command: ['/bin/bash', 'start.sh']
           envFrom:
             - secretRef:
                 name: mr-api-secret
