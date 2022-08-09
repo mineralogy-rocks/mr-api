@@ -18,8 +18,8 @@ spec:
         - image: <IMAGE>
           # imagePullPolicy: Always
           name: mr-api
-          command: ['/bin/sh', '../../start.sh']
-          # command: ["gunicorn", "wsgi:application", "--pythonpath", "src", "--bind", "0.0.0.0:8000", "--worker-class", "gevent", "--worker-connections", "1000", "--workers", "3"]
+          # command: ['/bin/sh', '../../start.sh']
+          command: ["gunicorn", "wsgi:application", "--pythonpath", "src", "--bind", "0.0.0.0:8000", "--worker-class", "gevent", "--worker-connections", "1000", "--workers", "3"]
           envFrom:
             - secretRef:
                 name: mr-api-secret
