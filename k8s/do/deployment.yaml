@@ -16,9 +16,9 @@ spec:
     spec:
       containers:
         - image: <IMAGE>
-          # imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           name: mr-api
-          command: ["gunicorn", "wsgi:application", "--pythonpath", "src", "--bind", "0.0.0.0:8000", "--worker-class", "gevent", "--worker-connections", "1000", "--workers", "3"]
+          command: ['start.sh']
           envFrom:
             - secretRef:
                 name: mr-api-secret
