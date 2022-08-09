@@ -57,6 +57,7 @@ class Mineral(Nameable, Creatable, Updatable):
         related_name="minerals",
     )
     ns_mineral = models.CharField(max_length=10, blank=True, null=True)
+    seen = models.IntegerField(default=0)
 
     discovery_countries = models.ManyToManyField(Country, through="MineralCountry")
     statuses = models.ManyToManyField(Status, through="MineralStatus")
