@@ -151,7 +151,6 @@ class MineralListSerializer(serializers.ModelSerializer):
     hierarchy = serializers.JSONField(source="hierarchy_")
     ions = serializers.JSONField(source="ions_")
     crystal_systems = serializers.JSONField(source="crystal_systems_")
-    colors = serializers.JSONField(source="colors_")
     statuses = serializers.JSONField(source="statuses_")
     relations = serializers.JSONField(source="relations_")
     discovery_countries = serializers.JSONField(source="discovery_countries_")
@@ -170,7 +169,6 @@ class MineralListSerializer(serializers.ModelSerializer):
             "hierarchy",
             "ions",
             "crystal_systems",
-            "colors",
             "statuses",
             "relations",
             "discovery_countries",
