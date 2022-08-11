@@ -572,35 +572,6 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                         (
                             SELECT COALESCE(json_agg(temp_), '[]'::json)
                             FROM (
-                                SELECT cl.id, cl.name, cl.code, COUNT(cl.id) AS counts
-                                FROM mineral_color mc
-                                INNER JOIN color_list cl ON mc.color_id = cl.id
-                                INNER JOIN mineral_hierarchy mh ON mh.mineral_id = mc.mineral_id
-                                WHERE mh.parent_id  = ml.id
-                                GROUP BY cl.id
-                                ORDER BY counts DESC
-                            ) temp_
-                        )
-                    ELSE
-                        (
-                           SELECT COALESCE(json_agg(temp_), '[]'::json)
-                           FROM (
-                                SELECT cl.id, cl.name, cl.code, COUNT(cl.id) AS counts
-                                FROM mineral_color mc
-                                INNER JOIN color_list cl ON mc.color_id = cl.id
-                                WHERE mc.mineral_id  = ml.id
-                                GROUP BY cl.id
-                                ORDER BY id
-                            ) temp_
-                        )
-                END AS colors_,
-
-                CASE
-                    WHEN ml.is_grouping
-                    THEN
-                        (
-                            SELECT COALESCE(json_agg(temp_), '[]'::json)
-                            FROM (
                                 SELECT csl.id, csl.name, COUNT(DISTINCT mh.mineral_id) AS counts
                                 FROM mineral_crystallography mc
                                 INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
