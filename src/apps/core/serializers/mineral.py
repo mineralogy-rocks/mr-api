@@ -7,9 +7,11 @@ from rest_framework import serializers
 from ..models.core import Status
 from ..models.crystal import CrystalSystem
 from ..models.mineral import Mineral
+from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHierarchy
 from ..models.mineral import MineralHistory
 from ..models.mineral import MineralIonPosition
+from .core import FormulaSourceSerializer
 from .crystal import CrystalSystemSerializer
 from .ion import MineralIonPositionSerializer
 
@@ -59,6 +61,23 @@ class HierarchyChildrenHyperlinkSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "url",
+        ]
+
+
+class MineralFormulaSerializer(serializers.ModelSerializer):
+
+    formula = serializers.CharField()
+    note = serializers.CharField()
+    source = FormulaSourceSerializer()
+    created_at = serializers.DjangoModelField()
+
+    class Meta:
+        model = MineralFormula
+        fields = [
+            "formula",
+            "note",
+            "source",
+            "created_at",
         ]
 
 
@@ -144,7 +163,8 @@ class MineralListSerializer(serializers.ModelSerializer):
 
     url = serializers.URLField(source="get_absolute_url")
     ns_index = serializers.CharField(source="ns_index_")
-    formula = serializers.CharField(source="formula_html")
+    formulas = MineralFormulaSerializer(many=True)
+    description = serializers.CharField()
     is_grouping = serializers.BooleanField()
     seen = serializers.IntegerField()
 
@@ -163,7 +183,8 @@ class MineralListSerializer(serializers.ModelSerializer):
             "name",
             "url",
             "ns_index",
-            "formula",
+            "formulas",
+            "description",
             "is_grouping",
             "seen",
             "hierarchy",
@@ -174,6 +195,19 @@ class MineralListSerializer(serializers.ModelSerializer):
             "discovery_countries",
             "history",
         ]
+
+    @staticmethod
+    def setup_eager_loading(**kwargs):
+        queryset = kwargs.get("queryset")
+
+        select_related = []
+
+        prefetch_related = ["formulas__source"]
+
+        queryset = queryset.select_related(*select_related).prefetch_related(
+            *prefetch_related
+        )
+        return queryset
 
     def get_ions(self, instance):
         output = MineralIonPositionSerializer(instance.positions, many=True).data

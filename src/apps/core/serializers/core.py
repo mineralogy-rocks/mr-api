@@ -3,6 +3,7 @@ from django.db.models import Prefetch
 from rest_framework import serializers
 
 from ..models.core import Country
+from ..models.core import FormulaSource
 from ..models.core import NsClass
 from ..models.core import NsFamily
 from ..models.core import NsSubclass
@@ -168,3 +169,13 @@ class RelationListSerializer(serializers.ModelSerializer):
     class Meta:
         model = RelationType
         fields = ["type", "note"]
+
+
+class FormulaSourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FormulaSource
+        fields = [
+            "id",
+            "name",
+            "url",
+        ]

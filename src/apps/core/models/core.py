@@ -162,3 +162,18 @@ class Country(BaseModel, Nameable):
 
     def __str__(self):
         return self.name
+
+
+class FormulaSource(BaseModel, Nameable):
+
+    url = models.URLField()
+
+    class Meta:
+        managed = False
+        db_table = "formula_source_list"
+
+        verbose_name = "Formula Source"
+        verbose_name_plural = "Formula Sources"
+
+    def __str__(self):
+        return self.name

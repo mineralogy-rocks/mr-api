@@ -6,4 +6,4 @@ __pycache__/
 /*.env
 db/backups/*.sql
 nginx/_data/*
-.envs/
+.envs/.prod/*
