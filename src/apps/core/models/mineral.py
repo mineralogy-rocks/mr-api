@@ -4,12 +4,12 @@ import uuid
 from django.db import models
 from django.urls import reverse
 
-from ..utils import formula_to_html
 from .base import BaseModel
 from .base import Creatable
 from .base import Nameable
 from .base import Updatable
 from .core import Country
+from .core import FormulaSource
 from .core import NsClass
 from .core import NsFamily
 from .core import NsSubclass
@@ -26,9 +26,7 @@ class Mineral(Nameable, Creatable, Updatable):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
 
-    formula = models.TextField(blank=True, null=True)
     note = models.TextField(blank=True, null=True)
-
     ns_class = models.ForeignKey(
         NsClass,
         models.CASCADE,
@@ -58,10 +56,12 @@ class Mineral(Nameable, Creatable, Updatable):
     )
     ns_mineral = models.CharField(max_length=10, blank=True, null=True)
     seen = models.IntegerField(default=0)
+    description = models.TextField(null=True, blank=True)
+    mindat_id = models.IntegerField(blank=True, null=True)
+    ima_symbol = models.CharField(max_length=12, null=True, blank=True)
 
     discovery_countries = models.ManyToManyField(Country, through="MineralCountry")
     statuses = models.ManyToManyField(Status, through="MineralStatus")
-
     impurities = models.ManyToManyField(
         Ion, through="MineralImpurity", related_name="impurities"
     )
@@ -101,9 +101,6 @@ class Mineral(Nameable, Creatable, Updatable):
         else:
             return None
 
-    def formula_html(self):
-        return formula_to_html(self.formula)
-
     def _statuses(self):
         if self.statuses:
             return "; ".join(
@@ -111,7 +108,6 @@ class Mineral(Nameable, Creatable, Updatable):
             )
 
     ns_index.short_description = "Nickel-Strunz Index"
-    formula_html.short_description = "Formula"
     _statuses.short_description = "Mineral Statuses"
 
 
@@ -132,6 +128,29 @@ class MineralStatus(BaseModel, Creatable, Updatable):
 
     def __str__(self):
         return "{} - {}".format(self.mineral, self.status)
+
+
+class MineralFormula(BaseModel, Creatable):
+
+    mineral = models.ForeignKey(
+        Mineral, models.CASCADE, db_column="mineral_id", related_name="formulas"
+    )
+    formula = models.CharField(max_length=1000, null=True, blank=True)
+    note = models.TextField(null=True, blank=True)
+    source = models.ForeignKey(
+        FormulaSource, models.CASCADE, db_column="source_id", related_name="minerals"
+    )
+    show_on_site = models.BooleanField(default=False)
+
+    class Meta:
+        managed = False
+        db_table = "mineral_formula"
+
+        verbose_name = "Formula"
+        verbose_name_plural = "Formulas"
+
+    def __str__(self):
+        return self.formula
 
 
 class MineralRelation(BaseModel):
@@ -287,6 +306,11 @@ class MineralHistory(BaseModel):
     discovery_year_max = models.IntegerField(blank=True, null=True)
     discovery_year_note = models.TextField(blank=True, null=True)
 
+    discovery_year = models.SmallIntegerField(blank=True, null=True)
+    ima_year = models.SmallIntegerField(blank=True, null=True)
+    publication_year = models.SmallIntegerField(blank=True, null=True)
+    approval_year = models.SmallIntegerField(blank=True, null=True)
+
     certain = models.BooleanField(null=False, default=True)
     first_usage_date = models.TextField(blank=True, null=True)
     first_known_use = models.TextField(blank=True, null=True)
@@ -294,15 +318,8 @@ class MineralHistory(BaseModel):
     class Meta:
         managed = False
         db_table = "mineral_history"
-        verbose_name_plural = "MineralHistory"
-
-    @property
-    def discovery_year(self):
-        if self.discovery_year_min and self.discovery_year_max:
-            return "{}-{}".format(
-                str(self.discovery_year_min), str(self.discovery_year_max)
-            )
-        return self.discovery_year_min
+        verbose_name = "Discovery Context"
+        verbose_name_plural = "Discovery contexts"
 
 
 class MineralHierarchy(BaseModel):
