@@ -4,6 +4,7 @@ import uuid
 from django.db import models
 from django.urls import reverse
 
+from ..utils import formula_to_html
 from .base import BaseModel
 from .base import Creatable
 from .base import Nameable
@@ -150,6 +151,8 @@ class MineralFormula(BaseModel, Creatable):
         verbose_name_plural = "Formulas"
 
     def __str__(self):
+        if self.source == 1:
+            return formula_to_html(self.formula)
         return self.formula
 
 

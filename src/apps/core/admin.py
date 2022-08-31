@@ -1,11 +1,16 @@
 # -*- coding: UTF-8 -*-
 from django.contrib import admin
+from django.utils.safestring import mark_safe
 
+from .inlines import MineralFormulaInline
+from .inlines import MineralStatusInline
+from .models.core import FormulaSource
 from .models.core import NsClass
 from .models.core import NsFamily
 from .models.core import NsSubclass
 from .models.core import Status
 from .models.core import StatusGroup
+from .models.mineral import Mineral
 
 
 @admin.register(StatusGroup)
@@ -35,6 +40,20 @@ class StatusAdmin(admin.ModelAdmin):
     list_select_related = ["status_group"]
 
     list_filter = ["status_group"]
+    search_fields = ["group", "status_id", "description_short", "description_long"]
+
+
+@admin.register(FormulaSource)
+class FormulaSourceAdmin(admin.ModelAdmin):
+    list_display = [
+        "id",
+        "name",
+        "url",
+    ]
+
+    list_display_links = ["id"]
+
+    list_filter = ["name"]
 
 
 @admin.register(NsClass)
@@ -82,6 +101,46 @@ class NsFamilyAdmin(admin.ModelAdmin):
     list_filter = [
         "ns_class",
     ]
+
+
+@admin.register(Mineral)
+class MineralAdmin(admin.ModelAdmin):
+
+    date_hierarchy = "updated_at"
+
+    list_display = [
+        "name",
+        "ima_symbol",
+        "ns_index",
+        "description_",
+    ]
+
+    list_filter = ["statuses", "ns_class"]
+
+    list_display_links = ["name"]
+    list_select_related = [
+        "ns_class",
+        "ns_subclass",
+        "ns_family",
+    ]
+    readonly_fields = [
+        "created_at",
+        "updated_at",
+    ]
+
+    ordering = [
+        "name",
+        "updated_at",
+    ]
+    search_fields = [
+        "name",
+    ]
+
+    inlines = [MineralStatusInline, MineralFormulaInline]
+
+    @admin.display(description="Description")
+    def description_(self, instance):
+        return mark_safe(instance.description) if instance.description else ""
 
 
 # # Register your models here.
