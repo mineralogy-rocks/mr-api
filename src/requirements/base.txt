@@ -1,5 +1,5 @@
 asgiref==3.5.2
-astroid==2.12.4
+astroid==2.12.5
 black==22.6.0
 boto3==1.24.64
 botocore==1.27.64
