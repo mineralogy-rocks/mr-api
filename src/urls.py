@@ -23,6 +23,7 @@ from drf_spectacular.views import SpectacularSwaggerView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("_nested_admin/", include("nested_admin.urls")),
     path("", include("core.urls")),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

@@ -5,10 +5,12 @@ boto3==1.24.66
 botocore==1.27.66
 certifi==2022.6.15
 Django==4.1.1
+django-autocomplete-light==3.9.4
 django-cors-headers==3.13.0
 django-environ==0.9.0
 django-filter==22.1
 django-storages==1.13.1
+django-nested-admin==3.4.0
 djangorestframework==3.13.1
 djangorestframework-simplejwt==5.2.0
 drf-spectacular==0.23.1

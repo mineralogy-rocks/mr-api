@@ -1,7 +1,10 @@
 # -*- coding: UTF-8 -*-
 import uuid
 
+from django.conf import settings
+from django.contrib import admin
 from django.db import models
+from django.db.models import Q
 from django.urls import reverse
 
 from ..utils import formula_to_html
@@ -14,7 +17,6 @@ from .core import FormulaSource
 from .core import NsClass
 from .core import NsFamily
 from .core import NsSubclass
-from .core import RelationType
 from .core import Status
 from .crystal import CrystalClass
 from .crystal import CrystalSystem
@@ -27,7 +29,11 @@ class Mineral(Nameable, Creatable, Updatable):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
 
-    note = models.TextField(blank=True, null=True)
+    note = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Please, leave your notes about the specie here.",
+    )
     ns_class = models.ForeignKey(
         NsClass,
         models.CASCADE,
@@ -56,19 +62,38 @@ class Mineral(Nameable, Creatable, Updatable):
         related_name="minerals",
     )
     ns_mineral = models.CharField(max_length=10, blank=True, null=True)
-    seen = models.IntegerField(default=0)
-    description = models.TextField(null=True, blank=True)
+    seen = models.IntegerField(
+        default=0,
+        help_text="Number of times this specie was retrieved by API and clients.",
+    )
+    description = models.TextField(
+        null=True, blank=True, help_text="Description from mindat.org"
+    )
     mindat_id = models.IntegerField(blank=True, null=True)
-    ima_symbol = models.CharField(max_length=12, null=True, blank=True)
+    ima_symbol = models.CharField(
+        max_length=12, null=True, blank=True, help_text="Official IMA symbol."
+    )
 
     discovery_countries = models.ManyToManyField(Country, through="MineralCountry")
-    statuses = models.ManyToManyField(Status, through="MineralStatus")
+    statuses = models.ManyToManyField(
+        Status,
+        through="MineralStatus",
+        through_fields=(
+            "mineral",
+            "status",
+        ),
+    )
     impurities = models.ManyToManyField(
         Ion, through="MineralImpurity", related_name="impurities"
     )
     ion_positions = models.ManyToManyField(IonPosition, through="MineralIonPosition")
     crystal_systems = models.ManyToManyField(
         CrystalSystem, through="MineralCrystallography"
+    )
+
+    relations = models.ManyToManyField(
+        "self",
+        through="MineralRelation",
     )
 
     class Meta:
@@ -87,6 +112,7 @@ class Mineral(Nameable, Creatable, Updatable):
     def get_absolute_url(self):
         return reverse("core:mineral-detail", kwargs={"pk": self.id})
 
+    @admin.display(description="Nickel-Strunz Index")
     def ns_index(self):
         if self.ns_class:
             return "{ns_class}.{ns_subclass}{ns_family}.{ns_mineral}".format(
@@ -108,15 +134,48 @@ class Mineral(Nameable, Creatable, Updatable):
                 [str(status.status.status_id) for status in self.statuses.all()]
             )
 
-    ns_index.short_description = "Nickel-Strunz Index"
-    _statuses.short_description = "Mineral Statuses"
-
 
 class MineralStatus(BaseModel, Creatable, Updatable):
 
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id")
+    mineral = models.ForeignKey(
+        Mineral, models.CASCADE, db_column="mineral_id", related_name="direct_relations"
+    )
     status = models.ForeignKey(
-        Status, models.CASCADE, db_column="status_id", related_name="minerals"
+        Status,
+        models.CASCADE,
+        db_column="status_id",
+        related_name="minerals",
+        help_text="A classification status of species.",
+    )
+    needs_revision = models.BooleanField(
+        default=False, null=False, help_text="Does the entry need a revision?"
+    )
+    note = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Please, leave your notes about the status here.",
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        db_column="author_id",
+        null=True,
+        help_text="Author of the last update.",
+    )
+    direct_status = models.BooleanField(
+        default=True,
+        null=False,
+        help_text="If checked, means the current species is a synonym/variety/polytype of related species.\n"
+        "Otherwise, means the related species are synonyms/varieties/polytypes of current species.",
+    )
+
+    relations = models.ManyToManyField(
+        Mineral,
+        through="MineralRelation",
+        through_fields=(
+            "status",
+            "relation",
+        ),
     )
 
     class Meta:
@@ -131,17 +190,137 @@ class MineralStatus(BaseModel, Creatable, Updatable):
         return "{} - {}".format(self.mineral, self.status)
 
 
+class MineralRelation(BaseModel):
+
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id")
+    status = models.ForeignKey(
+        MineralStatus,
+        models.CASCADE,
+        null=True,
+        db_column="mineral_status_id",
+    )
+    relation = models.ForeignKey(
+        Mineral,
+        models.CASCADE,
+        db_column="relation_id",
+        related_name="inverse_relations",
+    )
+    note = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Please, leave your notes about the relation here.",
+    )
+
+    class Meta:
+        managed = False
+        db_table = "mineral_relation"
+        unique_together = (
+            "mineral",
+            "status",
+            "relation",
+        )
+
+        verbose_name = "Relation"
+        verbose_name_plural = "Relations"
+
+    def __str__(self):
+        return self.relation.name
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        status = None
+
+        if self.status:
+            opposite_status = not self.status.direct_status
+            status, exists = MineralStatus.objects.get_or_create(
+                mineral=self.relation,
+                status=self.status.status,
+                direct_status=opposite_status,
+                defaults={
+                    "needs_revision": self.status.needs_revision,
+                    "author": self.status.author,
+                },
+            )
+
+        MineralRelation.objects.get_or_create(
+            mineral=self.relation,
+            status=status,
+            relation=self.mineral,
+        )
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+
+        all_opposite_relations = MineralRelation.objects.filter(
+            Q(mineral=self.relation) & Q(status__status=self.status.status)
+        )
+
+        adjacent_relations = all_opposite_relations.filter(Q(relation=self.mineral))
+
+        if all_opposite_relations.count() == adjacent_relations.count():
+            for relation in all_opposite_relations:
+                if not relation.status.direct_status:
+                    relation.status.delete()
+
+        adjacent_relations.delete()
+
+
+class MineralRelationSuggestion(BaseModel):
+
+    mineral = models.ForeignKey(
+        Mineral,
+        models.CASCADE,
+        db_column="mineral_id",
+        related_name="suggested_relations",
+    )
+    relation = models.ForeignKey(
+        Mineral,
+        models.CASCADE,
+        db_column="relation_id",
+        related_name="suggested_inverse_relations",
+    )
+    relation_type = models.IntegerField(
+        null=True,
+        db_column="relation_type_id",
+        help_text="Relation type according to mindat.",
+    )
+    is_processed = models.BooleanField(
+        null=False, default=False, help_text="Is the suggestion processed?"
+    )
+
+    class Meta:
+        managed = False
+        db_table = "mineral_relation_suggestion"
+        unique_together = (
+            "mineral",
+            "relation",
+            "relation_type",
+        )
+
+        verbose_name = "Relation Suggestion"
+        verbose_name_plural = "Relation Syggestions"
+
+
 class MineralFormula(BaseModel, Creatable):
 
     mineral = models.ForeignKey(
         Mineral, models.CASCADE, db_column="mineral_id", related_name="formulas"
     )
-    formula = models.CharField(max_length=1000, null=True, blank=True)
+    formula = models.CharField(
+        max_length=1000,
+        null=True,
+        blank=True,
+        help_text="Mineral formula in different formats.",
+    )
     note = models.TextField(null=True, blank=True)
     source = models.ForeignKey(
         FormulaSource, models.CASCADE, db_column="source_id", related_name="minerals"
     )
-    show_on_site = models.BooleanField(default=False)
+    show_on_site = models.BooleanField(
+        default=False,
+        help_text="Whether a specific formula has a priority over the others and thefore should be shown on site.",
+    )
 
     class Meta:
         managed = False
@@ -154,50 +333,6 @@ class MineralFormula(BaseModel, Creatable):
         if self.source == 1:
             return formula_to_html(self.formula)
         return self.formula
-
-
-class MineralRelation(BaseModel):
-
-    mineral = models.ForeignKey(
-        Mineral, models.CASCADE, db_column="mineral_id", related_name="relations"
-    )
-    status = models.ForeignKey(
-        MineralStatus, on_delete=models.CASCADE, db_column="mineral_status_id"
-    )
-    relation = models.ForeignKey(
-        Mineral,
-        models.CASCADE,
-        db_column="relation_id",
-        related_name="inverse_relations",
-    )
-    relation_type = models.ForeignKey(
-        RelationType,
-        models.CASCADE,
-        db_column="relation_type_id",
-        null=False,
-        blank=False,
-    )
-
-    relation_note = models.TextField(blank=True, null=True)
-    direct_relation = models.BooleanField(null=False)
-
-    class Meta:
-        managed = False
-        db_table = "mineral_relation"
-        unique_together = (
-            "mineral",
-            "status",
-            "relation",
-            "relation_type",
-            "relation_note",
-            "direct_relation",
-        )
-
-        verbose_name = "Relation"
-        verbose_name_plural = "Relations"
-
-    def __str__(self):
-        return self.relation.name
 
 
 class MineralImpurity(BaseModel):
