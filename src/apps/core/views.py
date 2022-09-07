@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+from dal import autocomplete
 from django.db.models import Case
 from django.db.models import CharField
 from django.db.models import Count
@@ -41,6 +42,19 @@ from .serializers.core import NsSubclassListSerializer
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRetrieveSerializer
+
+
+class MineralSearch(autocomplete.Select2QuerySetView):
+    def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return Mineral.objects.none()
+
+        qs = Mineral.objects.all()
+
+        if self.q:
+            qs = qs.filter(Q(name__istartswith=self.q))
+
+        return qs
 
 
 class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
@@ -501,14 +515,12 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                             SELECT COALESCE(json_agg(temp_), '[]'::json)
                             FROM (
                                 SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id, counts, status_group FROM (
-                                    SELECT COUNT(mr.mineral_id) AS counts, to_jsonb(sgl) AS status_group
-                                    FROM mineral_relation mr
-                                    INNER JOIN mineral_status ms ON mr.mineral_status_id = ms.id
+                                    SELECT COUNT(ms.relation_id) AS counts, to_jsonb(sgl) AS status_group
+                                    FROM mineral_status ms
                                     INNER JOIN status_list sl ON ms.status_id = sl.id
                                     INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
-                                    WHERE mr.direct_relation AND
-                                        mr.mineral_id = ml.id AND
-                                        mr.relation_type_id = 1 AND
+                                    WHERE ms.direct_relation AND
+                                        ms.mineral_id = ml.id AND
                                         sgl.id  IN (1, 4)
                                     GROUP BY sgl.id
                                     UNION

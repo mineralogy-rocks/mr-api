@@ -1,8 +1,13 @@
 # -*- coding: UTF-8 -*-
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
+from nested_admin import NestedModelAdmin
 
+from .forms import MineralRelationFormset
+from .inlines import MineralDirectRelationSuggestionInline
 from .inlines import MineralFormulaInline
+from .inlines import MineralReverseRelationSuggestionInline
 from .inlines import MineralStatusInline
 from .models.core import FormulaSource
 from .models.core import NsClass
@@ -104,15 +109,17 @@ class NsFamilyAdmin(admin.ModelAdmin):
 
 
 @admin.register(Mineral)
-class MineralAdmin(admin.ModelAdmin):
+class MineralAdmin(NestedModelAdmin):
+
+    empty_value_display = ""
 
     date_hierarchy = "updated_at"
 
     list_display = [
         "name",
-        "ima_symbol",
         "ns_index",
         "description_",
+        "mindat_link",
     ]
 
     list_filter = ["statuses", "ns_class"]
@@ -123,9 +130,32 @@ class MineralAdmin(admin.ModelAdmin):
         "ns_subclass",
         "ns_family",
     ]
-    readonly_fields = [
+
+    fields = [
+        "id",
+        "name",
+        "ima_symbol",
+        "seen",
+        "note",
+        "description_",
+        "mindat_link",
+        "duckduckgo_link",
+        "ns_class",
+        "ns_subclass",
+        "ns_family",
+        "ns_mineral",
         "created_at",
         "updated_at",
+    ]
+
+    readonly_fields = [
+        "id",
+        "seen",
+        "description_",
+        "created_at",
+        "updated_at",
+        "mindat_link",
+        "duckduckgo_link",
     ]
 
     ordering = [
@@ -135,12 +165,80 @@ class MineralAdmin(admin.ModelAdmin):
     search_fields = [
         "name",
     ]
+    search_help_text = "Fuzzy search against the species names."
 
-    inlines = [MineralStatusInline, MineralFormulaInline]
+    inlines = [
+        MineralStatusInline,
+        MineralDirectRelationSuggestionInline,
+        MineralReverseRelationSuggestionInline,
+        MineralFormulaInline,
+    ]
+
+    @admin.display(description="Mindat Ref")
+    def mindat_link(self, instance):
+        if instance.mindat_id:
+            return mark_safe(
+                '<a href="https://www.mindat.org/min-'
+                + str(instance.mindat_id)
+                + '.html" target="_blank">see on mindat</a>'
+            )
+
+    @admin.display(description="Search on DuckDuckGo")
+    def duckduckgo_link(self, instance):
+        if instance:
+            return mark_safe(
+                '<a href="https://www.duckduckgo.org/?q='
+                + str(instance.name)
+                + '" target="_blank">'
+                + str(instance.name)
+                + "</a>"
+            )
 
     @admin.display(description="Description")
     def description_(self, instance):
         return mark_safe(instance.description) if instance.description else ""
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        select_related = [
+            "ns_class",
+            "ns_subclass",
+            "ns_family",
+        ]
+        prefetch_related = []
+        return queryset.select_related(*select_related).prefetch_related(
+            *prefetch_related
+        )
+
+    def add_view(self, request, form_url="", extra_context=None):
+        self.readonly_fields = [
+            "id",
+            "seen",
+            "description_",
+            "created_at",
+            "updated_at",
+            "mindat_link",
+            "duckduckgo_link",
+        ]
+        return super().add_view(request, form_url, extra_context)
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        self.readonly_fields += [
+            "name",
+            "ima_symbol",
+        ]
+        return super().change_view(request, object_id, form_url, extra_context)
+
+    def save_related(self, request, form, formsets, change):
+        for formset in formsets:
+            if isinstance(formset, MineralRelationFormset):
+                instances = formset.save(commit=False)
+                for instance in instances:
+                    instance.mineral = form.instance
+                    if instance.mineral == instance.relation:
+                        # TODO: pass error to MineralRelationForm directly
+                        raise ValidationError("Mineral cannot be related to itself.")
+        super().save_related(request, form, formsets, change)
 
 
 # # Register your models here.
@@ -518,3 +616,4 @@ class MineralAdmin(admin.ModelAdmin):
 
 admin.site.site_header = "Mineralogy.rocks"
 admin.site.index_title = "Administration"
+admin.site.disable_action("delete_selected")
