@@ -187,7 +187,7 @@ class MineralStatus(BaseModel, Creatable, Updatable):
         verbose_name_plural = "Statuses"
 
     def __str__(self):
-        return "{} - {}".format(self.mineral, self.status)
+        return self.mineral.name + " " + self.status.description_short
 
 
 class MineralRelation(BaseModel):
@@ -301,6 +301,9 @@ class MineralRelationSuggestion(BaseModel):
         verbose_name = "Relation Suggestion"
         verbose_name_plural = "Relation Syggestions"
 
+    def __str__(self):
+        return self.mineral.name
+
 
 class MineralFormula(BaseModel, Creatable):
 
@@ -332,7 +335,7 @@ class MineralFormula(BaseModel, Creatable):
     def __str__(self):
         if self.source == 1:
             return formula_to_html(self.formula)
-        return self.formula
+        return self.formula or self.note
 
 
 class MineralImpurity(BaseModel):
