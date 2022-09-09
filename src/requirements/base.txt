@@ -3,7 +3,7 @@ astroid==2.12.9
 black==22.8.0
 boto3==1.24.69
 botocore==1.27.66
-certifi==2022.6.15
+certifi==2022.6.15.1
 Django==4.1.1
 django-autocomplete-light==3.9.4
 django-cors-headers==3.13.0
