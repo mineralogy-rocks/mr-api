@@ -11,6 +11,8 @@ from .forms import MineralRelationFormset
 from .forms import MineralRelationSuggestionForm
 from .forms import MineralStatusForm
 from .forms import MineralStatusFormset
+from .forms import ModelChoiceField
+from .models.core import Status
 from .models.mineral import MineralFormula
 from .models.mineral import MineralRelation
 from .models.mineral import MineralRelationSuggestion
@@ -119,7 +121,13 @@ class MineralDirectRelationSuggestionInline(NestedTabularInline):
 
         class UserProvidingInlineFormSet(formset):
             def __new__(cls, *args, **kwargs):
-                kwargs["form_kwargs"] = {"user": request.user, "direct_relation": True}
+                kwargs["form_kwargs"] = {
+                    "user": request.user,
+                    "direct_relation": True,
+                    "statuses": [
+                        *ModelChoiceField(queryset=Status.objects.all()).choices
+                    ],
+                }
                 return formset(*args, **kwargs)
 
         return UserProvidingInlineFormSet
@@ -180,7 +188,13 @@ class MineralReverseRelationSuggestionInline(NestedTabularInline):
 
         class UserProvidingInlineFormSet(formset):
             def __new__(cls, *args, **kwargs):
-                kwargs["form_kwargs"] = {"user": request.user, "direct_relation": False}
+                kwargs["form_kwargs"] = {
+                    "user": request.user,
+                    "direct_relation": False,
+                    "statuses": [
+                        *ModelChoiceField(queryset=Status.objects.all()).choices
+                    ],
+                }
                 return formset(*args, **kwargs)
 
         return UserProvidingInlineFormSet
