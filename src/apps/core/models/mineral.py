@@ -207,6 +207,7 @@ class MineralRelation(BaseModel):
     )
     note = models.TextField(
         null=True,
+        blank=True,
         help_text="Please, leave your notes about the relation here.",
     )
 
