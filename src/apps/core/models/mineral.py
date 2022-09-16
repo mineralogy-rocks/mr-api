@@ -206,7 +206,6 @@ class MineralRelation(BaseModel):
         related_name="inverse_relations",
     )
     note = models.TextField(
-        blank=True,
         null=True,
         help_text="Please, leave your notes about the relation here.",
     )

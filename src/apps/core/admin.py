@@ -180,7 +180,7 @@ class MineralAdmin(NestedModelAdmin):
             return mark_safe(
                 '<a href="https://www.mindat.org/min-'
                 + str(instance.mindat_id)
-                + '.html" target="_blank">see on mindat</a>'
+                + '.html" target="_blank" rel="nofollow">see on mindat</a>'
             )
 
     @admin.display(description="Search on DuckDuckGo")
@@ -189,7 +189,7 @@ class MineralAdmin(NestedModelAdmin):
             return mark_safe(
                 '<a href="https://www.duckduckgo.org/?q='
                 + str(instance.name)
-                + '" target="_blank">'
+                + '" target="_blank" rel="nofollow">'
                 + str(instance.name)
                 + "</a>"
             )

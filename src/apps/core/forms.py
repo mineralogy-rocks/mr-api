@@ -36,11 +36,11 @@ class MineralRelationSuggestionForm(ModelForm):
         help_text="Select the status of the related mineral.",
         blank=True,
         required=False,
-        empty_label="",
+        # empty_label="",
     )
 
     note = CharField(
-        empty_value=None, widget=Textarea(attrs={"rows": 1}), required=False
+        widget=Textarea(attrs={"rows": 1}), required=False
     )
     is_processed = BooleanField(
         initial=False,
