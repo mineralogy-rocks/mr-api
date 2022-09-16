@@ -8,7 +8,7 @@ metadata:
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, HEAD, OPTIONS"
     nginx.ingress.kubernetes.io/cors-allow-origin: "https://mineralogy.rocks"
     nginx.ingress.kubernetes.io/from-to-www-redirect: "false"
-    nginx.ingress.kubernetes.io/whitelist-source-range: "158.195.0.0/16,188.167.250.0/24,87.243.88.0/24,212.5.158.0/24"
+    nginx.ingress.kubernetes.io/whitelist-source-range: "158.195.0.0/16,188.167.0.0/16,87.243.0.0/16,212.5.0.0/16"
 spec:
   tls:
   - hosts:
