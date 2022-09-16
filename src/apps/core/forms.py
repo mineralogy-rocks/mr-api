@@ -31,16 +31,16 @@ class MineralFormulaForm(ModelForm):
 class MineralRelationSuggestionForm(ModelForm):
 
     status = ModelChoiceField(
-        queryset=Status.objects.all(),
+        queryset=None,
         label="Status",
         help_text="Select the status of the related mineral.",
         blank=True,
         required=False,
-        empty_label="",
+        # empty_label="",
     )
 
     note = CharField(
-        empty_value=None, widget=Textarea(attrs={"rows": 1}), required=False
+        widget=Textarea(attrs={"rows": 1}), required=False
     )
     is_processed = BooleanField(
         initial=False,
@@ -61,7 +61,10 @@ class MineralRelationSuggestionForm(ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user")
         self.direct_relation = kwargs.pop("direct_relation")
-        return super().__init__(*args, **kwargs)
+        statuses = kwargs.pop("statuses")
+        super().__init__(*args, **kwargs)
+
+        self.fields["status"].choices = list(statuses)
 
     def save(self, commit=True):
 
@@ -163,6 +166,11 @@ class MineralStatusForm(ModelForm):
 class MineralRelationFormset(BaseInlineFormSet):
 
     model = MineralRelation
+
+
+class MineralRelationSuggestionFormset(BaseInlineFormSet):
+
+    model = MineralRelationSuggestion
 
 
 class MineralStatusFormset(BaseInlineFormSet):

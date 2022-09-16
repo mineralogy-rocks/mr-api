@@ -11,6 +11,8 @@ from .forms import MineralRelationFormset
 from .forms import MineralRelationSuggestionForm
 from .forms import MineralStatusForm
 from .forms import MineralStatusFormset
+from .forms import ModelChoiceField
+from .models.core import Status
 from .models.mineral import MineralFormula
 from .models.mineral import MineralRelation
 from .models.mineral import MineralRelationSuggestion
@@ -67,6 +69,7 @@ class MineralRelationInline(NestedStackedInline):
 class MineralDirectRelationSuggestionInline(NestedTabularInline):
     model = MineralRelationSuggestion
     form = MineralRelationSuggestionForm
+    classes = ['collapse']
 
     verbose_name = "Suggested direct relation"
     verbose_name_plural = "Suggested direct relations from mindat.org"
@@ -77,6 +80,7 @@ class MineralDirectRelationSuggestionInline(NestedTabularInline):
     fields = [
         "relation",
         "mindat_link",
+        'description',
         "relation_note",
         "status",
         "note",
@@ -85,6 +89,7 @@ class MineralDirectRelationSuggestionInline(NestedTabularInline):
     readonly_fields = [
         "relation",
         "relation_note",
+        'description',
         "mindat_link",
     ]
     ordering = [
@@ -101,13 +106,17 @@ class MineralDirectRelationSuggestionInline(NestedTabularInline):
         queryset = queryset.filter(~Q(relation_type=5))
         return queryset
 
+    @admin.display(description='Description')
+    def description(self, instance):
+        return mark_safe(instance.relation.description) if instance.relation.description else ""
+
     @admin.display(description="Mindat Ref")
     def mindat_link(self, instance):
         if instance.relation.mindat_id:
             return mark_safe(
                 '<a href="https://www.mindat.org/min-'
                 + str(instance.relation.mindat_id)
-                + '.html" target="_blank">see on mindat</a>'
+                + '.html" target="_blank" rel="nofollow">see on mindat</a>'
             )
 
     @admin.display(description="Relation note.")
@@ -119,7 +128,13 @@ class MineralDirectRelationSuggestionInline(NestedTabularInline):
 
         class UserProvidingInlineFormSet(formset):
             def __new__(cls, *args, **kwargs):
-                kwargs["form_kwargs"] = {"user": request.user, "direct_relation": True}
+                kwargs["form_kwargs"] = {
+                    "user": request.user,
+                    "direct_relation": True,
+                    "statuses": [
+                        *ModelChoiceField(queryset=Status.objects.all()).choices
+                    ],
+                }
                 return formset(*args, **kwargs)
 
         return UserProvidingInlineFormSet
@@ -128,6 +143,7 @@ class MineralDirectRelationSuggestionInline(NestedTabularInline):
 class MineralReverseRelationSuggestionInline(NestedTabularInline):
     model = MineralRelationSuggestion
     form = MineralRelationSuggestionForm
+    classes = ['collapse']
 
     verbose_name = "Suggested reverse relation"
     verbose_name_plural = "Suggested reverse relations from mindat.org"
@@ -138,6 +154,7 @@ class MineralReverseRelationSuggestionInline(NestedTabularInline):
     fields = [
         "mineral",
         "mindat_link",
+        'description',
         "relation_note",
         "status",
         "note",
@@ -147,6 +164,7 @@ class MineralReverseRelationSuggestionInline(NestedTabularInline):
         "mineral",
         "relation_note",
         "mindat_link",
+        'description',
     ]
     ordering = [
         "relation_type",
@@ -162,13 +180,17 @@ class MineralReverseRelationSuggestionInline(NestedTabularInline):
         queryset = queryset.filter(~Q(relation_type=5))
         return queryset
 
+    @admin.display(description='Description')
+    def description(self, instance):
+        return mark_safe(instance.mineral.description) if instance.mineral.description else ""
+
     @admin.display(description="Mindat Ref")
     def mindat_link(self, instance):
         if instance.mineral.mindat_id:
             return mark_safe(
                 '<a href="https://www.mindat.org/min-'
                 + str(instance.mineral.mindat_id)
-                + '.html" target="_blank">see on mindat</a>'
+                + '.html" target="_blank" rel="nofollow">see on mindat</a>'
             )
 
     @admin.display(description="Relation note.")
@@ -180,7 +202,13 @@ class MineralReverseRelationSuggestionInline(NestedTabularInline):
 
         class UserProvidingInlineFormSet(formset):
             def __new__(cls, *args, **kwargs):
-                kwargs["form_kwargs"] = {"user": request.user, "direct_relation": False}
+                kwargs["form_kwargs"] = {
+                    "user": request.user,
+                    "direct_relation": False,
+                    "statuses": [
+                        *ModelChoiceField(queryset=Status.objects.all()).choices
+                    ],
+                }
                 return formset(*args, **kwargs)
 
         return UserProvidingInlineFormSet

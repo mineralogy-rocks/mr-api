@@ -22,6 +22,7 @@ CORS_ALLOWED_ORIGINS = os.environ.get("DJANGO_CORS_ALLOWED_ORIGINS", default="")
     ","
 )
 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 3000
 
 LOGGING = {
     "version": 1,
