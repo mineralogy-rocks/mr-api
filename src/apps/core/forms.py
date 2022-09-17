@@ -39,9 +39,7 @@ class MineralRelationSuggestionForm(ModelForm):
         # empty_label="",
     )
 
-    note = CharField(
-        widget=Textarea(attrs={"rows": 1}), required=False
-    )
+    note = CharField(widget=Textarea(attrs={"rows": 1}), required=False)
     is_processed = BooleanField(
         initial=False,
         label="Accept relation suggestion",
