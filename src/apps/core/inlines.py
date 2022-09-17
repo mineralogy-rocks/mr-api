@@ -69,7 +69,7 @@ class MineralRelationInline(NestedStackedInline):
 class MineralDirectRelationSuggestionInline(NestedTabularInline):
     model = MineralRelationSuggestion
     form = MineralRelationSuggestionForm
-    classes = ['collapse']
+    classes = ["collapse"]
 
     verbose_name = "Suggested direct relation"
     verbose_name_plural = "Suggested direct relations from mindat.org"
@@ -80,7 +80,7 @@ class MineralDirectRelationSuggestionInline(NestedTabularInline):
     fields = [
         "relation",
         "mindat_link",
-        'description',
+        "description",
         "relation_note",
         "status",
         "note",
@@ -89,7 +89,7 @@ class MineralDirectRelationSuggestionInline(NestedTabularInline):
     readonly_fields = [
         "relation",
         "relation_note",
-        'description',
+        "description",
         "mindat_link",
     ]
     ordering = [
@@ -106,9 +106,13 @@ class MineralDirectRelationSuggestionInline(NestedTabularInline):
         queryset = queryset.filter(~Q(relation_type=5))
         return queryset
 
-    @admin.display(description='Description')
+    @admin.display(description="Description")
     def description(self, instance):
-        return mark_safe(instance.relation.description) if instance.relation.description else ""
+        return (
+            mark_safe(instance.relation.description)
+            if instance.relation.description
+            else ""
+        )
 
     @admin.display(description="Mindat Ref")
     def mindat_link(self, instance):
@@ -143,7 +147,7 @@ class MineralDirectRelationSuggestionInline(NestedTabularInline):
 class MineralReverseRelationSuggestionInline(NestedTabularInline):
     model = MineralRelationSuggestion
     form = MineralRelationSuggestionForm
-    classes = ['collapse']
+    classes = ["collapse"]
 
     verbose_name = "Suggested reverse relation"
     verbose_name_plural = "Suggested reverse relations from mindat.org"
@@ -154,7 +158,7 @@ class MineralReverseRelationSuggestionInline(NestedTabularInline):
     fields = [
         "mineral",
         "mindat_link",
-        'description',
+        "description",
         "relation_note",
         "status",
         "note",
@@ -164,7 +168,7 @@ class MineralReverseRelationSuggestionInline(NestedTabularInline):
         "mineral",
         "relation_note",
         "mindat_link",
-        'description',
+        "description",
     ]
     ordering = [
         "relation_type",
@@ -180,9 +184,13 @@ class MineralReverseRelationSuggestionInline(NestedTabularInline):
         queryset = queryset.filter(~Q(relation_type=5))
         return queryset
 
-    @admin.display(description='Description')
+    @admin.display(description="Description")
     def description(self, instance):
-        return mark_safe(instance.mineral.description) if instance.mineral.description else ""
+        return (
+            mark_safe(instance.mineral.description)
+            if instance.mineral.description
+            else ""
+        )
 
     @admin.display(description="Mindat Ref")
     def mindat_link(self, instance):
