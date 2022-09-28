@@ -41,9 +41,7 @@ class Command(BaseCommand):
         try:
             r = requests.post(
                 MINDAT_API_URL + "/api-token-auth/",
-                data=json.dumps(
-                    {"username": MINDAT_API_USERNAME, "password": MINDAT_API_PASSWORD}
-                ),
+                data=json.dumps({"username": MINDAT_API_USERNAME, "password": MINDAT_API_PASSWORD}),
                 headers={"Content-Type": "application/json"},
                 timeout=10,
             )
@@ -73,9 +71,7 @@ class Command(BaseCommand):
                     while True:
                         if "next" in response and response["next"]:
                             time.sleep(3)
-                            r = requests.get(
-                                response["next"], headers=headers, timeout=10
-                            )
+                            r = requests.get(response["next"], headers=headers, timeout=10)
                             if r.status_code == 200:
                                 response = r.json()
                                 if response["results"]:
@@ -132,26 +128,18 @@ class Command(BaseCommand):
                                         discovery_year=entry["yeardiscovery"] or None,
                                         ima_year=entry["imayear"] or None,
                                         approval_year=entry["approval_year"] or None,
-                                        publication_year=entry["publication_year"]
-                                        or None,
+                                        publication_year=entry["publication_year"] or None,
                                         defaults={
-                                            "discovery_year": entry["yeardiscovery"]
-                                            or None,
+                                            "discovery_year": entry["yeardiscovery"] or None,
                                             "ima_year": entry["imayear"] or None,
-                                            "approval_year": entry["approval_year"]
-                                            or None,
-                                            "publication_year": entry[
-                                                "publication_year"
-                                            ]
-                                            or None,
+                                            "approval_year": entry["approval_year"] or None,
+                                            "publication_year": entry["publication_year"] or None,
                                         },
                                     )
 
                             MindatSync.objects.create(values=fetched)
                         except Exception as e:
-                            raise CommandError(
-                                "Error while saving synced data: " + str(e)
-                            )
+                            raise CommandError("Error while saving synced data: " + str(e))
 
                 else:
                     raise CommandError("Error while syncing with mindat.org")
