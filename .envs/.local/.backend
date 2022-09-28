@@ -7,6 +7,6 @@ DJANGO_SETTINGS_MODULE=settings.development
 DATABASE_ENGINE=django.db.backends.postgresql
 USE_S3=False
 
-MINDAT_API_USERNAME=iamuser
+MINDAT_API_USERNAME=iamuser@only.com
 MINDAT_API_PASSWORD=iamsecret
-MINDAT_API_URL=https://api.mindat.org
+MINDAT_API_URL=http://api.dev.mindat.org:81

@@ -43,8 +43,9 @@ export PGUSER="${POSTGRES_USER}"
 export PGPASSWORD="${POSTGRES_PASSWORD}"
 export PGDATABASE="${POSTGRES_DB}"
 
+
 message_info "Dropping the database..."
-dropdb "${PGDATABASE}"
+dropdb --force "${PGDATABASE}"
 
 message_info "Creating a new database..."
 createdb --owner="${POSTGRES_USER}"
