@@ -524,3 +524,18 @@ class MineralIonPosition(BaseModel):
 
     def __str__(self):
         return self.mineral.name
+
+
+class MindatSync(BaseModel, Creatable):
+
+    values = models.JSONField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "mindat_sync_log"
+
+        verbose_name = "Mindat Sync History"
+        verbose_name_plural = "Mindat Syncs"
+
+    def __str__(self):
+        return self.mineral.name

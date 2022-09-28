@@ -49,6 +49,7 @@ services:
         env_file:
             - ./.envs/.local/.backend
             - ./.envs/.local/.db
+            - ./.envs/.local/.nginx
         ports:
             - "8000:8000"
         volumes:
