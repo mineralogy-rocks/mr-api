@@ -9,4 +9,4 @@ USE_S3=False
 
 MINDAT_API_USERNAME=iamuser@only.com
 MINDAT_API_PASSWORD=iamsecret
-MINDAT_API_URL=http://api.dev.mindat.org:81
+MINDAT_API_URL=http://api.dev.mindat.org
