@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+import json
+
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
@@ -15,6 +17,7 @@ from .models.core import NsFamily
 from .models.core import NsSubclass
 from .models.core import Status
 from .models.core import StatusGroup
+from .models.mineral import MindatSync
 from .models.mineral import Mineral
 
 
@@ -106,6 +109,46 @@ class NsFamilyAdmin(admin.ModelAdmin):
     list_filter = [
         "ns_class",
     ]
+
+
+@admin.register(MindatSync)
+class MindatSyncAdmin(admin.ModelAdmin):
+
+    date_hierarchy = "created_at"
+
+    list_display = [
+        "id",
+        "values_",
+        "created_at",
+    ]
+
+    list_display_links = [
+        "id",
+    ]
+
+    ordering = [
+        "-created_at",
+    ]
+    search_fields = [
+        "values",
+    ]
+    readonly_fields = [
+        "values_",
+    ]
+    search_help_text = "Search across the synced names."
+
+    @admin.display(description="Entries")
+    def values_(self, instance):
+        if instance:
+            return mark_safe(f"<pre>{json.dumps(instance.values, indent=4, sort_keys=True)}</pre>")
+        # return mark_safe(
+        #     "<br>".join(
+        #         [
+        #             f"{k}: {v}"
+        #             for k, v in json.loads(instance.values).items()
+        #         ]
+        #     )
+        # )
 
 
 @admin.register(Mineral)
@@ -206,9 +249,7 @@ class MineralAdmin(NestedModelAdmin):
             "ns_family",
         ]
         prefetch_related = []
-        return queryset.select_related(*select_related).prefetch_related(
-            *prefetch_related
-        )
+        return queryset.select_related(*select_related).prefetch_related(*prefetch_related)
 
     def add_view(self, request, form_url="", extra_context=None):
         self.readonly_fields = [

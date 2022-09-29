@@ -2,6 +2,7 @@
 import json
 import os
 import time
+from datetime import datetime
 from datetime import timedelta
 
 import requests
@@ -34,9 +35,13 @@ class Command(BaseCommand):
         formula_ima = FormulaSource.objects.get(name="IMA")
 
         if sync_log:
-            last_datetime = sync_log.values("created_at")
+            last_datetime = datetime.strftime(sync_log.created_at, "%Y-%m-%d %H:%M:%S")
         else:
-            last_datetime = timezone.now() - timedelta(days=1)
+            last_datetime = timezone.now() - timedelta(days=60)
+
+        # TODO: remove after testing
+        last_datetime = timezone.now() - timedelta(days=60)
+        print(last_datetime)
 
         try:
             r = requests.post(
@@ -84,20 +89,34 @@ class Command(BaseCommand):
 
                     if fetched:
                         print(fetched)
-                        fetched = fetched[:1]
+                        fetched = fetched[:10]
                         try:
-                            for entry in fetched:
-                                mineral, created = Mineral.objects.update_or_create(
-                                    name=entry["name"],
-                                    defaults={
-                                        "mindat_id": entry["id"],
-                                        "description": entry["description"],
-                                    },
-                                )
-                                if entry["formula"]:
-                                    formula_note = entry["formulanotes"] or None
+                            for index, entry in enumerate(fetched):
+                                name_ = entry["name"].strip()
+                                is_updated = False
 
-                                    MineralFormula.objects.get_or_create(
+                                mineral, created_ = Mineral.objects.get_or_create(name=name_)
+                                if created_:
+                                    is_updated = True
+                                    mineral(
+                                        mindat_id=entry["id"],
+                                        description=entry["description"] or None,
+                                    )
+                                    mineral.save()
+                                else:
+                                    if mineral.mindat_id == entry["id"] and mineral.description == (
+                                        entry["description"] or None
+                                    ):
+                                        pass
+                                    else:
+                                        is_updated = True
+                                        mineral.mindat_id = entry["id"]
+                                        mineral.description = entry["description"] or None
+                                        mineral.save()
+
+                                formula_note = entry["formulanotes"] or None
+                                if entry["formula"]:
+                                    entry_, created_ = MineralFormula.objects.get_or_create(
                                         mineral=mineral,
                                         formula=entry["formula"],
                                         source=formula_mindat,
@@ -105,9 +124,11 @@ class Command(BaseCommand):
                                             "note": formula_note,
                                         },
                                     )
+                                    if created_:
+                                        is_updated = True
 
                                 if entry["imaformula"]:
-                                    MineralFormula.objects.get_or_create(
+                                    entry_, created_ = MineralFormula.objects.get_or_create(
                                         mineral=mineral,
                                         formula=entry["formula"],
                                         source=formula_ima,
@@ -116,19 +137,19 @@ class Command(BaseCommand):
                                         },
                                     )
 
-                                if any(
-                                    entry["yeardiscovery"],
-                                    entry["imayear"],
-                                    entry["publication_year"],
-                                    entry["approval_year"],
-                                ):
+                                    if created_:
+                                        is_updated = True
 
-                                    MineralHistory.objects.get_or_create(
+                                if any(
+                                    [
+                                        entry["yeardiscovery"],
+                                        entry["imayear"],
+                                        entry["publication_year"],
+                                        entry["approval_year"],
+                                    ]
+                                ):
+                                    entry_, updated_ = MineralHistory.objects.update_or_create(
                                         mineral=mineral,
-                                        discovery_year=entry["yeardiscovery"] or None,
-                                        ima_year=entry["imayear"] or None,
-                                        approval_year=entry["approval_year"] or None,
-                                        publication_year=entry["publication_year"] or None,
                                         defaults={
                                             "discovery_year": entry["yeardiscovery"] or None,
                                             "ima_year": entry["imayear"] or None,
@@ -136,11 +157,25 @@ class Command(BaseCommand):
                                             "publication_year": entry["publication_year"] or None,
                                         },
                                     )
+                                    if updated_:
+                                        is_updated = True
 
-                            MindatSync.objects.create(values=fetched)
+                                if not is_updated:
+                                    fetched.pop(index)
+                            if fetched:
+                                MindatSync.objects.create(values=fetched)
+                                self.stdout.write(
+                                    self.style.SUCCESS("Successfully synced mindat.org")
+                                )
+                            else:
+                                MindatSync.objects.create(values=None)
+                                self.stdout.write(
+                                    self.style.SUCCESS("All good, there's nothing to sync!")
+                                )
                         except Exception as e:
                             raise CommandError("Error while saving synced data: " + str(e))
-
+                    else:
+                        self.stdout.write(self.style.SUCCESS("All good, there's nothing to sync!"))
                 else:
                     raise CommandError("Error while syncing with mindat.org")
             else:
@@ -148,5 +183,3 @@ class Command(BaseCommand):
 
         except Exception as e:
             raise CommandError(e)
-
-        self.stdout.write(self.style.SUCCESS("Successfully synced mindat.org"))
