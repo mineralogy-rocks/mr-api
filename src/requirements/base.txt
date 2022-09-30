@@ -1,9 +1,9 @@
 asgiref==3.5.2
-astroid==2.12.9
+astroid==2.12.10
 black==22.8.0
-boto3==1.24.69
+boto3==1.24.75
 botocore==1.27.66
-certifi==2022.6.15
+certifi==2022.9.14
 Django==4.1.1
 django-autocomplete-light==3.9.4
 django-cors-headers==3.13.0
@@ -14,7 +14,6 @@ django-nested-admin==3.4.0
 djangorestframework==3.13.1
 djangorestframework-simplejwt==5.2.0
 drf-spectacular==0.24.0
-gevent==21.12.0
 gunicorn==20.1.0
 isort==5.10.1
 jmespath==1.0.1
@@ -26,7 +25,8 @@ pylint-plugin-utils==0.7
 python-dateutil==2.8.2
 python-dotenv==0.21.0
 pytz==2022.2.1
-pyjwt==2.4.0
+pyjwt==2.5.0
+requests==2.28.1
 s3transfer==0.6.0
 six==1.16.0
 sqlparse==0.4.2

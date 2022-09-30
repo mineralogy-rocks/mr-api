@@ -149,9 +149,7 @@ class Ion(BaseModel, Nameable):
 
     elements = models.ManyToManyField(Element, through="IonElement")
     subunits = models.ManyToManyField("self", through="IonSubunit")
-    ion_positions = models.ManyToManyField(
-        IonPosition, through="core.MineralIonPosition"
-    )
+    ion_positions = models.ManyToManyField(IonPosition, through="core.MineralIonPosition")
 
     class Meta:
         managed = False

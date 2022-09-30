@@ -1,0 +1,94 @@
+user nginx;
+worker_processes 1;
+pid /var/run/nginx.pid;
+
+events {
+	worker_connections 1024;
+}
+
+http {
+
+	include /etc/nginx/mime.types;
+	default_type application/octet-stream;
+
+  sendfile on;
+	tcp_nopush on;
+	tcp_nodelay on;
+	keepalive_timeout 65;
+	types_hash_max_size 2048;
+
+	access_log /var/log/nginx/access.log;
+	error_log /var/log/nginx/error.log;
+
+	gzip on;
+
+	resolver 127.0.0.11 valid=30s;
+
+	server {
+		listen 80;
+		server_name api.dev.${DOMAIN};
+
+		keepalive_timeout 5;
+		client_max_body_size 20m;
+
+		location = /favicon.ico {
+			alias /var/www/static/img/favicon/favicon.ico;
+		}
+
+		location /media  {
+			alias /var/www/media;
+		}
+
+		location /static {
+			alias /var/www/static;
+		}
+
+		location / {
+			proxy_http_version 1.1;
+
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_set_header Host $host;
+			proxy_redirect off;
+
+			add_header Cache-Control 'no-store';
+
+			set $backend_upstream backend:8000;
+			proxy_pass http://$backend_upstream;
+
+		}
+	}
+
+  server {
+		listen 80;
+		server_name api.dev.mindat.org;
+
+		keepalive_timeout 5;
+		client_max_body_size 20m;
+
+		location = /favicon.ico {
+			alias /var/www/static/img/favicon/favicon.ico;
+		}
+
+		location /media  {
+			alias /var/www/media;
+		}
+
+		location /static {
+			alias /var/www/static;
+		}
+
+		location / {
+			proxy_http_version 1.1;
+
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_set_header Host $host;
+			proxy_redirect off;
+
+			add_header Cache-Control 'no-store';
+
+			set $backend_upstream backend_mindat:8000;
+			proxy_pass http://$backend_upstream;
+
+		}
+	}
+}

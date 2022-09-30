@@ -12,7 +12,7 @@ services:
         env_file:
             - ./.envs/.local/.nginx
         volumes:
-            - ./nginx/dev/nginx.template:/etc/nginx/nginx.template:ro
+            - ./nginx/dev/nginx.mr-mindat.template:/etc/nginx/nginx.template:ro
 
             - ./nginx/_data/log:/var/log/nginx
             - ./nginx/_data/media:/var/www/media
@@ -44,19 +44,53 @@ services:
         command: /start.sh
         platform: linux/x86_64
         restart: unless-stopped
+        links:
+            - 'nginx-dev:api.dev.mindat.org'
         depends_on:
             - database
         env_file:
             - ./.envs/.local/.backend
             - ./.envs/.local/.db
             - ./.envs/.local/.nginx
-        ports:
-            - "8000:8000"
         volumes:
             - .:/app
 
             - ./nginx/_data/media:/app/media
             - ./nginx/_data/static:/app/static
 
+    backend_mindat:
+      container_name: backend_mindat
+      build:
+        context: ../mindatapi
+        dockerfile: ./compose/local/backend/Dockerfile
+      command: /start
+      restart: unless-stopped
+      depends_on:
+            - mysql5
+      env_file:
+        - ../mindatapi/.envs/.local/.backend
+        - ../mindatapi/.envs/.local/.db
+      volumes:
+        - ../mindatapi:/app
+
+        - ../mindatapi/nginx/_data/media:/app/media
+        - ../mindatapi/nginx/_data/static:/app/static
+
+    mysql5:
+      build:
+        context: ../mindatapi
+        dockerfile: ./compose/local/db/Dockerfile
+      restart: unless-stopped
+      volumes:
+        - mysql5:/var/lib/mysql
+        - ../mindatapi/db/backups:/backups
+      env_file:
+        - ../mindatapi/.envs/.local/.db
+      ports:
+        - "3306:3306"
+
 volumes:
     database-data:
+    mysql5:
+      external: true
+      name: mindatapi_mysql5

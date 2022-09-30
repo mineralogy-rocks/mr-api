@@ -66,9 +66,7 @@ class Mineral(Nameable, Creatable, Updatable):
         default=0,
         help_text="Number of times this specie was retrieved by API and clients.",
     )
-    description = models.TextField(
-        null=True, blank=True, help_text="Description from mindat.org"
-    )
+    description = models.TextField(null=True, blank=True, help_text="Description from mindat.org")
     mindat_id = models.IntegerField(blank=True, null=True)
     ima_symbol = models.CharField(
         max_length=12, null=True, blank=True, help_text="Official IMA symbol."
@@ -83,13 +81,9 @@ class Mineral(Nameable, Creatable, Updatable):
             "status",
         ),
     )
-    impurities = models.ManyToManyField(
-        Ion, through="MineralImpurity", related_name="impurities"
-    )
+    impurities = models.ManyToManyField(Ion, through="MineralImpurity", related_name="impurities")
     ion_positions = models.ManyToManyField(IonPosition, through="MineralIonPosition")
-    crystal_systems = models.ManyToManyField(
-        CrystalSystem, through="MineralCrystallography"
-    )
+    crystal_systems = models.ManyToManyField(CrystalSystem, through="MineralCrystallography")
 
     relations = models.ManyToManyField(
         "self",
@@ -120,9 +114,7 @@ class Mineral(Nameable, Creatable, Updatable):
                 ns_subclass=str(self.ns_subclass.ns_subclass)[-1]
                 if self.ns_subclass is not None
                 else "0",
-                ns_family=str(self.ns_family.ns_family)[-1]
-                if self.ns_family is not None
-                else "0",
+                ns_family=str(self.ns_family.ns_family)[-1] if self.ns_family is not None else "0",
                 ns_mineral=str(self.ns_mineral) if self.ns_mineral is not None else "0",
             )
         else:
@@ -130,9 +122,7 @@ class Mineral(Nameable, Creatable, Updatable):
 
     def _statuses(self):
         if self.statuses:
-            return "; ".join(
-                [str(status.status.status_id) for status in self.statuses.all()]
-            )
+            return "; ".join([str(status.status.status_id) for status in self.statuses.all()])
 
 
 class MineralStatus(BaseModel, Creatable, Updatable):
@@ -524,3 +514,18 @@ class MineralIonPosition(BaseModel):
 
     def __str__(self):
         return self.mineral.name
+
+
+class MindatSync(BaseModel, Creatable):
+
+    values = models.JSONField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "mindat_sync_log"
+
+        verbose_name = "Mindat Sync History"
+        verbose_name_plural = "Mindat Syncs"
+
+    def __str__(self):
+        return str(self.id)

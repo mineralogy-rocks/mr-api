@@ -90,9 +90,7 @@ class NsFamilyListSerializer(CountsFieldMixin, serializers.ModelSerializer):
             "minerals",
         ]
 
-        queryset = queryset.select_related(*select_related).prefetch_related(
-            *prefetch_related
-        )
+        queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
         return queryset
 
 
@@ -119,9 +117,7 @@ class NsSubclassListSerializer(CountsFieldMixin, serializers.ModelSerializer):
             "minerals",
         ]
 
-        queryset = queryset.select_related(*select_related).prefetch_related(
-            *prefetch_related
-        )
+        queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
         return queryset
 
 
@@ -134,9 +130,7 @@ class NsSubclassFamilyListSerializer(NsSubclassListSerializer):
         fields = NsSubclassListSerializer.Meta.fields + ["families"]
 
 
-class NsClassSubclassFamilyListSerializer(
-    CountsFieldMixin, serializers.ModelSerializer
-):
+class NsClassSubclassFamilyListSerializer(CountsFieldMixin, serializers.ModelSerializer):
 
     counts = serializers.SerializerMethodField()
     subclasses = NsSubclassFamilyListSerializer(many=True)
@@ -159,9 +153,7 @@ class NsClassSubclassFamilyListSerializer(
             ),
         ]
 
-        queryset = queryset.select_related(*select_related).prefetch_related(
-            *prefetch_related
-        )
+        queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
         return queryset
 
 

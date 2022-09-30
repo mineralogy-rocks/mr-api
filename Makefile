@@ -21,7 +21,7 @@ backups:
 	docker-compose -f docker-compose.yml run --rm database backups
 
 restore-local-db:
-	docker-compose -f docker-compose.yml run --rm database restore "${backup}"
+	docker-compose -f docker-compose.yml run --rm --no-deps database restore "${backup}"
 
 run-sql:
 ifdef file

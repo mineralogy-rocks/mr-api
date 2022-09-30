@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+import json
+
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
@@ -15,6 +17,7 @@ from .models.core import NsFamily
 from .models.core import NsSubclass
 from .models.core import Status
 from .models.core import StatusGroup
+from .models.mineral import MindatSync
 from .models.mineral import Mineral
 
 
@@ -106,6 +109,67 @@ class NsFamilyAdmin(admin.ModelAdmin):
     list_filter = [
         "ns_class",
     ]
+
+
+@admin.register(MindatSync)
+class MindatSyncAdmin(admin.ModelAdmin):
+
+    date_hierarchy = "created_at"
+
+    fields = ["id", "created_at", "pretty_values"]
+    list_display = [
+        "id",
+        "mineral_names",
+        "created_at",
+    ]
+    list_display_links = [
+        "id",
+    ]
+
+    ordering = [
+        "-created_at",
+    ]
+    search_fields = [
+        "values__name",
+    ]
+    readonly_fields = [
+        "pretty_values",
+        "mineral_names",
+    ]
+    search_help_text = "Search across the synced names."
+
+    def get_search_results(self, request, queryset, search_term):
+        if search_term:
+            queryset_ = self.model.objects.raw(
+                """
+                                                SELECT DISTINCT msl.* FROM (
+                                                    SELECT id, jsonb_array_elements(msl.values) ->> 'name' AS name FROM mindat_sync_log msl
+                                                ) AS temp_
+                                                INNER JOIN mindat_sync_log msl ON temp_.id = msl.id
+                                                WHERE name ILIKE  %s
+                                            """,
+                ["%" + search_term + "%"],
+            )
+            queryset = queryset.filter(id__in=[item.id for item in queryset_])
+        return queryset, False
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    @admin.display(description="Synced Mineral Names")
+    def mineral_names(self, instance):
+        if instance.values:
+            return [item["name"] for item in instance.values]
+
+    @admin.display(description="Synced Entries")
+    def pretty_values(self, instance):
+        if instance:
+            return mark_safe(
+                f"<pre style='white-space: pre-wrap;'>{json.dumps(instance.values, indent=4, ensure_ascii=False)}</pre>"
+            )
 
 
 @admin.register(Mineral)
@@ -206,9 +270,7 @@ class MineralAdmin(NestedModelAdmin):
             "ns_family",
         ]
         prefetch_related = []
-        return queryset.select_related(*select_related).prefetch_related(
-            *prefetch_related
-        )
+        return queryset.select_related(*select_related).prefetch_related(*prefetch_related)
 
     def add_view(self, request, form_url="", extra_context=None):
         self.readonly_fields = [
