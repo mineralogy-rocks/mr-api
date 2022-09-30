@@ -14,9 +14,7 @@ def formula_to_html(formula):
         ]
         parsed = formula
         [
-            parsed := re.sub(
-                replacement["to_replace"], replacement["replacement"], parsed
-            )
+            parsed := re.sub(replacement["to_replace"], replacement["replacement"], parsed)
             for replacement in replacements
         ]
         return mark_safe(parsed)

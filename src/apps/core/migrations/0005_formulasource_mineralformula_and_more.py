@@ -69,9 +69,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "is_processed",
-                    models.BooleanField(
-                        default=False, help_text="Is the suggestion processed?"
-                    ),
+                    models.BooleanField(default=False, help_text="Is the suggestion processed?"),
                 ),
             ],
             options={

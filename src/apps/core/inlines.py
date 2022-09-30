@@ -108,11 +108,7 @@ class MineralDirectRelationSuggestionInline(NestedTabularInline):
 
     @admin.display(description="Description")
     def description(self, instance):
-        return (
-            mark_safe(instance.relation.description)
-            if instance.relation.description
-            else ""
-        )
+        return mark_safe(instance.relation.description) if instance.relation.description else ""
 
     @admin.display(description="Mindat Ref")
     def mindat_link(self, instance):
@@ -135,9 +131,7 @@ class MineralDirectRelationSuggestionInline(NestedTabularInline):
                 kwargs["form_kwargs"] = {
                     "user": request.user,
                     "direct_relation": True,
-                    "statuses": [
-                        *ModelChoiceField(queryset=Status.objects.all()).choices
-                    ],
+                    "statuses": [*ModelChoiceField(queryset=Status.objects.all()).choices],
                 }
                 return formset(*args, **kwargs)
 
@@ -186,11 +180,7 @@ class MineralReverseRelationSuggestionInline(NestedTabularInline):
 
     @admin.display(description="Description")
     def description(self, instance):
-        return (
-            mark_safe(instance.mineral.description)
-            if instance.mineral.description
-            else ""
-        )
+        return mark_safe(instance.mineral.description) if instance.mineral.description else ""
 
     @admin.display(description="Mindat Ref")
     def mindat_link(self, instance):
@@ -213,9 +203,7 @@ class MineralReverseRelationSuggestionInline(NestedTabularInline):
                 kwargs["form_kwargs"] = {
                     "user": request.user,
                     "direct_relation": False,
-                    "statuses": [
-                        *ModelChoiceField(queryset=Status.objects.all()).choices
-                    ],
+                    "statuses": [*ModelChoiceField(queryset=Status.objects.all()).choices],
                 }
                 return formset(*args, **kwargs)
 

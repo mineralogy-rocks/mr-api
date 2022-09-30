@@ -80,39 +80,19 @@ class Element(BaseModel):
     boiling_point = models.IntegerField(null=True)
     density = models.DecimalField(max_digits=8, decimal_places=6, null=True)
 
-    crust_crc_handbook = models.DecimalField(
-        max_digits=11, decimal_places=10, null=True
-    )
+    crust_crc_handbook = models.DecimalField(max_digits=11, decimal_places=10, null=True)
     crust_kaye_laby = models.DecimalField(max_digits=11, decimal_places=10, null=True)
     crust_greenwood = models.DecimalField(max_digits=11, decimal_places=10, null=True)
-    crust_ahrens_taylor = models.DecimalField(
-        max_digits=11, decimal_places=10, null=True
-    )
-    crust_ahrens_wanke = models.DecimalField(
-        max_digits=11, decimal_places=10, null=True
-    )
-    crust_ahrens_waver = models.DecimalField(
-        max_digits=11, decimal_places=10, null=True
-    )
-    upper_crust_ahrens_taylor = models.DecimalField(
-        max_digits=11, decimal_places=10, null=True
-    )
-    upper_crust_ahrens_shaw = models.DecimalField(
-        max_digits=11, decimal_places=10, null=True
-    )
-    sea_water_crc_handbook = models.DecimalField(
-        max_digits=11, decimal_places=11, null=True
-    )
-    sea_water_kaye_laby = models.DecimalField(
-        max_digits=11, decimal_places=11, null=True
-    )
+    crust_ahrens_taylor = models.DecimalField(max_digits=11, decimal_places=10, null=True)
+    crust_ahrens_wanke = models.DecimalField(max_digits=11, decimal_places=10, null=True)
+    crust_ahrens_waver = models.DecimalField(max_digits=11, decimal_places=10, null=True)
+    upper_crust_ahrens_taylor = models.DecimalField(max_digits=11, decimal_places=10, null=True)
+    upper_crust_ahrens_shaw = models.DecimalField(max_digits=11, decimal_places=10, null=True)
+    sea_water_crc_handbook = models.DecimalField(max_digits=11, decimal_places=11, null=True)
+    sea_water_kaye_laby = models.DecimalField(max_digits=11, decimal_places=11, null=True)
     sun_kaye_laby = models.DecimalField(max_digits=16, decimal_places=11, null=True)
-    solar_system_kaye_laby = models.DecimalField(
-        max_digits=16, decimal_places=11, null=True
-    )
-    solar_system_ahrens = models.DecimalField(
-        max_digits=16, decimal_places=11, null=True
-    )
+    solar_system_kaye_laby = models.DecimalField(max_digits=16, decimal_places=11, null=True)
+    solar_system_ahrens = models.DecimalField(max_digits=16, decimal_places=11, null=True)
     solar_system_ahrens_with_uncertainty = models.DecimalField(
         max_digits=4, decimal_places=2, null=True
     )

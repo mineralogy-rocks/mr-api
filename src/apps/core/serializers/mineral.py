@@ -144,9 +144,7 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
             "discovery_countries",
         ]
 
-        queryset = queryset.select_related(*select_related).prefetch_related(
-            *prefetch_related
-        )
+        queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
         return queryset
 
     def get_hierarchy(self, instance):
@@ -204,9 +202,7 @@ class MineralListSerializer(serializers.ModelSerializer):
 
         prefetch_related = ["formulas__source"]
 
-        queryset = queryset.select_related(*select_related).prefetch_related(
-            *prefetch_related
-        )
+        queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
         return queryset
 
     def get_ions(self, instance):
