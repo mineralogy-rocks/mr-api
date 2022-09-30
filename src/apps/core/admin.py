@@ -116,11 +116,7 @@ class MindatSyncAdmin(admin.ModelAdmin):
 
     date_hierarchy = "created_at"
 
-    fields = [
-        'id',
-        'created_at',
-        'pretty_values'
-    ]
+    fields = ["id", "created_at", "pretty_values"]
     list_display = [
         "id",
         "mineral_names",
@@ -138,19 +134,22 @@ class MindatSyncAdmin(admin.ModelAdmin):
     ]
     readonly_fields = [
         "pretty_values",
-        'mineral_names',
+        "mineral_names",
     ]
     search_help_text = "Search across the synced names."
 
     def get_search_results(self, request, queryset, search_term):
         if search_term:
-            queryset_ = self.model.objects.raw('''
+            queryset_ = self.model.objects.raw(
+                """
                                                 SELECT DISTINCT msl.* FROM (
                                                     SELECT id, jsonb_array_elements(msl.values) ->> 'name' AS name FROM mindat_sync_log msl
                                                 ) AS temp_
                                                 INNER JOIN mindat_sync_log msl ON temp_.id = msl.id
                                                 WHERE name ILIKE  %s
-                                            ''', ['%' + search_term + '%'])
+                                            """,
+                ["%" + search_term + "%"],
+            )
             queryset = queryset.filter(id__in=[item.id for item in queryset_])
         return queryset, False
 
@@ -163,12 +162,14 @@ class MindatSyncAdmin(admin.ModelAdmin):
     @admin.display(description="Synced Mineral Names")
     def mineral_names(self, instance):
         if instance.values:
-            return [item['name'] for item in instance.values]
+            return [item["name"] for item in instance.values]
 
     @admin.display(description="Synced Entries")
     def pretty_values(self, instance):
         if instance:
-            return mark_safe(f"<pre style='white-space: pre-wrap;'>{json.dumps(instance.values, indent=4, ensure_ascii=False)}</pre>")
+            return mark_safe(
+                f"<pre style='white-space: pre-wrap;'>{json.dumps(instance.values, indent=4, ensure_ascii=False)}</pre>"
+            )
 
 
 @admin.register(Mineral)

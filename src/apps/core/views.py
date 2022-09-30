@@ -105,9 +105,7 @@ class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         serializer_class = self.get_serializer_class()
         if hasattr(serializer_class, "setup_eager_loading"):
-            queryset = serializer_class.setup_eager_loading(
-                queryset=queryset, request=self.request
-            )
+            queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
 
         return queryset
 
@@ -165,9 +163,7 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
             )
 
         if "class" in self.request.query_params:
-            queryset = queryset.filter(
-                ns_class=self.request.query_params.get("class", "")
-            )
+            queryset = queryset.filter(ns_class=self.request.query_params.get("class", ""))
 
         if "subclass" in self.request.query_params:
             if self.action in ["subclasses"]:
@@ -176,9 +172,7 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
                 )
             elif self.action in ["families"]:
                 queryset = queryset.filter(
-                    ns_subclass__ns_subclass=self.request.query_params.get(
-                        "subclass", ""
-                    )
+                    ns_subclass__ns_subclass=self.request.query_params.get("subclass", "")
                 )
             else:
                 pass
@@ -189,9 +183,7 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
                     families__ns_family=self.request.query_params.get("family", "")
                 )
             elif self.action in ["families"]:
-                queryset = queryset.filter(
-                    ns_family=self.request.query_params.get("family", "")
-                )
+                queryset = queryset.filter(ns_family=self.request.query_params.get("family", ""))
             else:
                 pass
         return queryset
@@ -201,9 +193,7 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
 
         serializer_class = self.get_serializer_class()
         if hasattr(serializer_class, "setup_eager_loading"):
-            queryset = serializer_class.setup_eager_loading(
-                queryset=queryset, request=self.request
-            )
+            queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
 
         return queryset
 
@@ -211,9 +201,7 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
     def classes(self, request, *args, **kwargs):
         queryset = NsClass.objects.annotate(counts=Count("minerals", distinct=True))
         queryset = self.filter_queryset(queryset)
-        return Response(
-            queryset.values("id", "description", "counts"), status=status.HTTP_200_OK
-        )
+        return Response(queryset.values("id", "description", "counts"), status=status.HTTP_200_OK)
 
     @action(methods=["get"], detail=False, url_path="subclasses")
     def subclasses(self, request, *args, **kwargs):
@@ -223,9 +211,7 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
             .annotate(counts=Count("minerals", distinct=True))
             .order_by("ns_class__id", "ns_subclass")
         )
-        queryset = serializer_class.setup_eager_loading(
-            queryset=queryset, request=self.request
-        )
+        queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
         queryset = self._filter_queryset(queryset)
 
         return self._get_paginated_response(queryset, serializer_class)
@@ -235,9 +221,7 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
         serializer_class = NsFamilyListSerializer
         queryset = NsFamily.objects.annotate(counts=Count("minerals", distinct=True))
 
-        queryset = serializer_class.setup_eager_loading(
-            queryset=queryset, request=self.request
-        )
+        queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
         queryset = self._filter_queryset(queryset)
 
         return self._get_paginated_response(queryset, serializer_class)
@@ -287,9 +271,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         serializer_class = self.get_serializer_class()
         if hasattr(serializer_class, "setup_eager_loading"):
-            queryset = serializer_class.setup_eager_loading(
-                queryset=queryset, request=self.request
-            )
+            queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
 
         # isostructural_minerals_ = NsFamily.objects.values('ns_family') \
         #                                           .annotate(count=Count('minerals')) \
