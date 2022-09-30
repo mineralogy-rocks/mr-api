@@ -3,9 +3,7 @@ import json
 
 from django.contrib import admin
 from django.core.exceptions import ValidationError
-from django.db.models import F
 from django.utils.safestring import mark_safe
-from django.utils.html import format_html
 from nested_admin import NestedModelAdmin
 
 from .forms import MineralRelationFormset
