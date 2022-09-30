@@ -35,12 +35,13 @@ class Command(BaseCommand):
         formula_ima = FormulaSource.objects.get(name="IMA")
 
         if sync_log:
-            last_datetime = datetime.strftime(sync_log.created_at, "%Y-%m-%d %H:%M:%S")
+            last_datetime = sync_log.created_at
         else:
             last_datetime = timezone.now() - timedelta(days=60)
 
         # TODO: remove after testing
         last_datetime = timezone.now() - timedelta(days=60)
+        last_datetime = datetime.strftime(last_datetime, "%Y-%m-%d %H:%M:%S")
         print(last_datetime)
 
         try:
@@ -55,13 +56,11 @@ class Command(BaseCommand):
                 token = r.json()["token"]
                 headers = {"Authorization": "Token " + token}
                 query_params = {
-                    "sync_datetime": last_datetime,
-                    "fields": "id,name,imayear,yeardiscovery,publication_year,approval_year,formula,formulanotes,imaformula,description",
-                    "expand": "description,publication_year,approval_year,formulanotes",
+                    "updated_at": last_datetime,
                     "non_utf": False,
                 }
                 r = requests.get(
-                    MINDAT_API_URL + "/minerals/",
+                    MINDAT_API_URL + "/minerals/mr-sync",
                     params=query_params,
                     headers=headers,
                     timeout=10,
@@ -100,6 +99,7 @@ class Command(BaseCommand):
                                     is_updated = True
                                     mineral(
                                         mindat_id=entry["id"],
+                                        ima_symbol=entry["ima_symbol"] or None,
                                         description=entry["description"] or None,
                                     )
                                     mineral.save()
@@ -111,10 +111,11 @@ class Command(BaseCommand):
                                     else:
                                         is_updated = True
                                         mineral.mindat_id = entry["id"]
+                                        mineral.ima_symbol = entry["ima_symbol"] or None
                                         mineral.description = entry["description"] or None
                                         mineral.save()
 
-                                formula_note = entry["formulanotes"] or None
+                                formula_note = entry["formula_note"] or None
                                 if entry["formula"]:
                                     entry_, created_ = MineralFormula.objects.get_or_create(
                                         mineral=mineral,
@@ -127,10 +128,10 @@ class Command(BaseCommand):
                                     if created_:
                                         is_updated = True
 
-                                if entry["imaformula"]:
+                                if entry["ima_formula"]:
                                     entry_, created_ = MineralFormula.objects.get_or_create(
                                         mineral=mineral,
-                                        formula=entry["formula"],
+                                        formula=entry["ima_formula"],
                                         source=formula_ima,
                                         defaults={
                                             "note": formula_note,
@@ -142,8 +143,8 @@ class Command(BaseCommand):
 
                                 if any(
                                     [
-                                        entry["yeardiscovery"],
-                                        entry["imayear"],
+                                        entry["discovery_year"],
+                                        entry["ima_year"],
                                         entry["publication_year"],
                                         entry["approval_year"],
                                     ]
@@ -151,8 +152,8 @@ class Command(BaseCommand):
                                     entry_, updated_ = MineralHistory.objects.update_or_create(
                                         mineral=mineral,
                                         defaults={
-                                            "discovery_year": entry["yeardiscovery"] or None,
-                                            "ima_year": entry["imayear"] or None,
+                                            "discovery_year": entry["discovery_year"] or None,
+                                            "ima_year": entry["ima_year"] or None,
                                             "approval_year": entry["approval_year"] or None,
                                             "publication_year": entry["publication_year"] or None,
                                         },
