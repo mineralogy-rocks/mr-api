@@ -2,7 +2,7 @@ asgiref==3.5.2
 astroid==2.12.10
 black==22.8.0
 boto3==1.24.87
-botocore==1.27.66
+botocore==1.27.88
 certifi==2022.9.14
 Django==4.1.1
 django-autocomplete-light==3.9.4
