@@ -37,10 +37,10 @@ class Command(BaseCommand):
         if sync_log:
             last_datetime = sync_log.created_at
         else:
-            last_datetime = timezone.now() - timedelta(days=60)
+            last_datetime = timezone.now() - timedelta(days=90)
 
         # TODO: remove after testing
-        last_datetime = timezone.now() - timedelta(days=60)
+        last_datetime = timezone.now() - timedelta(days=90)
         last_datetime = datetime.strftime(last_datetime, "%Y-%m-%d %H:%M:%S")
         print(last_datetime)
 
@@ -68,12 +68,15 @@ class Command(BaseCommand):
 
                 if r.status_code == 200:
                     fetched = []
+                    page = 1
                     response = r.json()
                     if response["results"]:
                         fetched += response["results"]
 
                     while True:
-                        if "next" in response and response["next"]:
+                        # TODO: remove page subset after testing
+                        if "next" in response and response["next"] and page <= 2:
+                            page += 1
                             time.sleep(3)
                             r = requests.get(response["next"], headers=headers, timeout=10)
                             if r.status_code == 200:
@@ -87,8 +90,6 @@ class Command(BaseCommand):
                             break
 
                     if fetched:
-                        print(fetched)
-                        fetched = fetched[:10]
                         try:
                             for index, entry in enumerate(fetched):
                                 name_ = entry["name"].strip()
@@ -116,7 +117,7 @@ class Command(BaseCommand):
                                         mineral.save()
 
                                 formula_note = entry["formula_note"] or None
-                                if entry["formula"]:
+                                if formula_note:
                                     entry_, created_ = MineralFormula.objects.get_or_create(
                                         mineral=mineral,
                                         formula=entry["formula"],
