@@ -83,7 +83,6 @@ class Command(BaseCommand):
                                 response = r.json()
                                 if response["results"]:
                                     fetched += response["results"]
-                                print(fetched)
                             else:
                                 break
                         else:
@@ -105,8 +104,10 @@ class Command(BaseCommand):
                                     )
                                     mineral.save()
                                 else:
-                                    if mineral.mindat_id == entry["id"] and mineral.description == (
-                                        entry["description"] or None
+                                    if (
+                                        mineral.mindat_id == entry["id"]
+                                        and mineral.ima_symbol == (entry["ima_symbol"] or None)
+                                        and mineral.description == (entry["description"] or None)
                                     ):
                                         pass
                                     else:
@@ -117,7 +118,7 @@ class Command(BaseCommand):
                                         mineral.save()
 
                                 formula_note = entry["formula_note"] or None
-                                if formula_note:
+                                if entry["formula"]:
                                     entry_, created_ = MineralFormula.objects.get_or_create(
                                         mineral=mineral,
                                         formula=entry["formula"],
@@ -165,7 +166,8 @@ class Command(BaseCommand):
                                 if not is_updated:
                                     fetched.pop(index)
                             if fetched:
-                                MindatSync.objects.create(values=fetched)
+                                print(fetched)
+                                # MindatSync.objects.create(values=fetched)
                                 self.stdout.write(
                                     self.style.SUCCESS("Successfully synced mindat.org")
                                 )
