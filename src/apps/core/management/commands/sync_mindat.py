@@ -70,115 +70,124 @@ class Command(BaseCommand):
                     fetched = []
                     page = 1
                     response = r.json()
-                    if response["results"]:
-                        fetched += response["results"]
 
                     while True:
-                        # TODO: remove page subset after testing
-                        if "next" in response and response["next"] and page <= 2:
+                        if "next" in response and response["next"]:
                             page += 1
                             time.sleep(3)
                             r = requests.get(response["next"], headers=headers, timeout=10)
                             if r.status_code == 200:
                                 response = r.json()
                                 if response["results"]:
-                                    fetched += response["results"]
+                                    try:
+                                        for index, entry in enumerate(response["results"]):
+                                            name_ = entry["name"].strip()
+                                            is_updated = False
+
+                                            mineral, created_ = Mineral.objects.get_or_create(
+                                                name=name_
+                                            )
+                                            if created_:
+                                                is_updated = True
+                                                mineral.mindat_id = entry["id"]
+                                                mineral.ima_symbol = entry["ima_symbol"] or None
+                                                mineral.description = entry["description"] or None
+                                                mineral.save()
+                                            else:
+                                                if (
+                                                    mineral.mindat_id == entry["id"]
+                                                    and mineral.ima_symbol
+                                                    == (entry["ima_symbol"] or None)
+                                                    and mineral.description
+                                                    == (entry["description"] or None)
+                                                ):
+                                                    pass
+                                                else:
+                                                    is_updated = True
+                                                    mineral.mindat_id = entry["id"]
+                                                    mineral.ima_symbol = entry["ima_symbol"] or None
+                                                    mineral.description = (
+                                                        entry["description"] or None
+                                                    )
+                                                    mineral.save()
+
+                                            formula_note = entry["formula_note"] or None
+                                            if entry["formula"]:
+                                                (
+                                                    entry_,
+                                                    created_,
+                                                ) = MineralFormula.objects.get_or_create(
+                                                    mineral=mineral,
+                                                    formula=entry["formula"],
+                                                    source=formula_mindat,
+                                                    defaults={
+                                                        "note": formula_note,
+                                                    },
+                                                )
+                                                if created_:
+                                                    is_updated = True
+
+                                            if entry["ima_formula"]:
+                                                (
+                                                    entry_,
+                                                    created_,
+                                                ) = MineralFormula.objects.get_or_create(
+                                                    mineral=mineral,
+                                                    formula=entry["ima_formula"],
+                                                    source=formula_ima,
+                                                    defaults={
+                                                        "note": formula_note,
+                                                    },
+                                                )
+
+                                                if created_:
+                                                    is_updated = True
+
+                                            if any(
+                                                [
+                                                    entry["discovery_year"],
+                                                    entry["ima_year"],
+                                                    entry["publication_year"],
+                                                    entry["approval_year"],
+                                                ]
+                                            ):
+                                                (
+                                                    entry_,
+                                                    updated_,
+                                                ) = MineralHistory.objects.update_or_create(
+                                                    mineral=mineral,
+                                                    defaults={
+                                                        "discovery_year": entry["discovery_year"]
+                                                        or None,
+                                                        "ima_year": entry["ima_year"] or None,
+                                                        "approval_year": entry["approval_year"]
+                                                        or None,
+                                                        "publication_year": entry[
+                                                            "publication_year"
+                                                        ]
+                                                        or None,
+                                                    },
+                                                )
+                                                if updated_:
+                                                    is_updated = True
+
+                                            if is_updated:
+                                                fetched.append(entry)
+
+                                    except Exception as e:
+                                        raise CommandError(
+                                            "Error while saving synced data: " + str(e)
+                                        )
                             else:
                                 break
                         else:
                             break
 
                     if fetched:
-                        try:
-                            for index, entry in enumerate(fetched):
-                                name_ = entry["name"].strip()
-                                is_updated = False
-
-                                mineral, created_ = Mineral.objects.get_or_create(name=name_)
-                                if created_:
-                                    is_updated = True
-                                    mineral(
-                                        mindat_id=entry["id"],
-                                        ima_symbol=entry["ima_symbol"] or None,
-                                        description=entry["description"] or None,
-                                    )
-                                    mineral.save()
-                                else:
-                                    if (
-                                        mineral.mindat_id == entry["id"]
-                                        and mineral.ima_symbol == (entry["ima_symbol"] or None)
-                                        and mineral.description == (entry["description"] or None)
-                                    ):
-                                        pass
-                                    else:
-                                        is_updated = True
-                                        mineral.mindat_id = entry["id"]
-                                        mineral.ima_symbol = entry["ima_symbol"] or None
-                                        mineral.description = entry["description"] or None
-                                        mineral.save()
-
-                                formula_note = entry["formula_note"] or None
-                                if entry["formula"]:
-                                    entry_, created_ = MineralFormula.objects.get_or_create(
-                                        mineral=mineral,
-                                        formula=entry["formula"],
-                                        source=formula_mindat,
-                                        defaults={
-                                            "note": formula_note,
-                                        },
-                                    )
-                                    if created_:
-                                        is_updated = True
-
-                                if entry["ima_formula"]:
-                                    entry_, created_ = MineralFormula.objects.get_or_create(
-                                        mineral=mineral,
-                                        formula=entry["ima_formula"],
-                                        source=formula_ima,
-                                        defaults={
-                                            "note": formula_note,
-                                        },
-                                    )
-
-                                    if created_:
-                                        is_updated = True
-
-                                if any(
-                                    [
-                                        entry["discovery_year"],
-                                        entry["ima_year"],
-                                        entry["publication_year"],
-                                        entry["approval_year"],
-                                    ]
-                                ):
-                                    entry_, updated_ = MineralHistory.objects.update_or_create(
-                                        mineral=mineral,
-                                        defaults={
-                                            "discovery_year": entry["discovery_year"] or None,
-                                            "ima_year": entry["ima_year"] or None,
-                                            "approval_year": entry["approval_year"] or None,
-                                            "publication_year": entry["publication_year"] or None,
-                                        },
-                                    )
-                                    if updated_:
-                                        is_updated = True
-
-                                if not is_updated:
-                                    fetched.pop(index)
-                            if fetched:
-                                print(fetched)
-                                # MindatSync.objects.create(values=fetched)
-                                self.stdout.write(
-                                    self.style.SUCCESS("Successfully synced mindat.org")
-                                )
-                            else:
-                                MindatSync.objects.create(values=None)
-                                self.stdout.write(
-                                    self.style.SUCCESS("All good, there's nothing to sync!")
-                                )
-                        except Exception as e:
-                            raise CommandError("Error while saving synced data: " + str(e))
+                        MindatSync.objects.create(values=fetched)
+                        self.stdout.write(self.style.SUCCESS("Successfully synced mindat.org"))
                     else:
+                        MindatSync.objects.create(values=None)
                         self.stdout.write(self.style.SUCCESS("All good, there's nothing to sync!"))
                 else:
                     raise CommandError("Error while syncing with mindat.org")
