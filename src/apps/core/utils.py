@@ -1,6 +1,10 @@
 # -*- coding: UTF-8 -*-
 import re
 
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe
 
 
@@ -50,3 +54,13 @@ def get_relation_note(relation_type):
     elif relation_type == 13:
         note = "Mineralogy of  Accessory minerals - these are minor components, often far less than 1 percent of the total mineral material"
     return note
+
+
+def send_email(subject, template, recepients, context=None):
+    html_content = render_to_string(template, context)
+    email_message = strip_tags(html_content)
+
+    msg = EmailMultiAlternatives(subject, email_message, settings.DEFAULT_FROM_EMAIL, recepients)
+    msg.attach_alternative(html_content, "text/html")
+
+    msg.send()

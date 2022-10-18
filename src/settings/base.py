@@ -20,6 +20,12 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 CORS_ALLOWED_ORIGINS = os.environ.get("DJANGO_CORS_ALLOWED_ORIGINS", default="").split(",")
 
+DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL")
+
+SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
+
+FRONTEND_DOMAIN = os.environ.get("DJANGO_FRONTEND_DOMAIN")
+
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 3000
 
 LOGGING = {
@@ -60,6 +66,12 @@ INSTALLED_APPS = [
     "corsheaders",
     "core",
 ]
+
+EMAIL_HOST = "smtp.sendgrid.net"
+EMAIL_HOST_USER = "apikey"
+EMAIL_HOST_PASSWORD = SENDGRID_API_KEY
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
