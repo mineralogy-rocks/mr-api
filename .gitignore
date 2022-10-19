@@ -7,3 +7,4 @@ __pycache__/
 db/backups/*.sql
 nginx/_data/*
 .envs/.prod/*
+.tmp/messages/*

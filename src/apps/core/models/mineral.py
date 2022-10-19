@@ -104,6 +104,9 @@ class Mineral(Nameable, Creatable, Updatable):
     def get_absolute_url(self):
         return reverse("core:mineral-detail", kwargs={"pk": self.id})
 
+    def get_admin_url(self):
+        return reverse("admin:core_mineral_change", args=(self.id,))
+
     @admin.display(description="Nickel-Strunz Index")
     def ns_index(self):
         if self.ns_class:
@@ -491,6 +494,7 @@ class MineralIonPosition(BaseModel):
 class MindatSync(BaseModel, Creatable):
 
     values = models.JSONField(blank=True, null=True)
+    is_successful = models.BooleanField(default=True)
 
     class Meta:
         managed = False

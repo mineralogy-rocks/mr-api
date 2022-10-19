@@ -25,6 +25,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.views.generic import TemplateView
 
 from .filters import MineralFilter
 from .filters import NickelStrunzFilter
@@ -42,7 +43,13 @@ from .serializers.core import NsSubclassListSerializer
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRetrieveSerializer
+from .utils import get_dummy_data
 
+class TestView(TemplateView):
+    template_name = "sync-report.html"
+
+    def get_context_data(self, **kwargs):
+        return  { "minerals": get_dummy_data() }
 
 class MineralSearch(autocomplete.Select2QuerySetView):
     def get_queryset(self):
