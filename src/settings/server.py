@@ -28,7 +28,7 @@ AWS_QUERYSTRING_AUTH = False
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.environ.get("DJANGO_EMAIL_HOST")
 EMAIL_HOST_USER = os.environ.get("DJANGO_EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = SENDGRID_API_KEY
+EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_API_KEY")
 EMAIL_PORT = os.environ.get("DJANGO_EMAIL_PORT")
 EMAIL_USE_TLS = True
 
