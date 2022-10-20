@@ -12,12 +12,14 @@ from django.core.management.base import CommandError
 from django.utils import timezone
 
 from ...models.core import FormulaSource
+from ...models.core import Status
 from ...models.mineral import MindatSync
 from ...models.mineral import Mineral
 from ...models.mineral import MineralFormula
-from ...models.mineral import MineralHistory, MineralStatus
-from ...models.core import Status
-from ...utils import send_email, shorten_text, get_dummy_data
+from ...models.mineral import MineralHistory
+from ...models.mineral import MineralStatus
+from ...utils import send_email
+from ...utils import shorten_text
 
 MINDAT_API_URL = os.environ.get("MINDAT_API_URL")
 MINDAT_API_USERNAME = os.environ.get("MINDAT_API_USERNAME")
@@ -98,7 +100,9 @@ class Command(BaseCommand):
 
                                                 if entry["ima_symbol"]:
                                                     status = Status.objects.get(status_id=0)
-                                                    MineralStatus.objects.create(mineral=mineral, status=status, needs_revision=True)
+                                                    MineralStatus.objects.create(
+                                                        mineral=mineral, status=status, needs_revision=True
+                                                    )
 
                                             else:
                                                 if (
@@ -115,7 +119,9 @@ class Command(BaseCommand):
                                                     mineral.save()
 
                                             if entry["description"]:
-                                                entry["description"] = shorten_text(entry["description"], limit=500, html=True)
+                                                entry["description"] = shorten_text(
+                                                    entry["description"], limit=500, html=True
+                                                )
 
                                             formula_note = entry["formula_note"] or None
                                             if entry["formula"]:
@@ -187,7 +193,7 @@ class Command(BaseCommand):
 
                     context = {
                         "minerals": fetched,
-                        'base_url': f'{settings.SCHEMA}://{settings.BACKEND_DOMAIN}',
+                        "base_url": f"{settings.SCHEMA}://{settings.BACKEND_DOMAIN}",
                         "domain": settings.FRONTEND_DOMAIN,
                         "link": sync_log.get_absolute_url(),
                     }

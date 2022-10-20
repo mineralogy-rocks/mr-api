@@ -4,17 +4,30 @@ metadata:
   name: sync-mindat
 spec:
   schedule: "0 0 * * *"
+  concurrencyPolicy: Forbid
   jobTemplate:
     spec:
       template:
         spec:
           containers:
-          - name: mr-api
-            image: busybox:1.28
+          - name: sync-mindat
+            image: juampynr/digital-ocean-cronjob:latest
             imagePullPolicy: IfNotPresent
-            command: ['python', '../../../src/app/manage.py', 'check']
-            # command:
-            # - /bin/sh
-            # - -c
-            # - date; echo Hello from the Kubernetes cluster
+            env:
+            - name: DIGITALOCEAN_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: mr-api-secret
+                  key: DIGITAL_OCEAN_ACCESS_TOKEN
+            - name: DIGITAL_OCEAN_KUBERNETES_CLUSTER_ID
+              valueFrom:
+                secretKeyRef:
+                  name: mr-api-secret
+                  key: DIGITAL_OCEAN_KUBERNETES_CLUSTER_ID
+            command: ['/bin/sh', '-c']
+            args:
+                - doctl registry login --expiry-seconds 800;
+                  doctl kubernetes cluster kubeconfig save $(DIGITAL_OCEAN_KUBERNETES_CLUSTER_ID);
+                  POD_NAME=$(kubectl get pods -o=jsonpath='{.items[0].metadata.name}');
+                  kubectl exec $POD_NAME -c mr-api -- python manage.py check;
           restartPolicy: Never
