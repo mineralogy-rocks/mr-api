@@ -39,18 +39,18 @@
                 </div>
 
                 {% if mineral.description %}
-                  <p style="font-style: italic; margin-top: 0px; margin-bottom: 10px;">
+                  <p style="font-style: italic; font-weight: 200; font-size: 12px; margin-top: 0px; margin-bottom: 10px;">
                     {{ mineral.description|safe }}
                   </p>
                 {% endif %}
 
-                <p style="margin: 2px 0;">
+                <p style="font-weight: 200; font-size: 12px; margin: 2px 0;">
                   See on mindat <a href="{{ mineral.mindat_link }}" target="_blank" rel="noopener noreferrer" style="color: #1874CD; font-weight: 200; text-decoration: underline; font-family: sans-serif;">
                     {{ mineral.mindat_link }}
                   </a>
                 </p>
 
-                <p style="margin: 2px 0;">
+                <p style="font-weight: 200; font-size: 12px; margin: 2px 0;">
                   Edit entry in the admin <a href="{{ base_url }}{{ mineral.admin_link }}" target="_blank" style="color: #1874CD; font-weight: 200; text-decoration: underline; font-family: sans-serif;">
                     {{ base_url }}{{ mineral.admin_link }}
                   </a>
