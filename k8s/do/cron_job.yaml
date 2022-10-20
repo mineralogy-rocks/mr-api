@@ -29,5 +29,5 @@ spec:
                 - doctl registry login --expiry-seconds 800;
                   doctl kubernetes cluster kubeconfig save $(DIGITAL_OCEAN_KUBERNETES_CLUSTER_ID);
                   POD_NAME=$(kubectl get pods -o=jsonpath='{.items[0].metadata.name}');
-                  kubectl exec $POD_NAME -c mr-api -- python manage.py check;
+                  kubectl exec $POD_NAME -c mr-api -- python manage.py sync_mindat;
           restartPolicy: Never
