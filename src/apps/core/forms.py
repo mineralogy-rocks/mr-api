@@ -129,9 +129,7 @@ class MineralRelationForm(ModelForm):
 
 class MineralStatusForm(ModelForm):
 
-    status = ModelChoiceField(
-        queryset=Status.objects.all(), initial=Status.objects.filter(status_id=0)
-    )
+    status = ModelChoiceField(queryset=Status.objects.all(), initial=Status.objects.filter(status_id=0))
 
     class Meta:
         model = MineralStatus

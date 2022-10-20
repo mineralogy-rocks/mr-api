@@ -11,6 +11,7 @@ from django.db.models import When
 from django.db.models.functions import Coalesce
 from django.db.models.functions import Concat
 from django.db.models.functions import Right
+from django.views.generic import TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework import status
@@ -25,7 +26,6 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.views.generic import TemplateView
 
 from .filters import MineralFilter
 from .filters import NickelStrunzFilter
@@ -45,11 +45,13 @@ from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRetrieveSerializer
 from .utils import get_dummy_data
 
+
 class TestView(TemplateView):
     template_name = "sync-report.html"
 
     def get_context_data(self, **kwargs):
-        return  { "minerals": get_dummy_data() }
+        return {"minerals": get_dummy_data()}
+
 
 class MineralSearch(autocomplete.Select2QuerySetView):
     def get_queryset(self):
@@ -165,30 +167,22 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
 
     def _filter_queryset(self, queryset):
         if "q" in self.request.query_params:
-            queryset = queryset.filter(
-                description__icontains=self.request.query_params.get("q", "")
-            )
+            queryset = queryset.filter(description__icontains=self.request.query_params.get("q", ""))
 
         if "class" in self.request.query_params:
             queryset = queryset.filter(ns_class=self.request.query_params.get("class", ""))
 
         if "subclass" in self.request.query_params:
             if self.action in ["subclasses"]:
-                queryset = queryset.filter(
-                    ns_subclass=self.request.query_params.get("subclass", "")
-                )
+                queryset = queryset.filter(ns_subclass=self.request.query_params.get("subclass", ""))
             elif self.action in ["families"]:
-                queryset = queryset.filter(
-                    ns_subclass__ns_subclass=self.request.query_params.get("subclass", "")
-                )
+                queryset = queryset.filter(ns_subclass__ns_subclass=self.request.query_params.get("subclass", ""))
             else:
                 pass
 
         if "family" in self.request.query_params:
             if self.action in ["subclasses"]:
-                queryset = queryset.filter(
-                    families__ns_family=self.request.query_params.get("family", "")
-                )
+                queryset = queryset.filter(families__ns_family=self.request.query_params.get("family", ""))
             elif self.action in ["families"]:
                 queryset = queryset.filter(ns_family=self.request.query_params.get("family", ""))
             else:
@@ -325,9 +319,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         #                                                            )
         #                                                        )
 
-        is_grouping_ = MineralStatus.objects.filter(
-            Q(mineral=OuterRef("id")) & Q(status__status_group=1)
-        )
+        is_grouping_ = MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(status__status_group=1))
 
         queryset = queryset.annotate(
             is_grouping=Exists(is_grouping_),
@@ -400,18 +392,12 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             if discovery_countries:
                 queryset = queryset.filter(
                     Q(is_grouping=True)
-                    & Q(
-                        children_hierarchy__mineral__discovery_countries__in=discovery_countries.split(
-                            ","
-                        )
-                    )
+                    & Q(children_hierarchy__mineral__discovery_countries__in=discovery_countries.split(","))
                 )
 
         else:
             if discovery_countries:
-                queryset = queryset.filter(
-                    Q(discovery_countries__in=discovery_countries.split(","))
-                )
+                queryset = queryset.filter(Q(discovery_countries__in=discovery_countries.split(",")))
 
         return queryset
 
