@@ -105,9 +105,7 @@ class StatusGroup(BaseModel, Nameable):
 class Status(BaseModel):
 
     status_id = models.FloatField(null=False)
-    status_group = models.ForeignKey(
-        StatusGroup, models.CASCADE, db_column="status_group_id", to_field="id"
-    )
+    status_group = models.ForeignKey(StatusGroup, models.CASCADE, db_column="status_group_id", to_field="id")
     description_long = models.TextField(blank=True, null=True)
     description_short = models.CharField(max_length=100)
 

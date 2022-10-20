@@ -71,7 +71,8 @@ def shorten_text(text, limit=100, strip_html=False, html=False):
     text = text.strip()
     if strip_html:
         text = strip_tags(text)
-    return Truncator(text).chars(limit, truncate='...', html=html)
+    return Truncator(text).chars(limit, truncate="...", html=html)
+
 
 def get_dummy_data():
 
@@ -90,7 +91,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 405,
@@ -100,13 +101,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/8680e4b9-9b99-4677-86f3-67994d91eb1b/change/",
             "ima_symbol": "Ast",
-            "description": "Astrophyllite Group. \r\nThe mineral was first found in 1844 by the Norwegian mineralogist Paul Christian Weibye (1819-1865) and later described by him, in 1848, as a brown, micaceous mineral (\"brauner Glimmer\") from Låven (formerly Lamöskjär), Langesundsfjorden, Norway (Weibye 1848). Later Scheerer (1854) described it under the name astrophyllite. Brøgger (1890) described in detail the crystallographic and optical properties as well as its chemistry.",
+            "description": 'Astrophyllite Group. \r\nThe mineral was first found in 1844 by the Norwegian mineralogist Paul Christian Weibye (1819-1865) and later described by him, in 1848, as a brown, micaceous mineral ("brauner Glimmer") from Låven (formerly Lamöskjär), Langesundsfjorden, Norway (Weibye 1848). Later Scheerer (1854) described it under the name astrophyllite. Brøgger (1890) described in detail the crystallographic and optical properties as well as its chemistry.',
             "ima_formula": "K^2NaFe#2+#^7Ti^2(Si^4O^12)^2O^2(OH)^4F",
             "mindat_link": "https://www.mindat.org/min-405.html",
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1844,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 472,
@@ -122,7 +123,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 1990,
             "discovery_year": None,
-            "publication_year": 1966
+            "publication_year": 1966,
         },
         {
             "id": 56025,
@@ -138,7 +139,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 511,
@@ -154,7 +155,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1951,
-            "publication_year": 1951
+            "publication_year": 1951,
         },
         {
             "id": 537,
@@ -164,13 +165,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/e3e0ddcd-1c18-4168-b353-2add9b08127f/change/",
             "ima_symbol": "Bgr",
-            "description": "\"The Ollague meteorite, as a whole, was artificially annealed at a temperature above 1000°C and that heating gave rise to secondary high-temperature alteration of chemical and phase compositions of this meteorite, including the formation of barringerite.\" (from Britvin et al 2017).",
+            "description": '"The Ollague meteorite, as a whole, was artificially annealed at a temperature above 1000°C and that heating gave rise to secondary high-temperature alteration of chemical and phase compositions of this meteorite, including the formation of barringerite." (from Britvin et al 2017).',
             "ima_formula": "(Fe,Ni)^2P",
             "mindat_link": "https://www.mindat.org/min-537.html",
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1969
+            "publication_year": 1969,
         },
         {
             "id": 561,
@@ -186,7 +187,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1961
+            "publication_year": 1961,
         },
         {
             "id": 562,
@@ -202,7 +203,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1970
+            "publication_year": 1970,
         },
         {
             "id": 583,
@@ -218,7 +219,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1976,
-            "publication_year": 1976
+            "publication_year": 1976,
         },
         {
             "id": 603,
@@ -234,7 +235,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1970
+            "publication_year": 1970,
         },
         {
             "id": 707,
@@ -250,7 +251,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1925
+            "publication_year": 1925,
         },
         {
             "id": 724,
@@ -266,7 +267,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1975,
-            "publication_year": 1975
+            "publication_year": 1975,
         },
         {
             "id": 770,
@@ -282,7 +283,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 776,
@@ -298,7 +299,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1938
+            "publication_year": 1938,
         },
         {
             "id": 923,
@@ -314,7 +315,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1972
+            "publication_year": 1972,
         },
         {
             "id": 929,
@@ -330,7 +331,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1955
+            "publication_year": 1955,
         },
         {
             "id": 935,
@@ -346,7 +347,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1988
+            "publication_year": 1988,
         },
         {
             "id": 987,
@@ -362,7 +363,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 1983,
             "discovery_year": 1983,
-            "publication_year": 1986
+            "publication_year": 1986,
         },
         {
             "id": 992,
@@ -378,7 +379,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1967
+            "publication_year": 1967,
         },
         {
             "id": 1027,
@@ -394,7 +395,7 @@ def get_dummy_data():
             "formula_note": "a n=2 member of the humite polysomatic series",
             "approval_year": None,
             "discovery_year": 1817,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 1037,
@@ -410,7 +411,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1981
+            "publication_year": 1981,
         },
         {
             "id": 1040,
@@ -420,13 +421,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/fb33c934-57d8-4a55-9f09-4c1e258fecbd/change/",
             "ima_symbol": "Ccl",
-            "description": "A mineral of secondary origin, commonly associated with other secondary copper minerals, it is typically found as glassy botryoidal or rounded masses or bubbly crusts, and as vein fillings. Any acicular or fibrous chrysocolla \"crystals\" are all pseudomorphs. \r\n\r\nCopper-bearing allophane may look similar.",
+            "description": 'A mineral of secondary origin, commonly associated with other secondary copper minerals, it is typically found as glassy botryoidal or rounded masses or bubbly crusts, and as vein fillings. Any acicular or fibrous chrysocolla "crystals" are all pseudomorphs. \r\n\r\nCopper-bearing allophane may look similar.',
             "ima_formula": "(Cu^2-xAl^x)H^2-xSi^2O^5(OH)^4.nH^2O",
             "mindat_link": "https://www.mindat.org/min-1040.html",
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 315,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 1045,
@@ -442,7 +443,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1960
+            "publication_year": 1960,
         },
         {
             "id": 1077,
@@ -452,13 +453,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/738db144-19ef-46fc-bbd5-0c82fa04ec9b/change/",
             "ima_symbol": "Chu",
-            "description": "Clinohumite is a monoclinic member of the humite group. It forms a continuous series towards hydroxylclinohumite. The name \"clinohumite\" has commonly been used as a default when the F/OH ratio has not been determined. Since hydroxylclinohumite was approved as a separate mineral (1998) it has become apparent that hydroxylclinohumite is much more common than indicated in the literature and locality entries in Mindat. It should also be noted that some of the published analyses (Luc Yen, V...",
+            "description": 'Clinohumite is a monoclinic member of the humite group. It forms a continuous series towards hydroxylclinohumite. The name "clinohumite" has commonly been used as a default when the F/OH ratio has not been determined. Since hydroxylclinohumite was approved as a separate mineral (1998) it has become apparent that hydroxylclinohumite is much more common than indicated in the literature and locality entries in Mindat. It should also be noted that some of the published analyses (Luc Yen, V...',
             "ima_formula": "Mg^9(SiO^4)^4F^2",
             "mindat_link": "https://www.mindat.org/min-1077.html",
             "formula_note": "a n=4 member of the humite polysomatic series",
             "approval_year": None,
             "discovery_year": 1876,
-            "publication_year": 1876
+            "publication_year": 1876,
         },
         {
             "id": 1177,
@@ -474,7 +475,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1884
+            "publication_year": 1884,
         },
         {
             "id": 1212,
@@ -490,7 +491,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 1224,
@@ -506,7 +507,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1983
+            "publication_year": 1983,
         },
         {
             "id": 1234,
@@ -522,7 +523,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1906
+            "publication_year": 1906,
         },
         {
             "id": 1282,
@@ -538,7 +539,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 1303,
@@ -554,7 +555,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1927
+            "publication_year": 1927,
         },
         {
             "id": 1326,
@@ -570,7 +571,7 @@ def get_dummy_data():
             "formula_note": "May be Sb-bearing.",
             "approval_year": 1978,
             "discovery_year": 1978,
-            "publication_year": 1978
+            "publication_year": 1978,
         },
         {
             "id": 1365,
@@ -583,10 +584,10 @@ def get_dummy_data():
             "description": "Gold-Silver Series. \r\nHigh silver-bearing gold is pale-yellow nearly white (Ramdohr. 1969).",
             "ima_formula": None,
             "mindat_link": "https://www.mindat.org/min-1365.html",
-            "formula_note": "\"Mix crystals containing 30-45% Ag are called electrum; they are almost pure white. Those with about 80% Ag are designated with the rarely encountered name \"kustelite\".\" (Paul Ramdohr (1969): The Ore Minerals and Their Intergrowths).",
+            "formula_note": '"Mix crystals containing 30-45% Ag are called electrum; they are almost pure white. Those with about 80% Ag are designated with the rarely encountered name "kustelite"." (Paul Ramdohr (1969): The Ore Minerals and Their Intergrowths).',
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 1417,
@@ -602,7 +603,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1823,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 1425,
@@ -618,7 +619,7 @@ def get_dummy_data():
             "formula_note": "Usually the sum (Nb+Ta) is close to Ti, in other words (Nb+Ta)/Ti ~ 1.\r\nSynthetic end-member: YTiNbO6",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 1446,
@@ -628,13 +629,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/eaf2e817-c05b-4ca1-9437-740f614792fb/change/",
             "ima_symbol": "Fmn",
-            "description": "A mineral closely related to boulangerite, or possibly only a lead-rich variety of the latter. \r\nAlthough the IMA currently considers falkmanite as a grandfathered species, an IMA Commission report (Moëlo et al., 2008) is undecided on the status and concludes that \"A solution of the crystal structure of falkmanite is necessary for its definite classification.\" The XRD patterns of boulangerite and falkmanite are similar.\r\nAccording to Schultz et al. (2017), \"falkmanite\" is boulangerite....",
+            "description": 'A mineral closely related to boulangerite, or possibly only a lead-rich variety of the latter. \r\nAlthough the IMA currently considers falkmanite as a grandfathered species, an IMA Commission report (Moëlo et al., 2008) is undecided on the status and concludes that "A solution of the crystal structure of falkmanite is necessary for its definite classification." The XRD patterns of boulangerite and falkmanite are similar.\r\nAccording to Schultz et al. (2017), "falkmanite" is boulangerite....',
             "ima_formula": "Pb^3Sb^2S^6",
             "mindat_link": "https://www.mindat.org/min-1446.html",
             "formula_note": "Previously given as Pb5.4Sb3.6S11. ICDD 35-595",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 1582,
@@ -650,7 +651,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1944
+            "publication_year": 1944,
         },
         {
             "id": 1628,
@@ -666,7 +667,7 @@ def get_dummy_data():
             "formula_note": "Often slightly radioactive due to minor U and/or Th contents; therefore often metamict.",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1788
+            "publication_year": 1788,
         },
         {
             "id": 1668,
@@ -682,7 +683,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1815,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 1677,
@@ -698,7 +699,7 @@ def get_dummy_data():
             "formula_note": "The As was originally assumed to be pentavalent.",
             "approval_year": None,
             "discovery_year": 1907,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 1683,
@@ -714,7 +715,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1845,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 1769,
@@ -730,7 +731,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 1983,
             "discovery_year": 1959,
-            "publication_year": 1962
+            "publication_year": 1962,
         },
         {
             "id": 1771,
@@ -746,7 +747,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1965,
-            "publication_year": 1965
+            "publication_year": 1965,
         },
         {
             "id": 1818,
@@ -756,13 +757,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/ca5e7cde-972b-4a0c-87a6-2b372f1b29d6/change/",
             "ima_symbol": "Hdy",
-            "description": "In daylight, natural hardystonite is a very non-descript massive ashen white mineral distinguished from massive calcite by a lack of cleavage and a somewhat greasy luster. (Note: Many photographers over-expose images of hardystonite to accentuate the blue fluorescent brightness. Such photos are often called \"eBay blue\", because deceptive sellers wish to increase their sales, but disappointed buyers feel cheated because the actual fluorescence of hardystonite is fairly dim compared with associ...",
+            "description": 'In daylight, natural hardystonite is a very non-descript massive ashen white mineral distinguished from massive calcite by a lack of cleavage and a somewhat greasy luster. (Note: Many photographers over-expose images of hardystonite to accentuate the blue fluorescent brightness. Such photos are often called "eBay blue", because deceptive sellers wish to increase their sales, but disappointed buyers feel cheated because the actual fluorescence of hardystonite is fairly dim compared with associ...',
             "ima_formula": "Ca^2ZnSi^2O^7",
             "mindat_link": "https://www.mindat.org/min-1818.html",
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1899,
-            "publication_year": 1899
+            "publication_year": 1899,
         },
         {
             "id": 26676,
@@ -778,7 +779,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 1947,
@@ -794,7 +795,7 @@ def get_dummy_data():
             "formula_note": "a n=3 member of the polysomatic series; the above Mindat Formula is the now-accepted (IMA CNMNC Newsletter 63) end-member formula",
             "approval_year": None,
             "discovery_year": 1813,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 1999,
@@ -810,7 +811,7 @@ def get_dummy_data():
             "formula_note": "The above mindat formula corresponds to new findings and, as such, new structural refinements within the hopeite group",
             "approval_year": None,
             "discovery_year": 1822,
-            "publication_year": 1822
+            "publication_year": 1822,
         },
         {
             "id": 2059,
@@ -820,13 +821,13 @@ def get_dummy_data():
             "ima_year": 1962,
             "admin_link": "http:///admin/core/mineral/6621bfe7-2b97-49d9-9e6e-0be72c865d15/change/",
             "ima_symbol": "Ix",
-            "description": "Complex oxide with disordered cation distribution (only one cation site in the asymmetric unit) and a unit cell equivalent to a subcell of columbite. Structurally, ixiolite can be regarded as a disordered form of tantalite. The degree of disorder depends on the chemical composition.\r\n\r\n\"Significant Sn, along with Mn, Fe, and Ti in its composition, is essential to the definition of this species, the disordered counterpart of wodginite, to which it alters on heating.\" (Hand...",
+            "description": 'Complex oxide with disordered cation distribution (only one cation site in the asymmetric unit) and a unit cell equivalent to a subcell of columbite. Structurally, ixiolite can be regarded as a disordered form of tantalite. The degree of disorder depends on the chemical composition.\r\n\r\n"Significant Sn, along with Mn, Fe, and Ti in its composition, is essential to the definition of this species, the disordered counterpart of wodginite, to which it alters on heating." (Hand...',
             "ima_formula": "(Ta,Mn,Nb)O^2",
             "mindat_link": "https://www.mindat.org/min-2059.html",
             "formula_note": None,
             "approval_year": 1962,
             "discovery_year": 1857,
-            "publication_year": 1857
+            "publication_year": 1857,
         },
         {
             "id": 2213,
@@ -842,7 +843,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 1969,
             "discovery_year": 1969,
-            "publication_year": 1970
+            "publication_year": 1970,
         },
         {
             "id": 2308,
@@ -858,7 +859,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 2488,
@@ -874,7 +875,7 @@ def get_dummy_data():
             "formula_note": "The taramite group minerals are sodium-calcium amphiboles defined with A(Na+K+2Ca)> 0.5 apfu and 1.5 apfu < C(Al+Fe3++2Ti).\r\n\r\nFerri-taramite is defined with \r\n\r\nA position: Na dominant\r\nC2+ position: Mg dominant\r\nC3+ position: Fe dominant\r\nW position: (OH) dominant",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 2543,
@@ -890,7 +891,7 @@ def get_dummy_data():
             "formula_note": "Initial (Moore & Araki, 1979) structural formula: Mn2+18[As3+6Mn+O18]2Cl2 but it is not necessarily confirmed (or disproved) by further studies",
             "approval_year": None,
             "discovery_year": 1956,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 2583,
@@ -900,13 +901,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/6ffdbdc4-3884-4fb6-aa2e-b092489e8ee4/change/",
             "ima_symbol": None,
-            "description": "The name given for hematite pseudomorphs after magnetite, formed under conditions of increasing oxygen fugacity. \r\n\r\nFor pseudomorphs of magnetite after hematite see \"mushketovite\".\r\n\r\n\r\nOriginally described from Itabira, Minas Gerais, Southeast Region, Brazil.",
+            "description": 'The name given for hematite pseudomorphs after magnetite, formed under conditions of increasing oxygen fugacity. \r\n\r\nFor pseudomorphs of magnetite after hematite see "mushketovite".\r\n\r\n\r\nOriginally described from Itabira, Minas Gerais, Southeast Region, Brazil.',
             "ima_formula": None,
             "mindat_link": "https://www.mindat.org/min-2583.html",
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 2617,
@@ -922,7 +923,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1965
+            "publication_year": 1965,
         },
         {
             "id": 2748,
@@ -938,7 +939,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1854,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 2923,
@@ -954,7 +955,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1996
+            "publication_year": 1996,
         },
         {
             "id": 2925,
@@ -970,7 +971,7 @@ def get_dummy_data():
             "formula_note": "a n=1 (the most simple) member of the humite polysomatic series",
             "approval_year": None,
             "discovery_year": 1926,
-            "publication_year": 1926
+            "publication_year": 1926,
         },
         {
             "id": 2994,
@@ -986,7 +987,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 3090,
@@ -1002,7 +1003,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1843
+            "publication_year": 1843,
         },
         {
             "id": 3119,
@@ -1018,7 +1019,7 @@ def get_dummy_data():
             "formula_note": "Pargasite is defined as a pargasite group member with the following dominant elements: \r\nA position: Na\r\nC position: Mg as the dominant divalent cation and Al as the dominant trivalent cation.\r\nW position: OH as the dominant anion",
             "approval_year": None,
             "discovery_year": 1814,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 3124,
@@ -1034,7 +1035,7 @@ def get_dummy_data():
             "formula_note": "May contain minor Ni, Cl.",
             "approval_year": None,
             "discovery_year": 1978,
-            "publication_year": 1978
+            "publication_year": 1978,
         },
         {
             "id": 3160,
@@ -1050,7 +1051,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1977,
-            "publication_year": 1977
+            "publication_year": 1977,
         },
         {
             "id": 3185,
@@ -1066,7 +1067,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1813,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 3191,
@@ -1076,13 +1077,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/9ebfa4df-c492-49d2-ac8c-1143e54b7db5/change/",
             "ima_symbol": "Pbu",
-            "description": "The As-P ordered arsenate-phosphate analogue of kipushite (phosphate endmember) and goldhillite (arsenate endmember, approved in 2021). \r\n\r\nNOTE: Many \"philipsburgites\" from localities except the type locality are probably goldhillite. For example, the first find of \"philipsburgite\" from the Clara mine, Black Forest, Germany, was analysed as P-free, i.e. it is in fact goldhillite.\r\n\r\nType philipsburgite shows an ordered distribution of As and P over two symmetri...",
+            "description": 'The As-P ordered arsenate-phosphate analogue of kipushite (phosphate endmember) and goldhillite (arsenate endmember, approved in 2021). \r\n\r\nNOTE: Many "philipsburgites" from localities except the type locality are probably goldhillite. For example, the first find of "philipsburgite" from the Clara mine, Black Forest, Germany, was analysed as P-free, i.e. it is in fact goldhillite.\r\n\r\nType philipsburgite shows an ordered distribution of As and P over two symmetri...',
             "ima_formula": "Cu^5Zn(AsO^4)(PO^4)(OH)^6.H^2O",
             "mindat_link": "https://www.mindat.org/min-3191.html",
             "formula_note": "Cu:Zn ratio is roughly 2.5:1 - 3:1.",
             "approval_year": None,
             "discovery_year": 1985,
-            "publication_year": 1985
+            "publication_year": 1985,
         },
         {
             "id": 470364,
@@ -1098,7 +1099,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 3251,
@@ -1114,7 +1115,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1969,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 3257,
@@ -1130,7 +1131,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 3270,
@@ -1143,7 +1144,7 @@ def get_dummy_data():
             "description": "The only natural Pb-Bi vanadate known (unique combination of elements).\r\nThe Pb/Bi ratio varies in the range from 0.86 to 1.48.\r\n\r\nCrystal structure details:\r\n(1) A site split into two partially occupied subsites;\r\n(2) distorted square antiprismatic coordination of Bi;\r\n(3) contains trace As and Cl;\r\n(4) isolated vanadate tetrahedra have common oxygen atoms with heavy metals -> double-layer units || (001), shifted from themselves by 1/2 b; \r\n(5) there are [(VO4)(H23Bi)Bi(VO4)4·H2O",
             "approval_year": 1988,
             "discovery_year": None,
-            "publication_year": 1988
+            "publication_year": 1988,
         },
         {
             "id": 3292,
@@ -1153,13 +1154,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/96dc292c-6e61-4db6-ba97-9dda7165933a/change/",
             "ima_symbol": None,
-            "description": "An ill-defined secondary mineral containing Sb, Cu, Fe and minor As. Probably \"thrombolite (of Breithaupt)\" or colloidal partzite. [Clark, 1993 - \"Hey's Mineral Index\", p566] \r\n\r\nOriginally reported from Sattlerkogel Mt., Veitsch, Mitterdorf, Styria, Austria and Blagill Mine, Nent Valley, Alston Moor District, North Pennines, North and Western Region (Cumberland), Cumbria, England, UK.",
+            "description": 'An ill-defined secondary mineral containing Sb, Cu, Fe and minor As. Probably "thrombolite (of Breithaupt)" or colloidal partzite. [Clark, 1993 - "Hey\'s Mineral Index", p566] \r\n\r\nOriginally reported from Sattlerkogel Mt., Veitsch, Mitterdorf, Styria, Austria and Blagill Mine, Nent Valley, Alston Moor District, North Pennines, North and Western Region (Cumberland), Cumbria, England, UK.',
             "ima_formula": None,
             "mindat_link": "https://www.mindat.org/min-3292.html",
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 3358,
@@ -1175,7 +1176,7 @@ def get_dummy_data():
             "formula_note": "The Cu:Zn ratio is slightly variable.",
             "approval_year": 1984,
             "discovery_year": 1984,
-            "publication_year": 1985
+            "publication_year": 1985,
         },
         {
             "id": 3360,
@@ -1191,7 +1192,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1859
+            "publication_year": 1859,
         },
         {
             "id": 3388,
@@ -1207,7 +1208,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1988
+            "publication_year": 1988,
         },
         {
             "id": 3393,
@@ -1223,7 +1224,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1984
+            "publication_year": 1984,
         },
         {
             "id": 3399,
@@ -1239,7 +1240,7 @@ def get_dummy_data():
             "formula_note": "Nd is almost always replaced by major to minor La and Ce.",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1957
+            "publication_year": 1957,
         },
         {
             "id": 3509,
@@ -1255,7 +1256,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1939,
-            "publication_year": 1939
+            "publication_year": 1939,
         },
         {
             "id": 3652,
@@ -1271,7 +1272,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 3654,
@@ -1287,7 +1288,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 1983,
             "discovery_year": 1983,
-            "publication_year": 1985
+            "publication_year": 1985,
         },
         {
             "id": 3695,
@@ -1303,7 +1304,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 1983,
             "discovery_year": 1983,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 3714,
@@ -1319,7 +1320,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1989,
-            "publication_year": 1989
+            "publication_year": 1989,
         },
         {
             "id": 3785,
@@ -1335,7 +1336,7 @@ def get_dummy_data():
             "formula_note": "$m = Na, Ca or K",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 3893,
@@ -1351,7 +1352,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 3935,
@@ -1367,7 +1368,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1826,
-            "publication_year": 1826
+            "publication_year": 1826,
         },
         {
             "id": 3953,
@@ -1377,13 +1378,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/9f3a48a4-1e71-49e2-9539-717388bd1a0e/change/",
             "ima_symbol": None,
-            "description": "An emerald-green mixture, primarily pseudomalachite. [Clark, 1993 - \"Hey's Mineral Index\"]\r\n\r\nOriginally reported from Băiţa Mining District (Baita Bihor; Rézbánya), Nucet, Bihor Co., Romania. \r\n\r\nNote: thrombolite is (also) a name used for stromatolite-like rock structures and for protopartzite/partzite.",
+            "description": 'An emerald-green mixture, primarily pseudomalachite. [Clark, 1993 - "Hey\'s Mineral Index"]\r\n\r\nOriginally reported from Băiţa Mining District (Baita Bihor; Rézbánya), Nucet, Bihor Co., Romania. \r\n\r\nNote: thrombolite is (also) a name used for stromatolite-like rock structures and for protopartzite/partzite.',
             "ima_formula": None,
             "mindat_link": "https://www.mindat.org/min-3953.html",
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 3987,
@@ -1399,7 +1400,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1867,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 4003,
@@ -1415,7 +1416,7 @@ def get_dummy_data():
             "formula_note": "$a = Ca, Na, K, Pb or is vacant;\r\n\r\n$d = Al, Fe2+, Fe3+, Li, Mg2+, Mn2+, Ti;\r\n\r\n$g = Al, Cr3+, Fe3+, V3+;\r\n\r\n$t = Si almost exclusively, although there can sometimes be minor Al and/or B3+ substitution. In adachiite only thus far, the T sites include one essential Al;\r\n\r\n$x = O and/or OH;\r\n\r\n$z = F, O and/or OH",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 4011,
@@ -1431,7 +1432,7 @@ def get_dummy_data():
             "formula_note": "The tremolite-actinolite series are defined as calcium amphiboles with A(Na+K+ 2Ca)<0.5 apfu and with C(Al+Fe3++2Ti)<0.5 apfu. The W position may contain (OH), F or Cl. \r\n\r\nTremolite is defined with \r\nC2+ position: Mg>4.5 apfu\r\nW position: (OH) dominant.\r\n\r\nTremolite is one of the few amphiboles that has not been redefined or renamed in any of the amphibole nomenclature reports.",
             "approval_year": None,
             "discovery_year": 1789,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 4049,
@@ -1447,7 +1448,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1967
+            "publication_year": 1967,
         },
         {
             "id": 4070,
@@ -1463,7 +1464,7 @@ def get_dummy_data():
             "formula_note": "Formular originally assumed to be (Fe#2+#,Ba,Pb)(UO^2)^2(WO^4)(OH)^4.12H^2O (Walenta, 1985).",
             "approval_year": 1984,
             "discovery_year": 1984,
-            "publication_year": 1985
+            "publication_year": 1985,
         },
         {
             "id": 4156,
@@ -1473,13 +1474,13 @@ def get_dummy_data():
             "ima_year": 1967,
             "admin_link": "http:///admin/core/mineral/e3f9f38d-8118-4044-b121-a5df9f9a30c0/change/",
             "ima_symbol": "Var",
-            "description": "Variscite-Strengite Series. \r\nThe orthorhombic dimorph of Metavariscite.\r\n\r\nPseudo-tetragonal-dipyramidal crystals may be confused with wardite.\r\n\r\nThe two orthorhombic polytypes, variscite-1O and variscite-2O (Ardit et al., 2022), are known as \"Lucin-type\" and \"Messbach-type\", respectively.",
+            "description": 'Variscite-Strengite Series. \r\nThe orthorhombic dimorph of Metavariscite.\r\n\r\nPseudo-tetragonal-dipyramidal crystals may be confused with wardite.\r\n\r\nThe two orthorhombic polytypes, variscite-1O and variscite-2O (Ardit et al., 2022), are known as "Lucin-type" and "Messbach-type", respectively.',
             "ima_formula": "Al(PO^4).2H^2O",
             "mindat_link": "https://www.mindat.org/min-4156.html",
             "formula_note": None,
             "approval_year": 1967,
             "discovery_year": 1837,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 4199,
@@ -1495,7 +1496,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 1853,
-            "publication_year": 1853
+            "publication_year": 1853,
         },
         {
             "id": 5314,
@@ -1511,7 +1512,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 5472,
@@ -1527,7 +1528,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 6577,
@@ -1543,7 +1544,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 1976,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 6739,
@@ -1559,7 +1560,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 6798,
@@ -1575,7 +1576,7 @@ def get_dummy_data():
             "formula_note": "The taramite group minerals are sodium-calcium amphiboles defined with A(Na+K+2Ca)> 0.5 apfu and 1.5 apfu < C(Al+Fe3++2Ti).\r\n\r\nTaramite is defined with \r\n\r\nA position: Na dominant\r\nC2+ position: Mg dominant\r\nC3+ position: Al dominant\r\nW position: (OH) dominant",
             "approval_year": 2012,
             "discovery_year": None,
-            "publication_year": 2007
+            "publication_year": 2007,
         },
         {
             "id": 6808,
@@ -1591,7 +1592,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 6866,
@@ -1607,7 +1608,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 6867,
@@ -1623,7 +1624,7 @@ def get_dummy_data():
             "formula_note": "Also given as (Ce,La,Ca,Th)^4(Fe#2+#,Mg)(Fe#2+#,Ti,Fe#3+#)^2(Ti,Fe#3+#)^2(Si^2O^7)^2O^8.",
             "approval_year": None,
             "discovery_year": 1839,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 6915,
@@ -1639,7 +1640,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1967
+            "publication_year": 1967,
         },
         {
             "id": 6916,
@@ -1655,7 +1656,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1964
+            "publication_year": 1964,
         },
         {
             "id": 6930,
@@ -1671,7 +1672,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1976
+            "publication_year": 1976,
         },
         {
             "id": 6932,
@@ -1687,7 +1688,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1985
+            "publication_year": 1985,
         },
         {
             "id": 6941,
@@ -1703,7 +1704,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1998
+            "publication_year": 1998,
         },
         {
             "id": 6949,
@@ -1713,13 +1714,13 @@ def get_dummy_data():
             "ima_year": 1996,
             "admin_link": "http:///admin/core/mineral/77ee76e1-bc3a-4ac2-8831-18951d0dfe44/change/",
             "ima_symbol": "Fca",
-            "description": "Originally, the mineral was named \"cannilloite,\" but the type material was found to be fluorine-dominant (F>OH) and it was renamed as stated.\r\n\r\nNote that the \"fluoro-cannilloites\" from Luc Yen, Vietnam, are pargasite (see http://www.mindat.org/mesg-7-198029.html).",
+            "description": 'Originally, the mineral was named "cannilloite," but the type material was found to be fluorine-dominant (F>OH) and it was renamed as stated.\r\n\r\nNote that the "fluoro-cannilloites" from Luc Yen, Vietnam, are pargasite (see http://www.mindat.org/mesg-7-198029.html).',
             "ima_formula": "CaCa^2(Mg^4Al)(Si^5Al^3)O^22F^2",
             "mindat_link": "https://www.mindat.org/min-6949.html",
             "formula_note": "Defined as a an amphibole in the cannilloite group of the Calcium subgroup with Mg>Fe2+ and Al>Fe3+ in the C position and with F as the dominant anion in the W position.",
             "approval_year": 1996,
             "discovery_year": None,
-            "publication_year": 1996
+            "publication_year": 1996,
         },
         {
             "id": 6970,
@@ -1735,7 +1736,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1999
+            "publication_year": 1999,
         },
         {
             "id": 7070,
@@ -1751,7 +1752,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 1998,
             "discovery_year": None,
-            "publication_year": 2000
+            "publication_year": 2000,
         },
         {
             "id": 7129,
@@ -1767,7 +1768,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 1997,
             "discovery_year": None,
-            "publication_year": 1999
+            "publication_year": 1999,
         },
         {
             "id": 7202,
@@ -1783,7 +1784,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 1997,
             "discovery_year": None,
-            "publication_year": 1998
+            "publication_year": 1998,
         },
         {
             "id": 7293,
@@ -1799,7 +1800,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 1998,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 7403,
@@ -1809,13 +1810,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/fbc5edf8-3b1b-4edc-a5fc-ca78c1f477c6/change/",
             "ima_symbol": None,
-            "description": "A group of calcium rare-earth fluoro-carbonates. \"Parisite\" is used for specimens with unspecified REE dominance, but parisite-(Ce) is the most common member.",
+            "description": 'A group of calcium rare-earth fluoro-carbonates. "Parisite" is used for specimens with unspecified REE dominance, but parisite-(Ce) is the most common member.',
             "ima_formula": None,
             "mindat_link": "https://www.mindat.org/min-7403.html",
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 7729,
@@ -1825,13 +1826,13 @@ def get_dummy_data():
             "ima_year": 1998,
             "admin_link": "http:///admin/core/mineral/9fb91e00-6bad-4b4b-b6a6-40a3ed1be0c9/change/",
             "ima_symbol": "Hchu",
-            "description": "Hydroxylclinohumite is a monoclinic member of the humite group. It forms a continuous series towards clinohumite. The name \"clinohumite\" has commonly been used as a default when the F/OH ratio has not been determined. Since hydroxylclinohumite was approved as a separate mineral (1998), it has become apparent that hydroxylclinohumite is much more common than indicated in the literature and locality entries in Mindat. It should also be noted that some of the published analyses (Luc Yen, ...",
+            "description": 'Hydroxylclinohumite is a monoclinic member of the humite group. It forms a continuous series towards clinohumite. The name "clinohumite" has commonly been used as a default when the F/OH ratio has not been determined. Since hydroxylclinohumite was approved as a separate mineral (1998), it has become apparent that hydroxylclinohumite is much more common than indicated in the literature and locality entries in Mindat. It should also be noted that some of the published analyses (Luc Yen, ...',
             "ima_formula": "Mg^9(SiO^4)^4(OH)^2",
             "mindat_link": "https://www.mindat.org/min-7729.html",
             "formula_note": "a n=4 member of the humite polysomatic series",
             "approval_year": 1998,
             "discovery_year": None,
-            "publication_year": 1999
+            "publication_year": 1999,
         },
         {
             "id": 7873,
@@ -1847,7 +1848,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 8007,
@@ -1857,13 +1858,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/2bca8f0f-bc6d-48c5-8d02-43211836523c/change/",
             "ima_symbol": None,
-            "description": "A pseudomorph of fine-grained muscovite (\"sericite\") with kaolinite (and minor quartz, biotite, etc) after orthoclase, found in kaolinized granite.",
+            "description": 'A pseudomorph of fine-grained muscovite ("sericite") with kaolinite (and minor quartz, biotite, etc) after orthoclase, found in kaolinized granite.',
             "ima_formula": None,
             "mindat_link": "https://www.mindat.org/min-8007.html",
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 8520,
@@ -1879,7 +1880,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 9372,
@@ -1895,7 +1896,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 10101,
@@ -1905,13 +1906,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/44e00a06-9d9c-487a-93e4-40bbe9a94c67/change/",
             "ima_symbol": None,
-            "description": "The name given for magnetite pseudomorphs after hematite.\r\n\r\nFor pseudomorphs of hematite after magnetite, see \"martite\".",
+            "description": 'The name given for magnetite pseudomorphs after hematite.\r\n\r\nFor pseudomorphs of hematite after magnetite, see "martite".',
             "ima_formula": None,
             "mindat_link": "https://www.mindat.org/min-10101.html",
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 10934,
@@ -1921,13 +1922,13 @@ def get_dummy_data():
             "ima_year": 2001,
             "admin_link": "http:///admin/core/mineral/0eea58cc-0fbb-4f54-8b81-2e3d36ff5305/change/",
             "ima_symbol": "Nik",
-            "description": "The Fe analogue of shigaite and poellmannite.\r\n\r\nMay be confused with clinochlore and chamosite.\r\n\r\n\"Recent material from Huanuni labeled as nikischerite has be confirmed as a chlorite group mineral, not nikischerite. We were offered a number of Huanuni specimens from 2020-2021 and after analysis, returned them all.\" (Tony Nikischer, Mindat message https://www.mindat.org/mesg-603193.html, 2022).",
+            "description": 'The Fe analogue of shigaite and poellmannite.\r\n\r\nMay be confused with clinochlore and chamosite.\r\n\r\n"Recent material from Huanuni labeled as nikischerite has be confirmed as a chlorite group mineral, not nikischerite. We were offered a number of Huanuni specimens from 2020-2021 and after analysis, returned them all." (Tony Nikischer, Mindat message https://www.mindat.org/mesg-603193.html, 2022).',
             "ima_formula": "Fe#2+#^6Al^3(OH)^18[Na(H^2O)^6](SO^4)^2.6H^2O",
             "mindat_link": "https://www.mindat.org/min-10934.html",
             "formula_note": None,
             "approval_year": 2001,
             "discovery_year": None,
-            "publication_year": 2003
+            "publication_year": 2003,
         },
         {
             "id": 10966,
@@ -1937,13 +1938,13 @@ def get_dummy_data():
             "ima_year": 2012,
             "admin_link": "http:///admin/core/mineral/bf003977-8ba8-46e1-a488-ae2032d993eb/change/",
             "ima_symbol": "Odrv",
-            "description": "Tourmaline Group.\r\n\r\nOxy-dravite has been used as a preliminary working name for a much-studied new member of the tourmaline group which has already appeared several times in the mineralogical literature. It was submitted and approved as a new species by the IMA in 2012.\r\nThis species is related to dravite by substitution of one OH by (ideally) one O, the altered charge balance being compensated by replacing one Mg by a trivalent Al/Fe. This different charge balance means that \"oxy-dra...",
+            "description": 'Tourmaline Group.\r\n\r\nOxy-dravite has been used as a preliminary working name for a much-studied new member of the tourmaline group which has already appeared several times in the mineralogical literature. It was submitted and approved as a new species by the IMA in 2012.\r\nThis species is related to dravite by substitution of one OH by (ideally) one O, the altered charge balance being compensated by replacing one Mg by a trivalent Al/Fe. This different charge balance means that "oxy-dra...',
             "ima_formula": "Na(Al^2Mg)(Al^5Mg)(Si^6O^18)(BO^3)^3(OH)^3O",
             "mindat_link": "https://www.mindat.org/min-10966.html",
             "formula_note": None,
             "approval_year": 2012,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 11010,
@@ -1959,7 +1960,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 1999,
             "discovery_year": None,
-            "publication_year": 2001
+            "publication_year": 2001,
         },
         {
             "id": 11089,
@@ -1975,7 +1976,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 11229,
@@ -1991,7 +1992,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 11453,
@@ -2007,7 +2008,7 @@ def get_dummy_data():
             "formula_note": "ZnSn2Al12O22(OH)2 according to the IMA proposal",
             "approval_year": 2018,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 11454,
@@ -2023,7 +2024,7 @@ def get_dummy_data():
             "formula_note": "formerly given as (Zn,Mg,Al)3(Al,Sn,Fe)8O15(OH)",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 11520,
@@ -2033,13 +2034,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/ed3433be-f355-4457-b536-8539c200a1d0/change/",
             "ima_symbol": None,
-            "description": "A beryllium-bearing vesuvianite.\r\nSynonymous with \"Beryllium vesuvianite\".",
+            "description": 'A beryllium-bearing vesuvianite.\r\nSynonymous with "Beryllium vesuvianite".',
             "ima_formula": None,
             "mindat_link": "https://www.mindat.org/min-11520.html",
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 11991,
@@ -2055,7 +2056,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 22168,
@@ -2071,7 +2072,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 25634,
@@ -2087,7 +2088,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 25664,
@@ -2103,7 +2104,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 25665,
@@ -2119,7 +2120,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 25667,
@@ -2135,7 +2136,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 25680,
@@ -2145,13 +2146,13 @@ def get_dummy_data():
             "ima_year": 2003,
             "admin_link": "http:///admin/core/mineral/68c39feb-13da-4975-98c0-acfc7e4af4ad/change/",
             "ima_symbol": "Fgh",
-            "description": "The material from the type locality was originally described by Dunn & Roy (1938) as \"tirodite\". The description provided did not meet modern standards for describing a new mineral specimen, and the chemical composition of the \"tirodite\" varies within too wide boundaries to be considered one mineral only (see Bilgrami, 1954). The name was eventually mostly used for manganoan cummingtonites (see Leake 1978) without taking into account the Na and Fe3+/Al content from the original des...",
+            "description": 'The material from the type locality was originally described by Dunn & Roy (1938) as "tirodite". The description provided did not meet modern standards for describing a new mineral specimen, and the chemical composition of the "tirodite" varies within too wide boundaries to be considered one mineral only (see Bilgrami, 1954). The name was eventually mostly used for manganoan cummingtonites (see Leake 1978) without taking into account the Na and Fe3+/Al content from the original des...',
             "ima_formula": "[](NaMn#2+#)(Mg^4Fe#3+#)Si^8O^22(OH)^2",
             "mindat_link": "https://www.mindat.org/min-25680.html",
             "formula_note": "The ghoseite-root name group belongs to the Sodium-(magnesium-iron-manganese) amphibole subgroup and is defined with \r\n\r\nA(Na+K+2Ca)< 0.5 apfu,\r\nB(NaMn)\r\nC0.5 apfu<(Al+Fe3++2Ti) > 1.5 apfu\r\n\r\nFerri-ghoseite is defined with: \r\nC2+ position: Mg dominant\r\nC3+ position: Fe dominant\r\nW position: (OH) dominant",
             "approval_year": 2003,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 26453,
@@ -2167,7 +2168,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2002,
             "discovery_year": None,
-            "publication_year": 2004
+            "publication_year": 2004,
         },
         {
             "id": 29042,
@@ -2183,7 +2184,7 @@ def get_dummy_data():
             "formula_note": "Formula is also written Pb4O3SO4.H2O.",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 29050,
@@ -2199,7 +2200,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 29253,
@@ -2215,7 +2216,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 40370,
@@ -2231,7 +2232,7 @@ def get_dummy_data():
             "formula_note": "May contain various impurities (commonly Fe, but also As, S, Ca, etc.)",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 31813,
@@ -2247,7 +2248,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 35900,
@@ -2263,7 +2264,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2007,
             "discovery_year": None,
-            "publication_year": 2009
+            "publication_year": 2009,
         },
         {
             "id": 35986,
@@ -2279,7 +2280,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 39012,
@@ -2295,7 +2296,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 39078,
@@ -2311,7 +2312,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 39212,
@@ -2324,10 +2325,10 @@ def get_dummy_data():
             "description": None,
             "ima_formula": "(Ca,Na)^2(Al,Mg,Fe#2+#)(Si^2O^7)",
             "mindat_link": "https://www.mindat.org/min-39212.html",
-            "formula_note": "The mindat formula represents the simplified end-member composition. This composition was historically known as \"soda melilite\".",
+            "formula_note": 'The mindat formula represents the simplified end-member composition. This composition was historically known as "soda melilite".',
             "approval_year": 2008,
             "discovery_year": None,
-            "publication_year": 2009
+            "publication_year": 2009,
         },
         {
             "id": 39558,
@@ -2343,7 +2344,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2009,
             "discovery_year": None,
-            "publication_year": 2010
+            "publication_year": 2010,
         },
         {
             "id": 42383,
@@ -2359,7 +2360,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2011,
             "discovery_year": 2008,
-            "publication_year": 2012
+            "publication_year": 2012,
         },
         {
             "id": 43384,
@@ -2375,7 +2376,7 @@ def get_dummy_data():
             "formula_note": " ",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 43427,
@@ -2391,7 +2392,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 43516,
@@ -2407,7 +2408,7 @@ def get_dummy_data():
             "formula_note": "The holmquistite group are orthorhombic amphiboles in the lithium amphibole subgroup.\r\n\r\nFerro-ferri-holmquistite is defined with Fe2+>Mg and Fe3+>Al in the C position",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 43571,
@@ -2423,7 +2424,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 2015
+            "publication_year": 2015,
         },
         {
             "id": 43593,
@@ -2439,7 +2440,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 2013
+            "publication_year": 2013,
         },
         {
             "id": 56024,
@@ -2455,7 +2456,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 46188,
@@ -2471,7 +2472,7 @@ def get_dummy_data():
             "formula_note": "Structural formula: [(UO2)(SO4)(H2O)2]2·5H2O",
             "approval_year": 2015,
             "discovery_year": None,
-            "publication_year": 2017
+            "publication_year": 2017,
         },
         {
             "id": 54663,
@@ -2487,7 +2488,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 47040,
@@ -2503,7 +2504,7 @@ def get_dummy_data():
             "formula_note": "Note that Grice et al., 2017 offer an idealized formula for their Norwegian material, which can be recast into the standard formula format for melilite group minerals, as (Ca1.5[]0.5)(Si0.8Be0.2)[Be1.05Si0.95O5.5(OH)1.5] (the T1 and T2 site occupancies shown here approximate their reported distributions).\r\n\r\nHowever, they don't offer a more generalized end-member formula, one that could, for example, be used to plot exchange vectors. One possibility for an end-member composition could be (Ca1.5[]0.5)Si[BeSiO6(OH)], although this formula would represent a somewhat lower H content than that of the reported formula.",
             "approval_year": 2016,
             "discovery_year": 1976,
-            "publication_year": 2017
+            "publication_year": 2017,
         },
         {
             "id": 47224,
@@ -2513,13 +2514,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/93304ed9-fccd-4c0f-98dc-6326b1df32d8/change/",
             "ima_symbol": None,
-            "description": "Reported as \"Mineral 6a\" in Leicht (1971). Somewhat similar to tyrolite (optical parameters and some PXRD lines).\r\n\r\nFound as both intergrown crystals in frothy masses forming radiating tufts (type 1) and micaceous form (type 2).\r\n\r\nWith metazeunerite from Grandview mine, Coconino Co., Arizona.",
+            "description": 'Reported as "Mineral 6a" in Leicht (1971). Somewhat similar to tyrolite (optical parameters and some PXRD lines).\r\n\r\nFound as both intergrown crystals in frothy masses forming radiating tufts (type 1) and micaceous form (type 2).\r\n\r\nWith metazeunerite from Grandview mine, Coconino Co., Arizona.',
             "ima_formula": None,
             "mindat_link": "https://www.mindat.org/min-47224.html",
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 47381,
@@ -2535,7 +2536,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 47519,
@@ -2551,7 +2552,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 47656,
@@ -2567,7 +2568,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1982
+            "publication_year": 1982,
         },
         {
             "id": 47890,
@@ -2583,7 +2584,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2016,
             "discovery_year": None,
-            "publication_year": 2017
+            "publication_year": 2017,
         },
         {
             "id": 48540,
@@ -2599,7 +2600,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 48661,
@@ -2615,7 +2616,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 49519,
@@ -2631,7 +2632,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 49520,
@@ -2647,7 +2648,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 50033,
@@ -2663,7 +2664,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 50237,
@@ -2679,7 +2680,7 @@ def get_dummy_data():
             "formula_note": "$a= A site: Ca, Na, K, Sr, Ba, REE, Pb\r\n$b = B site: Ti, Nb, Sn, Zr \r\n",
             "approval_year": 2016,
             "discovery_year": None,
-            "publication_year": 2016
+            "publication_year": 2016,
         },
         {
             "id": 9424,
@@ -2695,7 +2696,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 35845,
@@ -2711,7 +2712,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 50771,
@@ -2727,7 +2728,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2016,
             "discovery_year": None,
-            "publication_year": 2017
+            "publication_year": 2017,
         },
         {
             "id": 51044,
@@ -2743,7 +2744,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 51560,
@@ -2759,7 +2760,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2017,
             "discovery_year": None,
-            "publication_year": 2018
+            "publication_year": 2018,
         },
         {
             "id": 51845,
@@ -2775,7 +2776,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2017,
             "discovery_year": None,
-            "publication_year": 2018
+            "publication_year": 2018,
         },
         {
             "id": 52574,
@@ -2791,7 +2792,7 @@ def get_dummy_data():
             "formula_note": "structural formula: (NH4)HO(CNNHC2C(OH)NC(OH)N)",
             "approval_year": 2017,
             "discovery_year": None,
-            "publication_year": 2022
+            "publication_year": 2022,
         },
         {
             "id": 53051,
@@ -2807,7 +2808,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2018,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 53093,
@@ -2823,7 +2824,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 53114,
@@ -2839,7 +2840,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 53134,
@@ -2855,7 +2856,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 53201,
@@ -2871,7 +2872,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 1969
+            "publication_year": 1969,
         },
         {
             "id": 53642,
@@ -2887,7 +2888,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 53676,
@@ -2903,7 +2904,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2019,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 53677,
@@ -2919,7 +2920,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2019,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 54030,
@@ -2935,7 +2936,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 2022
+            "publication_year": 2022,
         },
         {
             "id": 54033,
@@ -2951,7 +2952,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 54044,
@@ -2967,7 +2968,7 @@ def get_dummy_data():
             "formula_note": "crystallochemical formula: CuNa6-2xCax(SO4)4",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 2020
+            "publication_year": 2020,
         },
         {
             "id": 54240,
@@ -2983,7 +2984,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2019,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 54246,
@@ -2999,7 +3000,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2019,
             "discovery_year": None,
-            "publication_year": 2021
+            "publication_year": 2021,
         },
         {
             "id": 54423,
@@ -3009,13 +3010,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/d2d0d586-3449-497e-8ea5-d157bfec70d6/change/",
             "ima_symbol": None,
-            "description": "Thrombolites are \"cryptalgal structures related to stromatolites, but lacking lamination and characterized by a macroscopic clotted fabric\"[[1]].\r\n\r\nMicrobial carbonate outlines are irregular equidimensional clots that can elongate into branches.\r\n\r\n\r\nMacrofabric = microbial carbonate outline relative to interstitial sediment.\r\n\r\n\r\n\r\n\r\nNot to be confused with Thrombolite (of Breithaupt).",
+            "description": 'Thrombolites are "cryptalgal structures related to stromatolites, but lacking lamination and characterized by a macroscopic clotted fabric"[[1]].\r\n\r\nMicrobial carbonate outlines are irregular equidimensional clots that can elongate into branches.\r\n\r\n\r\nMacrofabric = microbial carbonate outline relative to interstitial sediment.\r\n\r\n\r\n\r\n\r\nNot to be confused with Thrombolite (of Breithaupt).',
             "ima_formula": None,
             "mindat_link": "https://www.mindat.org/min-54423.html",
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 54571,
@@ -3031,7 +3032,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2020,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 54647,
@@ -3047,7 +3048,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2020,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 55027,
@@ -3063,7 +3064,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2020,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 55112,
@@ -3079,7 +3080,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2020,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 55127,
@@ -3095,7 +3096,7 @@ def get_dummy_data():
             "formula_note": "Contents of Fe, Sb, Ti and Ta are variable.",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 55233,
@@ -3111,7 +3112,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2020,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 55325,
@@ -3127,7 +3128,7 @@ def get_dummy_data():
             "formula_note": "Tentatively Ce2TiO5 based on EDS analyses only.",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 55373,
@@ -3143,7 +3144,7 @@ def get_dummy_data():
             "formula_note": "May also be given as Ca3(AsO4)2⋅2H2O.",
             "approval_year": 2021,
             "discovery_year": None,
-            "publication_year": 2021
+            "publication_year": 2021,
         },
         {
             "id": 55440,
@@ -3159,7 +3160,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 2022
+            "publication_year": 2022,
         },
         {
             "id": 55442,
@@ -3175,7 +3176,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 2022
+            "publication_year": 2022,
         },
         {
             "id": 55443,
@@ -3191,7 +3192,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 2022
+            "publication_year": 2022,
         },
         {
             "id": 55537,
@@ -3207,7 +3208,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 2022
+            "publication_year": 2022,
         },
         {
             "id": 55538,
@@ -3223,7 +3224,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": 2022
+            "publication_year": 2022,
         },
         {
             "id": 55546,
@@ -3239,7 +3240,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 55547,
@@ -3249,13 +3250,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/f08657a2-ac59-4dae-ae42-2d64b5501f01/change/",
             "ima_symbol": None,
-            "description": "The As analogue of kipushite (full analogy) and philipsburgite (\"partial\" analogy because of As-P ordering in the crystal structure). \r\n\r\nChemically similar to sabelliite, theisite, veselovskýite, and (to some extent) to zincolivenite.",
+            "description": 'The As analogue of kipushite (full analogy) and philipsburgite ("partial" analogy because of As-P ordering in the crystal structure). \r\n\r\nChemically similar to sabelliite, theisite, veselovskýite, and (to some extent) to zincolivenite.',
             "ima_formula": "Cu^5Zn(AsO^4)^2(OH)^6.H^2O",
             "mindat_link": "https://www.mindat.org/min-55547.html",
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 55550,
@@ -3271,7 +3272,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 55607,
@@ -3287,7 +3288,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 55671,
@@ -3303,7 +3304,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 55685,
@@ -3319,7 +3320,7 @@ def get_dummy_data():
             "formula_note": "simplified formula: NaMgAl3(PO4)2F6(H2O)9",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 55754,
@@ -3335,7 +3336,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2021,
             "discovery_year": None,
-            "publication_year": 2022
+            "publication_year": 2022,
         },
         {
             "id": 55758,
@@ -3351,7 +3352,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 55923,
@@ -3367,7 +3368,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 55951,
@@ -3383,7 +3384,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56026,
@@ -3399,7 +3400,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56027,
@@ -3415,7 +3416,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56033,
@@ -3431,7 +3432,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2022,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56036,
@@ -3447,7 +3448,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56063,
@@ -3463,7 +3464,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": 2022,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56064,
@@ -3479,7 +3480,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56075,
@@ -3495,7 +3496,7 @@ def get_dummy_data():
             "formula_note": "Possibly hydrated compound; Ba:Cl = 1:2.",
             "approval_year": None,
             "discovery_year": 2022,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56110,
@@ -3511,7 +3512,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56111,
@@ -3521,13 +3522,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/2d4f4b5c-7adf-4ea6-b965-a785d38e6f57/change/",
             "ima_symbol": "Ssu",
-            "description": "Probably identical to \"Mn-deficient eudialyte\" of Aksenov et al. (2022).",
+            "description": 'Probably identical to "Mn-deficient eudialyte" of Aksenov et al. (2022).',
             "ima_formula": None,
             "mindat_link": "https://www.mindat.org/min-56111.html",
             "formula_note": "the idealized formula is that derived from the CNMNC Newsletter (#68)",
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56112,
@@ -3543,7 +3544,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56113,
@@ -3559,7 +3560,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56114,
@@ -3575,7 +3576,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56115,
@@ -3591,7 +3592,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56116,
@@ -3607,7 +3608,7 @@ def get_dummy_data():
             "formula_note": "The type mineral contains considerable F; the empirical formula is Na1.02K0.02Ca0.08Mg1.26Al2.86(PO4)2.00(OH)3.82F2.48 .7.70H2O.",
             "approval_year": 2022,
             "discovery_year": None,
-            "publication_year": 2022
+            "publication_year": 2022,
         },
         {
             "id": 56117,
@@ -3623,7 +3624,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56118,
@@ -3639,7 +3640,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56119,
@@ -3655,7 +3656,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56120,
@@ -3671,7 +3672,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56121,
@@ -3687,7 +3688,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56122,
@@ -3703,7 +3704,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56123,
@@ -3719,7 +3720,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56124,
@@ -3735,7 +3736,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56125,
@@ -3751,7 +3752,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56126,
@@ -3767,7 +3768,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56127,
@@ -3783,7 +3784,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56128,
@@ -3799,7 +3800,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56129,
@@ -3815,7 +3816,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56130,
@@ -3831,7 +3832,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56131,
@@ -3847,7 +3848,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56132,
@@ -3863,7 +3864,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56133,
@@ -3879,7 +3880,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56135,
@@ -3895,7 +3896,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56134,
@@ -3911,7 +3912,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56136,
@@ -3927,7 +3928,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56137,
@@ -3943,7 +3944,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56138,
@@ -3959,7 +3960,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56139,
@@ -3975,7 +3976,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56140,
@@ -3991,7 +3992,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56141,
@@ -4007,7 +4008,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56142,
@@ -4023,7 +4024,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56143,
@@ -4039,7 +4040,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56144,
@@ -4055,7 +4056,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56145,
@@ -4065,13 +4066,13 @@ def get_dummy_data():
             "ima_year": None,
             "admin_link": "http:///admin/core/mineral/ade7d279-ef7a-4e74-bc81-cee725351c4b/change/",
             "ima_symbol": None,
-            "description": "The chemical formula of kaersutite root nae group minerals have been changed in the 2012 amphibole nomenclature from {Na}{Ca^2}{Mg^4Ti}(Al^2Si^6O^22)(OH)O  to {Na}{Ca^2}{Mg^3AlTi}(Al^2Si^6O^22)O^2  thus adding WO > 1.0 apfu to the CTi > 0.5 apfu requirement to the definition of the mineral. The exact WO2-/(OH)- ratio is rarely analyzed and the amphibole report \"use Ti content as a proxy for the oxo component in pargasite, an...",
+            "description": 'The chemical formula of kaersutite root nae group minerals have been changed in the 2012 amphibole nomenclature from {Na}{Ca^2}{Mg^4Ti}(Al^2Si^6O^22)(OH)O  to {Na}{Ca^2}{Mg^3AlTi}(Al^2Si^6O^22)O^2  thus adding WO > 1.0 apfu to the CTi > 0.5 apfu requirement to the definition of the mineral. The exact WO2-/(OH)- ratio is rarely analyzed and the amphibole report "use Ti content as a proxy for the oxo component in pargasite, an...',
             "ima_formula": None,
             "mindat_link": "https://www.mindat.org/min-56145.html",
             "formula_note": "The Kaersutite group minerals are WO2- dominant amphiboles defined with  : \r\nA(Na+K+2Ca)> 0.5 apfu,\r\nB: Ca dominant\r\nCTi > 0.5 apfu and \r\nWO > 1.0 apfu  \r\n\r\n\r\nPotassic-ferri-kaersutite is defined with \r\nA position: K dominant\r\nC2+ position: Mg dominant\r\nC3+ position: Fe dominant",
             "approval_year": None,
             "discovery_year": 2006,
-            "publication_year": 2006
+            "publication_year": 2006,
         },
         {
             "id": 56146,
@@ -4087,7 +4088,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56147,
@@ -4103,7 +4104,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56148,
@@ -4119,7 +4120,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56149,
@@ -4135,7 +4136,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56150,
@@ -4151,7 +4152,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56151,
@@ -4167,7 +4168,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56152,
@@ -4183,7 +4184,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56160,
@@ -4199,7 +4200,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56153,
@@ -4215,7 +4216,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56154,
@@ -4231,7 +4232,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56155,
@@ -4247,7 +4248,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56156,
@@ -4263,7 +4264,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56157,
@@ -4279,7 +4280,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56158,
@@ -4295,7 +4296,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56159,
@@ -4311,7 +4312,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56161,
@@ -4327,7 +4328,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56162,
@@ -4343,7 +4344,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56163,
@@ -4359,7 +4360,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56164,
@@ -4375,7 +4376,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 56165,
@@ -4391,7 +4392,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470361,
@@ -4407,7 +4408,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470362,
@@ -4423,7 +4424,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470363,
@@ -4439,7 +4440,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470365,
@@ -4455,7 +4456,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470366,
@@ -4471,7 +4472,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470367,
@@ -4487,7 +4488,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470368,
@@ -4503,7 +4504,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470369,
@@ -4519,7 +4520,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": 2022,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470374,
@@ -4535,7 +4536,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470375,
@@ -4551,7 +4552,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470376,
@@ -4567,7 +4568,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470377,
@@ -4583,7 +4584,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470378,
@@ -4599,7 +4600,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470379,
@@ -4615,7 +4616,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470380,
@@ -4631,7 +4632,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470381,
@@ -4647,7 +4648,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470382,
@@ -4663,7 +4664,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470383,
@@ -4679,7 +4680,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470384,
@@ -4695,7 +4696,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470385,
@@ -4711,7 +4712,7 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
+            "publication_year": None,
         },
         {
             "id": 470386,
@@ -4727,6 +4728,6 @@ def get_dummy_data():
             "formula_note": None,
             "approval_year": None,
             "discovery_year": None,
-            "publication_year": None
-        }
+            "publication_year": None,
+        },
     ]
