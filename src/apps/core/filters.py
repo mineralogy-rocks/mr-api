@@ -54,15 +54,9 @@ class NickelStrunzFilter(filters.FilterSet):
 
 class MineralFilter(filters.FilterSet):
 
-    discovery_year__gte = filters.NumberFilter(
-        field_name="history__discovery_year_min", lookup_expr="gte"
-    )
-    discovery_year__lte = filters.NumberFilter(
-        field_name="history__discovery_year_max", lookup_expr="lte"
-    )
-    discovery_year__exact = filters.NumberFilter(
-        field_name="history__discovery_year_min", lookup_expr="lte"
-    )
+    discovery_year__gte = filters.NumberFilter(field_name="history__discovery_year_min", lookup_expr="gte")
+    discovery_year__lte = filters.NumberFilter(field_name="history__discovery_year_max", lookup_expr="lte")
+    discovery_year__exact = filters.NumberFilter(field_name="history__discovery_year_min", lookup_expr="lte")
     # discovery_countries = filters.ModelMultipleChoiceFilter(
     #     label='Discovery countries',
     #     queryset=Country.objects.all()
@@ -112,17 +106,11 @@ class MineralFilter(filters.FilterSet):
             if discovery_countries:
                 queryset = queryset.filter(
                     Q(is_grouping=True)
-                    & Q(
-                        children_hierarchy__mineral__discovery_countries__in=discovery_countries.split(
-                            ","
-                        )
-                    )
+                    & Q(children_hierarchy__mineral__discovery_countries__in=discovery_countries.split(","))
                 )
 
         else:
             if discovery_countries:
-                queryset = queryset.filter(
-                    Q(discovery_countries__in=discovery_countries.split(","))
-                )
+                queryset = queryset.filter(Q(discovery_countries__in=discovery_countries.split(",")))
 
         return queryset
