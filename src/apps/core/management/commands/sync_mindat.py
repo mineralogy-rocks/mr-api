@@ -78,7 +78,7 @@ class Command(BaseCommand):
                     response = r.json()
 
                     while True:
-                        if "next" in response and response["next"] and page <= 1:
+                        if "next" in response and response["next"]:
                             page += 1
                             time.sleep(3)
                             r = requests.get(response["next"], headers=headers, timeout=10)
