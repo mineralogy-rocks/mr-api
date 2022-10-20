@@ -15,6 +15,9 @@ INTERNAL_IPS = [
     "localhost",
 ]
 
+EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+EMAIL_FILE_PATH = "../.tmp/messages"
+
 DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": lambda _request: DEBUG}
 
 CACHE_TTL = 10  # Set cache time to 5 seconds in dev mode

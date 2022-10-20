@@ -1,5 +1,6 @@
 CREATE TABLE mindat_sync_log(
 	id serial PRIMARY KEY,
 	VALUES jsonb DEFAULT NULL,
-	created_at timestamp DEFAULT current_timestamp
+	created_at timestamp DEFAULT current_timestamp,
+	is_successful BOOLEAN NOT NULL DEFAULT TRUE
 );
