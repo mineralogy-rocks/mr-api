@@ -93,9 +93,7 @@ class Element(BaseModel):
     sun_kaye_laby = models.DecimalField(max_digits=16, decimal_places=11, null=True)
     solar_system_kaye_laby = models.DecimalField(max_digits=16, decimal_places=11, null=True)
     solar_system_ahrens = models.DecimalField(max_digits=16, decimal_places=11, null=True)
-    solar_system_ahrens_with_uncertainty = models.DecimalField(
-        max_digits=4, decimal_places=2, null=True
-    )
+    solar_system_ahrens_with_uncertainty = models.DecimalField(max_digits=4, decimal_places=2, null=True)
 
     natural_isotopes = models.TextField(null=True)
     name_meaning = models.TextField(null=True)

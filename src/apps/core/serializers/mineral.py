@@ -33,9 +33,7 @@ class HierarchyParentsHyperlinkSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(source="parent", read_only=True)
 
     name = serializers.StringRelatedField(source="parent")
-    url = serializers.HyperlinkedRelatedField(
-        source="parent", read_only=True, view_name="core:mineral-detail"
-    )
+    url = serializers.HyperlinkedRelatedField(source="parent", read_only=True, view_name="core:mineral-detail")
 
     class Meta:
         model = MineralHierarchy
@@ -51,9 +49,7 @@ class HierarchyChildrenHyperlinkSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(source="mineral", read_only=True)
 
     name = serializers.StringRelatedField(source="mineral")
-    url = serializers.HyperlinkedRelatedField(
-        source="mineral", read_only=True, view_name="core:mineral-detail"
-    )
+    url = serializers.HyperlinkedRelatedField(source="mineral", read_only=True, view_name="core:mineral-detail")
 
     class Meta:
         model = MineralHierarchy
@@ -136,9 +132,7 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
             ),
             models.Prefetch(
                 "ions",
-                MineralIonPosition.objects.select_related("ion", "position").order_by(
-                    "position", "ion__formula"
-                ),
+                MineralIonPosition.objects.select_related("ion", "position").order_by("position", "ion__formula"),
                 to_attr="positions",
             ),
             "discovery_countries",
@@ -152,9 +146,7 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
             return HierarchyChildrenHyperlinkSerializer(
                 instance.children_hierarchy, context=self.context, many=True
             ).data
-        return HierarchyParentsHyperlinkSerializer(
-            instance.parents_hierarchy, context=self.context, many=True
-        ).data
+        return HierarchyParentsHyperlinkSerializer(instance.parents_hierarchy, context=self.context, many=True).data
 
 
 class MineralListSerializer(serializers.ModelSerializer):
@@ -218,11 +210,7 @@ class MineralListSerializer(serializers.ModelSerializer):
                 output_.append(
                     {
                         "position": position_,
-                        "ions": [
-                            ion_["ion"]
-                            for ion_ in output
-                            if ion_["position"]["id"] == position_["id"]
-                        ],
+                        "ions": [ion_["ion"] for ion_ in output if ion_["position"]["id"] == position_["id"]],
                     }
                 )
 

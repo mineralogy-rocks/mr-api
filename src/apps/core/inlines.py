@@ -241,11 +241,7 @@ class MineralStatusInline(NestedTabularInline):
 
     @admin.display(description="Author")
     def author_(self, instance):
-        return (
-            instance.author.first_name + " " + instance.author.last_name
-            if instance.author
-            else instance.author
-        )
+        return instance.author.first_name + " " + instance.author.last_name if instance.author else instance.author
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
