@@ -40,7 +40,7 @@ class Command(BaseCommand):
         formula_ima = FormulaSource.objects.get(name="IMA")
 
         if sync_log:
-            last_datetime = sync_log.created_at
+            last_datetime = sync_log.created_at - timedelta(hours=3)
         else:
             last_datetime = timezone.now() - timedelta(days=90)
 
