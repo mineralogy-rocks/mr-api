@@ -31,9 +31,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        assert MINDAT_API_URL
-        assert MINDAT_API_USERNAME
-        assert MINDAT_API_PASSWORD
+        assert MINDAT_API_URL, "Please, add MINDAT_API_URL to your environment variables"
+        assert MINDAT_API_USERNAME, "Please, add MINDAT_API_USERNAME to your environment variables"
+        assert MINDAT_API_PASSWORD, "Please, add MINDAT_API_PASSWORD to your environment variables"
 
         sync_log = MindatSync.objects.filter(is_successful=True).order_by("-created_at").first()
         formula_mindat = FormulaSource.objects.get(name="mindat.org")
@@ -199,7 +199,7 @@ class Command(BaseCommand):
                     }
                     send_email(
                         subject="Mindat synchronization report",
-                        template="sync-report.html",
+                        template="sync/sync-report.html",
                         recepients=["liubomyr.gavryliv@gmail.com"],
                         context=context,
                     )

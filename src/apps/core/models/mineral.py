@@ -507,4 +507,4 @@ class MindatSync(BaseModel, Creatable):
         return str(self.id)
 
     def get_absolute_url(self):
-        return reverse("admin:core_mindatsync_change", kwargs={"object_id": self.id})
+        return reverse("core:sync-log", kwargs={"pk": self.id})
