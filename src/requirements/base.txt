@@ -1,7 +1,7 @@
 asgiref==3.5.2
 astroid==2.12.10
 black==22.8.0
-boto3==1.24.87
+boto3==1.25.5
 botocore==1.27.93
 certifi==2022.9.14
 Django==4.1.2
