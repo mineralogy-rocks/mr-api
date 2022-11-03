@@ -27,6 +27,7 @@ from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
+from rest_framework_api_key.permissions import HasAPIKey
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .filters import MineralFilter
@@ -91,9 +92,7 @@ class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         JSONRenderer,
         BrowsableAPIRenderer,
     ]
-    permission_classes = [
-        IsAuthenticated,
-    ]
+    permission_classes = [HasAPIKey | IsAuthenticated]
     authentication_classes = [
         SessionAuthentication,
         JWTAuthentication,
@@ -144,9 +143,7 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
         JSONRenderer,
         BrowsableAPIRenderer,
     ]
-    permission_classes = [
-        IsAuthenticated,
-    ]
+    permission_classes = [HasAPIKey | IsAuthenticated]
     authentication_classes = [
         SessionAuthentication,
         JWTAuthentication,
@@ -255,9 +252,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     ]
     pagination_class = CustomLimitOffsetPagination
 
-    permission_classes = [
-        IsAuthenticated,
-    ]
+    permission_classes = [HasAPIKey | IsAuthenticated]
     authentication_classes = [
         SessionAuthentication,
         JWTAuthentication,
