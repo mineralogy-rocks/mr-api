@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "django.contrib.postgres",
     "django_filters",
     "rest_framework",
+    "rest_framework_api_key",
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "nested_admin",
