@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 from nested_admin import NestedModelAdmin
+from django.utils.translation import gettext_lazy as _
 
 from .forms import MineralRelationFormset
 from .inlines import MineralDirectRelationSuggestionInline
@@ -172,6 +173,40 @@ class MindatSyncAdmin(admin.ModelAdmin):
             )
 
 
+class StatusFilter(admin.SimpleListFilter):
+    title = _("Status Accepted or Pending Revision")
+    parameter_name = "status"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("accepted", "Accepted"),
+            ("pending", "Pending revision"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "accepted":
+            return queryset.filter(direct_relations__needs_revision=False)
+        if self.value() == "pending":
+            return queryset.filter(direct_relations__needs_revision=True)
+
+
+class StatusListFilter(admin.SimpleListFilter):
+
+    title = _('Status')
+    parameter_name = 'id'
+
+    def lookups(self, request, model_admin):
+        status_list = []
+        for status in Status.objects.all():
+            status_list.append((status.id, '{} — {}'.format(status.status_id, status.description_short)))
+        return status_list
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(statuses__id=self.value(), direct_relations__direct_status=True)
+        return queryset
+
+
 @admin.register(Mineral)
 class MineralAdmin(NestedModelAdmin):
 
@@ -186,7 +221,7 @@ class MineralAdmin(NestedModelAdmin):
         "mindat_link",
     ]
 
-    list_filter = ["statuses", "ns_class"]
+    list_filter = [StatusFilter, StatusListFilter, "ns_class",]
 
     list_display_links = ["name"]
     list_select_related = [
