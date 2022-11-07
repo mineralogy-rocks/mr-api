@@ -1,18 +1,25 @@
 # -*- coding: UTF-8 -*-
 from dal import autocomplete
 from django.conf import settings
+from django.contrib.postgres.expressions import ArraySubquery
+from django.db import OperationalError
+from django.db import connection
+from django.db import transaction
 from django.db.models import Case
 from django.db.models import CharField
 from django.db.models import Count
 from django.db.models import Exists
+from django.db.models import F
 from django.db.models import OuterRef
 from django.db.models import Q
 from django.db.models import Value
 from django.db.models import When
 from django.db.models.functions import Coalesce
 from django.db.models.functions import Concat
+from django.db.models.functions import JSONObject
 from django.db.models.functions import Right
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.views.generic import DetailView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
@@ -39,8 +46,8 @@ from .models.core import NsSubclass
 from .models.core import Status
 from .models.mineral import MindatSync
 from .models.mineral import Mineral
+from .models.mineral import MineralCrystallography
 from .models.mineral import MineralStatus
-from .pagination import CustomLimitOffsetPagination
 from .serializers.core import NsClassSubclassFamilyListSerializer
 from .serializers.core import NsFamilyListSerializer
 from .serializers.core import NsSubclassListSerializer
@@ -235,6 +242,48 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
         return self._get_paginated_response(queryset, serializer_class)
 
 
+class LargeTablePaginator(LimitOffsetPagination):
+    """
+    Combination of ideas from:
+     - https://gist.github.com/safar/3bbf96678f3e479b6cb683083d35cb4d
+     - https://medium.com/@hakibenita/optimizing-django-admin-paginator-53c4eb6bfca3
+    Overrides the count method of QuerySet objects to avoid timeouts.
+    - Try to get the real count limiting the queryset execution time to 150 ms.
+    - If count takes longer than 150 ms the database kills the query and raises OperationError. In that case,
+    get an estimate instead of actual count when not filtered (this estimate can be stale and hence not fit for
+    situations where the count of objects actually matter).
+    - If any other exception occured fall back to default behaviour.
+    """
+
+    @cached_property
+    def count(self):
+        """
+        Returns an estimated number of objects, across all pages.
+        """
+        try:
+            with transaction.atomic(), connection.cursor() as cursor:
+                # Limit to 150 ms
+                cursor.execute("SET LOCAL statement_timeout TO 150;")
+                return super().count
+        except OperationalError:
+            pass
+
+        if not self.object_list.query.where:
+            try:
+                with transaction.atomic(), connection.cursor() as cursor:
+                    # Obtain estimated values (only valid with PostgreSQL)
+                    cursor.execute(
+                        "SELECT reltuples FROM pg_class WHERE relname = %s",
+                        [self.object_list.query.model._meta.db_table],
+                    )
+                    estimate = int(cursor.fetchone()[0])
+                    return estimate
+            except Exception:
+                # If any other exception occurred fall back to default behaviour
+                pass
+        return super().count
+
+
 class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
     http_method_names = [
@@ -250,7 +299,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         JSONRenderer,
         BrowsableAPIRenderer,
     ]
-    pagination_class = CustomLimitOffsetPagination
+    pagination_class = LargeTablePaginator  # CursorPagination
 
     permission_classes = [HasAPIKey | IsAuthenticated]
     authentication_classes = [
@@ -279,50 +328,33 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         if hasattr(serializer_class, "setup_eager_loading"):
             queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
 
-        # isostructural_minerals_ = NsFamily.objects.values('ns_family') \
-        #                                           .annotate(count=Count('minerals')) \
-        #                                           .filter(ns_family=OuterRef('ns_family'))
+        # isostructural_minerals_ = (
+        #     NsFamily.objects.values("ns_family").annotate(count=Count("minerals")).filter(id=OuterRef("ns_family"))
+        # )
 
-        # relations_count_ = MineralRelation.objects.values('relation') \
-        #                                           .filter(Q(direct_relation=True)) \
-        #                                           .annotate(
-        #                                              varieties_count=Case(
-        #                                                  When(status__status__status_group__name='varieties', then=Count('relation')),
-        #                                                  default=Value(None)
-        #                                              ),
-        #                                              polytypes_count=Case(
-        #                                                 When(status__status__status_group__name='polytypes', then=Count('relation')),
-        #                                                 default=Value(None)
-        #                                              )
-        #                                           ) \
-        #                                           .filter(mineral=OuterRef('id'))
+        # relations_count_ = (
+        #     MineralRelation.objects.values("relation")
+        #     .filter(Q(status__direct_status=True))
+        #     .annotate(
+        #         varieties_count=Case(
+        #             When(status__status__status_group__name="varieties", then=Count("relation")), default=Value(None)
+        #         ),
+        #         polytypes_count=Case(
+        #             When(status__status__status_group__name="polytypes", then=Count("relation")), default=Value(None)
+        #         ),
+        #     )
+        #     .filter(mineral=OuterRef("id"))
+        # )
 
-        # history_ = MineralHierarchy.objects.values('parent') \
-        #                                    .filter(Q(parent=OuterRef('id'))) \
-        #                                    .annotate(
-        #                                      discovery_year_min=Min('mineral__history__discovery_year_min'),
-        #                                      discovery_year_max=Max('mineral__history__discovery_year_max')
-        #                                    )
-
-        # ions_ = MineralIonPosition.objects.all().values('position') \
-        #                                         .filter(Q(mineral=OuterRef('id'))) \
-        #                                         .annotate(
-        #                                             ions_= JSONObject(
-        #                                                 id=F('position__id'),
-        #                                                 name=F('position__name'),
-        #                                                 ions=ArrayAgg('ion__formula')
-        #                                             )
-        #                                         ).order_by('position__name')
-
-        # crystal_systems_ = MineralCrystallography.objects.all().values('crystal_system') \
-        #                                                        .filter(Q(mineral__parents_hierarchy__parent=OuterRef('id'))) \
-        #                                                        .annotate(
-        #                                                            crystal_systems_=JSONObject(
-        #                                                                 id=F('crystal_system__id'),
-        #                                                                 name=F('crystal_system__name'),
-        #                                                                 count=Count('mineral', distinct=True)
-        #                                                            )
-        #                                                        )
+        crystal_systems_ = (
+            MineralCrystallography.objects.values("crystal_system")
+            .filter(Q(mineral__parents_hierarchy__parent=OuterRef("id")))
+            .annotate(
+                crystal_systems_=JSONObject(
+                    id=F("crystal_system__id"), name=F("crystal_system__name"), count=Count("mineral", distinct=True)
+                )
+            )
+        )
 
         is_grouping_ = MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(status__status_group=1))
 
@@ -345,28 +377,16 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             ),
         )
 
-        # queryset = queryset.annotate(
-        #                         ions_=Case(
-        #                             When(is_grouping=True, then=ArraySubquery(ions_.values('ions_'))),
-        #                             default=[]
-        #                         ),
-        #                         crystal_systems_=ArraySubquery(crystal_systems_.values('crystal_systems_')),
-        #                         relations_=JSONObject(
-        #                             isostructural_minerals=Subquery(isostructural_minerals_.values('count')),
-        #                             varieties=Subquery(relations_count_.values('varieties_count')),
-        #                             polytypes=Subquery(relations_count_.values('polytypes_count')),
-        #                         ),
-        #                         history_=JSONObject(
-        #                             discovery_year_min=Case(
-        #                                 When(is_grouping=True, then=Subquery(history_.values('discovery_year_min'))),
-        #                                 default=F('history__discovery_year_min')
-        #                             ),
-        #                             discovery_year_max=Case(
-        #                                 When(is_grouping=True, then=Subquery(history_.values('discovery_year_max'))),
-        #                                 default=F('history__discovery_year_max')
-        #                             ),
-        #                         )
-        #                     )
+        queryset = queryset.annotate(
+            crystal_systems_=Case(
+                When(is_grouping=True, then=ArraySubquery(crystal_systems_.values("crystal_systems_"))), default=[]
+            ),
+            # relations_=JSONObject(
+            #     isostructural_minerals=Subquery(isostructural_minerals_.values('count')),
+            #     varieties=Subquery(relations_count_.values('varieties_count')),
+            #     polytypes=Subquery(relations_count_.values('polytypes_count')),
+            # ),
+        )
 
         queryset = queryset.defer(
             "ns_class",
@@ -374,12 +394,6 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             "ns_mineral",
             "note",
             "created_at",
-            "updated_at",
-            "history__mineral_id",
-            "history__discovery_year_note",
-            "history__certain",
-            "history__first_usage_date",
-            "history__first_known_use",
         )
 
         return queryset
@@ -423,6 +437,10 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        return response
+
+    def list_(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
         page = self.paginate_queryset(queryset)
@@ -495,18 +513,19 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                             SELECT COALESCE(json_agg(temp_), '[]'::json)
                             FROM (
                                 SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id, counts, status_group FROM (
-                                    SELECT COUNT(ms.relation_id) AS counts, to_jsonb(sgl) AS status_group
+                                    SELECT COUNT(mr.id) AS counts, to_jsonb(sgl) AS status_group
                                     FROM mineral_status ms
+                                    LEFT JOIN mineral_relation mr ON ms.id = mr.mineral_status_id
                                     INNER JOIN status_list sl ON ms.status_id = sl.id
                                     INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
-                                    WHERE ms.direct_relation AND
+                                    WHERE ms.direct_status AND
                                         ms.mineral_id = ml.id AND
                                         sgl.id  IN (1, 4)
                                     GROUP BY sgl.id
                                     UNION
                                     SELECT count(ml_.id) AS counts, (SELECT to_jsonb(sgl) AS status_group FROM status_group_list sgl WHERE sgl.id = 11)
                                     FROM ns_family nf
-                                    INNER  JOIN mineral_log ml_ ON nf.id = ml_.ns_family
+                                    INNER JOIN mineral_log ml_ ON nf.id = ml_.ns_family
                                     INNER JOIN mineral_status ms ON ms.mineral_id = ml_.id
                                     INNER JOIN status_list sl ON ms.status_id = sl.id
                                     INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
@@ -608,19 +627,22 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                     WHEN ml.is_grouping
                     THEN (
                             SELECT to_json(temp_) AS history_ FROM (
-                                SELECT min(mhis.discovery_year_min) AS discovery_year_min, max(mhis.discovery_year_max) AS discovery_year_max
+                                SELECT MIN(mhis.discovery_year) AS discovery_year_min, MAX(mhis.discovery_year) AS discovery_year_max,
+                                MIN(mhis.ima_year) AS ima_year_min, MAX(mhis.ima_year) AS ima_year_max,
+                                MIN(mhis.publication_year) AS publication_year_min, MAX(mhis.publication_year) AS publication_year_max,
+                                MIN(mhis.approval_year) AS approval_year_min, MAX(mhis.approval_year) AS approval_year_max
                                 FROM mineral_hierarchy mh
                                 INNER JOIN mineral_log ml_ ON mh.mineral_id = ml_.id AND mh.parent_id = ml.id
                                 LEFT OUTER JOIN mineral_history mhis ON ml_.id = mhis.mineral_id
-                            ) temp_ WHERE temp_.discovery_year_min IS NOT NULL OR temp_.discovery_year_max IS NOT NULL
+                            ) temp_ WHERE COALESCE(temp_.discovery_year_min, temp_.ima_year_min, temp_.publication_year_min, temp_.approval_year_min) IS NOT NULL
                         )
                     ELSE
                         (
                             SELECT to_json(temp_) AS history_ FROM (
-                                SELECT mhis.discovery_year_min, mhis.discovery_year_max
+                                SELECT mhis.discovery_year, mhis.ima_year, mhis.publication_year, mhis.approval_year
                                 FROM mineral_history mhis
                                 WHERE mhis.mineral_id = ml.id
-                            ) temp_ WHERE temp_.discovery_year_min IS NOT NULL OR temp_.discovery_year_max IS NOT NULL
+                            ) temp_ WHERE COALESCE(temp_.discovery_year, temp_.ima_year, temp_.publication_year, temp_.approval_year) IS NOT NULL
                         )
                 END AS history_
                 FROM ("""

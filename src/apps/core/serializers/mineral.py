@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+from django.contrib.humanize.templatetags.humanize import naturalday
 from django.db import models
 from django.db.models import Count
 from django.db.models import F
@@ -12,6 +13,7 @@ from ..models.mineral import MineralHierarchy
 from ..models.mineral import MineralHistory
 from ..models.mineral import MineralIonPosition
 from .core import FormulaSourceSerializer
+from .core import StatusListSerializer
 from .crystal import CrystalSystemSerializer
 from .ion import MineralIonPositionSerializer
 
@@ -22,6 +24,9 @@ class MineralHistorySerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "discovery_year",
+            "ima_year",
+            "publication_year",
+            "approval_year",
             "discovery_year_note",
             "first_usage_date",
             "first_known_use",
@@ -149,10 +154,11 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
         return HierarchyParentsHyperlinkSerializer(instance.parents_hierarchy, context=self.context, many=True).data
 
 
-class MineralListSerializer(serializers.ModelSerializer):
+class MineralListSerializer_(serializers.ModelSerializer):
 
     url = serializers.URLField(source="get_absolute_url")
     ns_index = serializers.CharField(source="ns_index_")
+    updated_at = serializers.SerializerMethodField()
     formulas = MineralFormulaSerializer(many=True)
     description = serializers.CharField()
     is_grouping = serializers.BooleanField()
@@ -171,8 +177,10 @@ class MineralListSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "ima_symbol",
             "url",
             "ns_index",
+            "updated_at",
             "formulas",
             "description",
             "is_grouping",
@@ -192,10 +200,15 @@ class MineralListSerializer(serializers.ModelSerializer):
 
         select_related = []
 
-        prefetch_related = ["formulas__source"]
+        prefetch_related = [
+            models.Prefetch("formulas", MineralFormula.objects.filter(show_on_site=True).select_related("source")),
+        ]
 
         queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
         return queryset
+
+    def get_updated_at(self, instance):
+        return naturalday(instance.updated_at)
 
     def get_ions(self, instance):
         output = MineralIonPositionSerializer(instance.positions, many=True).data
@@ -243,4 +256,83 @@ class MineralListSerializer(serializers.ModelSerializer):
             #                                     )
 
             return crystal_systems.values("id", "name", "counts")
+        return CrystalSystemSerializer(instance.crystal_systems, many=True).data
+
+
+class MineralListSerializer(serializers.ModelSerializer):
+
+    url = serializers.URLField(source="get_absolute_url")
+    ns_index = serializers.CharField(source="ns_index_")
+    description = serializers.CharField()
+    is_grouping = serializers.BooleanField()
+    seen = serializers.IntegerField()
+    updated_at = serializers.SerializerMethodField()
+
+    formulas = MineralFormulaSerializer(many=True)
+    # hierarchy = serializers.JSONField(source="hierarchy_")
+    crystal_systems = serializers.SerializerMethodField()
+    statuses = StatusListSerializer(many=True)
+    # relations = serializers.JSONField(source="relations_")
+    # discovery_countries = serializers.JSONField(source="discovery_countries_")
+    history = MineralHistorySerializer()
+
+    class Meta:
+        model = Mineral
+        fields = [
+            "id",
+            "name",
+            "url",
+            "ns_index",
+            "ima_symbol",
+            "description",
+            "is_grouping",
+            "seen",
+            "updated_at",
+            "formulas",
+            # "hierarchy",
+            "crystal_systems",
+            "statuses",
+            # "relations",
+            # "discovery_countries",
+            "history",
+        ]
+
+    @staticmethod
+    def setup_eager_loading(**kwargs):
+        queryset = kwargs.get("queryset")
+
+        select_related = [
+            "history",
+        ]
+
+        prefetch_related = [
+            "formulas__source",
+            "crystal_systems",
+            models.Prefetch(
+                "children_hierarchy",
+                MineralHierarchy.objects.filter(mineral__crystal_systems__isnull=False).prefetch_related(
+                    "mineral__crystal_systems"
+                ),
+            ),
+            models.Prefetch("statuses", Status.objects.select_related("status_group")),
+        ]
+
+        queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
+        return queryset
+
+    def get_updated_at(self, instance):
+        return naturalday(instance.updated_at)
+
+    def get_crystal_systems(self, instance):
+        if instance.is_grouping:
+            # crystal_systems = (
+            #     CrystalSystem.objects
+            #                  .filter(minerals__mineral__in=[child.mineral for child in instance.children_hierarchy.all()])
+            #                  .annotate(
+            #                      counts=Count("id"),
+            #                  )
+            # )
+            return instance.crystal_systems_
+            # return crystal_systems.values("id", "name", "counts")
+
         return CrystalSystemSerializer(instance.crystal_systems, many=True).data
