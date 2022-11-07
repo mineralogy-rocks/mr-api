@@ -272,7 +272,7 @@ class MineralListSerializer(serializers.ModelSerializer):
     # hierarchy = serializers.JSONField(source="hierarchy_")
     crystal_systems = serializers.SerializerMethodField()
     statuses = StatusListSerializer(many=True)
-    # relations = serializers.JSONField(source="relations_")
+    relations = serializers.JSONField(source="relations_")
     # discovery_countries = serializers.JSONField(source="discovery_countries_")
     history = MineralHistorySerializer()
 
@@ -292,7 +292,7 @@ class MineralListSerializer(serializers.ModelSerializer):
             # "hierarchy",
             "crystal_systems",
             "statuses",
-            # "relations",
+            "relations",
             # "discovery_countries",
             "history",
         ]
@@ -325,14 +325,14 @@ class MineralListSerializer(serializers.ModelSerializer):
 
     def get_crystal_systems(self, instance):
         if instance.is_grouping:
-            # crystal_systems = (
-            #     CrystalSystem.objects
-            #                  .filter(minerals__mineral__in=[child.mineral for child in instance.children_hierarchy.all()])
-            #                  .annotate(
-            #                      counts=Count("id"),
-            #                  )
-            # )
+            crystal_systems = (
+                CrystalSystem.objects
+                             .filter(minerals__mineral__in=[child.mineral for child in instance.children_hierarchy.all()])
+                             .annotate(
+                                 counts=Count("id"),
+                             )
+            )
             return instance.crystal_systems_
-            # return crystal_systems.values("id", "name", "counts")
+            return crystal_systems.values("id", "name", "counts")
 
         return CrystalSystemSerializer(instance.crystal_systems, many=True).data
