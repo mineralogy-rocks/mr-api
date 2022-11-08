@@ -2,25 +2,22 @@
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.postgres.expressions import ArraySubquery
-from django.db import OperationalError
-from django.db import connection
-from django.db import transaction
 from django.db.models import Case
 from django.db.models import CharField
 from django.db.models import Count
 from django.db.models import Exists
 from django.db.models import F
-from django.db.models import Subquery
+from django.db.models import JSONField
 from django.db.models import OuterRef
 from django.db.models import Q
 from django.db.models import Value
 from django.db.models import When
+from django.db.models.expressions import RawSQL
 from django.db.models.functions import Coalesce
 from django.db.models.functions import Concat
 from django.db.models.functions import JSONObject
 from django.db.models.functions import Right
 from django.urls import reverse
-from django.utils.functional import cached_property
 from django.views.generic import DetailView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
@@ -29,7 +26,8 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
 from rest_framework.mixins import RetrieveModelMixin
-from rest_framework.pagination import LimitOffsetPagination, CursorPagination
+from rest_framework.pagination import CursorPagination
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.renderers import JSONRenderer
@@ -45,10 +43,13 @@ from .models.core import NsClass
 from .models.core import NsFamily
 from .models.core import NsSubclass
 from .models.core import Status
-from .models.mineral import MindatSync, MineralRelation
+from .models.mineral import MindatSync
 from .models.mineral import Mineral
 from .models.mineral import MineralCrystallography
 from .models.mineral import MineralStatus
+from .queries import grouping_discovery_countries_query
+from .queries import grouping_relations_query
+from .queries import relations_query
 from .serializers.core import NsClassSubclassFamilyListSerializer
 from .serializers.core import NsFamilyListSerializer
 from .serializers.core import NsSubclassListSerializer
@@ -243,58 +244,6 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
         return self._get_paginated_response(queryset, serializer_class)
 
 
-class OptimizedPaginator(LimitOffsetPagination):
-    """
-    Combination of ideas from:
-     - https://gist.github.com/safar/3bbf96678f3e479b6cb683083d35cb4d
-     - https://medium.com/@hakibenita/optimizing-django-admin-paginator-53c4eb6bfca3
-    Overrides the count method of QuerySet objects to avoid timeouts.
-    - Try to get the real count limiting the queryset execution time to 150 ms.
-    - If count takes longer than 150 ms the database kills the query and raises OperationError. In that case,
-    get an estimate instead of actual count when not filtered (this estimate can be stale and hence not fit for
-    situations where the count of objects actually matter).
-    - If any other exception occured fall back to default behaviour.
-    """
-
-    def get_count(self, queryset):
-        """
-        Returns an estimated number of objects, across all pages.
-        """
-        print(queryset.model._meta.db_table)
-        # try:
-        #     with transaction.atomic(), connection.cursor() as cursor:
-        #         # Limit to 150 ms
-        #         cursor.execute("SET LOCAL statement_timeout TO 100;")
-        #         return self.get_count_(queryset)
-        # except OperationalError:
-        #     pass
-
-        # if not queryset.query.where:
-        try:
-            print(queryset.model._meta.db_table)
-            with transaction.atomic(), connection.cursor() as cursor:
-                # Obtain estimated values (only valid with PostgreSQL)
-                cursor.execute(
-                    "SELECT reltuples FROM pg_class WHERE relname = %s",
-                    [queryset.model._meta.db_table],
-                )
-                estimate = int(cursor.fetchone()[0])
-                return estimate
-        except Exception:
-            # If any other exception occurred fall back to default behaviour
-            pass
-        return self.get_count_(queryset)
-
-    def get_count_(self, queryset):
-        """
-        Determine an object count, supporting either querysets or regular lists.
-        """
-        try:
-            return queryset.count()
-        except (AttributeError, TypeError):
-            return len(queryset)
-
-
 class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
     http_method_names = [
@@ -339,24 +288,6 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         if hasattr(serializer_class, "setup_eager_loading"):
             queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
 
-        isostructural_minerals_ = (
-            NsFamily.objects.values("ns_family").annotate(count=Count("minerals")).filter(id=OuterRef("ns_family"))
-        )
-
-        relations_count_ = (
-            MineralRelation.objects.values("relation")
-            .filter(Q(status__direct_status=True))
-            .annotate(
-                varieties_count=Case(
-                    When(status__status__status_group__name="varieties", then=Count("relation")), default=Value(None)
-                ),
-                polytypes_count=Case(
-                    When(status__status__status_group__name="polytypes", then=Count("relation")), default=Value(None)
-                ),
-            )
-            .filter(mineral=OuterRef("id"))
-        )
-
         crystal_systems_ = (
             MineralCrystallography.objects.values("crystal_system")
             .filter(Q(mineral__parents_hierarchy__parent=OuterRef("id")))
@@ -392,10 +323,16 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             crystal_systems_=Case(
                 When(is_grouping=True, then=ArraySubquery(crystal_systems_.values("crystal_systems_"))), default=[]
             ),
-            relations_=JSONObject(
-                isostructural_minerals=Subquery(isostructural_minerals_.values('count')),
-                varieties=Subquery(relations_count_.values('varieties_count')),
-                polytypes=Subquery(relations_count_.values('polytypes_count')),
+            discovery_countries_=Case(
+                When(is_grouping=True, then=RawSQL(grouping_discovery_countries_query, ())), default=[]
+            ),
+            relations_=Case(
+                When(
+                    is_grouping=True,
+                    then=RawSQL(grouping_relations_query, ()),
+                ),
+                default=RawSQL(relations_query, ()),
+                output_field=JSONField(),
             ),
         )
 
@@ -446,10 +383,6 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         instance.save()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
-
-    def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-        return response
 
     def list_(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

@@ -3,8 +3,10 @@ from django.contrib.humanize.templatetags.humanize import naturalday
 from django.db import models
 from django.db.models import Count
 from django.db.models import F
+from django.db.models import Q
 from rest_framework import serializers
 
+from ..models.core import Country
 from ..models.core import Status
 from ..models.crystal import CrystalSystem
 from ..models.mineral import Mineral
@@ -12,6 +14,7 @@ from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHierarchy
 from ..models.mineral import MineralHistory
 from ..models.mineral import MineralIonPosition
+from .core import CountryListSerializer
 from .core import FormulaSourceSerializer
 from .core import StatusListSerializer
 from .crystal import CrystalSystemSerializer
@@ -65,12 +68,26 @@ class HierarchyChildrenHyperlinkSerializer(serializers.ModelSerializer):
         ]
 
 
+class HierarchyParentHyperlinkSerializer(serializers.ModelSerializer):
+
+    id = serializers.PrimaryKeyRelatedField(source="parent", read_only=True)
+
+    name = serializers.StringRelatedField(source="parent")
+    url = serializers.HyperlinkedRelatedField(source="parent", read_only=True, view_name="core:mineral-detail")
+
+    class Meta:
+        model = MineralHierarchy
+        fields = [
+            "id",
+            "name",
+            "url",
+        ]
+
+
 class MineralFormulaSerializer(serializers.ModelSerializer):
 
-    formula = serializers.CharField()
-    note = serializers.CharField()
     source = FormulaSourceSerializer()
-    created_at = serializers.DjangoModelField()
+    created_at = serializers.SerializerMethodField()
 
     class Meta:
         model = MineralFormula
@@ -80,6 +97,9 @@ class MineralFormulaSerializer(serializers.ModelSerializer):
             "source",
             "created_at",
         ]
+
+    def get_created_at(self, instance):
+        return naturalday(instance.created_at)
 
 
 class MineralRetrieveSerializer(serializers.ModelSerializer):
@@ -269,11 +289,11 @@ class MineralListSerializer(serializers.ModelSerializer):
     updated_at = serializers.SerializerMethodField()
 
     formulas = MineralFormulaSerializer(many=True)
-    # hierarchy = serializers.JSONField(source="hierarchy_")
+    hierarchy = serializers.SerializerMethodField()
     crystal_systems = serializers.SerializerMethodField()
     statuses = StatusListSerializer(many=True)
     relations = serializers.JSONField(source="relations_")
-    # discovery_countries = serializers.JSONField(source="discovery_countries_")
+    discovery_countries = serializers.SerializerMethodField()
     history = MineralHistorySerializer()
 
     class Meta:
@@ -289,11 +309,11 @@ class MineralListSerializer(serializers.ModelSerializer):
             "seen",
             "updated_at",
             "formulas",
-            # "hierarchy",
+            "hierarchy",
             "crystal_systems",
             "statuses",
             "relations",
-            # "discovery_countries",
+            "discovery_countries",
             "history",
         ]
 
@@ -310,9 +330,15 @@ class MineralListSerializer(serializers.ModelSerializer):
             "crystal_systems",
             models.Prefetch(
                 "children_hierarchy",
-                MineralHierarchy.objects.filter(mineral__crystal_systems__isnull=False).prefetch_related(
-                    "mineral__crystal_systems"
-                ),
+                MineralHierarchy.objects.select_related("mineral", "parent").order_by("mineral__name"),
+            ),
+            models.Prefetch(
+                "parents_hierarchy",
+                MineralHierarchy.objects.select_related("mineral", "parent").order_by("parent__name"),
+            ),
+            models.Prefetch(
+                "discovery_countries",
+                Country.objects.filter(~Q(id=250)),
             ),
             models.Prefetch("statuses", Status.objects.select_related("status_group")),
         ]
@@ -325,14 +351,19 @@ class MineralListSerializer(serializers.ModelSerializer):
 
     def get_crystal_systems(self, instance):
         if instance.is_grouping:
-            crystal_systems = (
-                CrystalSystem.objects
-                             .filter(minerals__mineral__in=[child.mineral for child in instance.children_hierarchy.all()])
-                             .annotate(
-                                 counts=Count("id"),
-                             )
-            )
             return instance.crystal_systems_
-            return crystal_systems.values("id", "name", "counts")
-
         return CrystalSystemSerializer(instance.crystal_systems, many=True).data
+
+    def get_discovery_countries(self, instance):
+        if instance.is_grouping:
+            return instance.discovery_countries_
+        return CountryListSerializer(instance.discovery_countries, many=True).data
+
+    def get_hierarchy(self, instance):
+        if instance.is_grouping:
+            return HierarchyChildrenHyperlinkSerializer(
+                instance.children_hierarchy.all()[:5], context=self.context, many=True
+            ).data
+        return HierarchyParentHyperlinkSerializer(
+            instance.parents_hierarchy.all()[:5], context=self.context, many=True
+        ).data
