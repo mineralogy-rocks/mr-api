@@ -4,8 +4,8 @@ import json
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
-from nested_admin import NestedModelAdmin
 from django.utils.translation import gettext_lazy as _
+from nested_admin import NestedModelAdmin
 
 from .forms import MineralRelationFormset
 from .inlines import MineralDirectRelationSuggestionInline
@@ -192,13 +192,13 @@ class StatusFilter(admin.SimpleListFilter):
 
 class StatusListFilter(admin.SimpleListFilter):
 
-    title = _('Status')
-    parameter_name = 'id'
+    title = _("Status")
+    parameter_name = "id"
 
     def lookups(self, request, model_admin):
         status_list = []
         for status in Status.objects.all():
-            status_list.append((status.id, '{} — {}'.format(status.status_id, status.description_short)))
+            status_list.append((status.id, "{} — {}".format(status.status_id, status.description_short)))
         return status_list
 
     def queryset(self, request, queryset):
@@ -221,7 +221,11 @@ class MineralAdmin(NestedModelAdmin):
         "mindat_link",
     ]
 
-    list_filter = [StatusFilter, StatusListFilter, "ns_class",]
+    list_filter = [
+        StatusFilter,
+        StatusListFilter,
+        "ns_class",
+    ]
 
     list_display_links = ["name"]
     list_select_related = [
