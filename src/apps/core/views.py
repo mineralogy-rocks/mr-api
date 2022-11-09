@@ -47,9 +47,6 @@ from .models.mineral import MindatSync
 from .models.mineral import Mineral
 from .models.mineral import MineralCrystallography
 from .models.mineral import MineralStatus
-from .queries import grouping_discovery_countries_query
-from .queries import grouping_relations_query
-from .queries import relations_query
 from .serializers.core import NsClassSubclassFamilyListSerializer
 from .serializers.core import NsFamilyListSerializer
 from .serializers.core import NsSubclassListSerializer
@@ -324,14 +321,94 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                 When(is_grouping=True, then=ArraySubquery(crystal_systems_.values("crystal_systems_"))), default=[]
             ),
             discovery_countries_=Case(
-                When(is_grouping=True, then=RawSQL(grouping_discovery_countries_query, ())), default=[]
+                When(
+                    is_grouping=True,
+                    then=RawSQL(
+                        """
+                        (
+                            SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
+                                SELECT cl.id, cl.name, count(cl.id) AS counts
+                                FROM mineral_country mc
+                                INNER JOIN country_list cl ON mc.country_id = cl.id
+                                INNER JOIN mineral_hierarchy mh ON mh.mineral_id = mc.mineral_id
+                                WHERE mh.parent_id = mineral_log.id
+                                AND cl.id <> 250
+                                GROUP BY cl.id
+                                ORDER BY counts DESC, name DESC
+                                LIMIT 5
+                            ) temp_
+                        )
+                    """,
+                        (),
+                    ),
+                ),
+                default=[],
             ),
             relations_=Case(
                 When(
                     is_grouping=True,
-                    then=RawSQL(grouping_relations_query, ()),
+                    then=RawSQL(
+                        """
+                            (
+                                SELECT COALESCE(jsonb_agg(temp_), '[]'::jsonb)
+                                FROM (
+                                        WITH RECURSIVE hierarchy as (
+                                            SELECT
+                                                id,
+                                                mineral_id,
+                                                parent_id
+                                            FROM mineral_hierarchy
+                                            WHERE mineral_id = mineral_log.id
+                                            UNION
+                                            SELECT
+                                                e.id,
+                                                e.mineral_id,
+                                                e.parent_id
+                                            FROM mineral_hierarchy e
+                                            INNER JOIN hierarchy h ON h.mineral_id = e.parent_id
+                                        )
+                                        SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id,
+                                                count(h.mineral_id) AS counts,
+                                                to_jsonb(sgl) AS status_group
+                                        FROM hierarchy h
+                                        INNER JOIN mineral_status ms ON ms.mineral_id = h.mineral_id
+                                        INNER JOIN status_list sl ON sl.id = ms.status_id
+                                        INNER JOIN status_group_list sgl ON sgl.id = sl.status_group_id
+                                        WHERE h.parent_id IS NOT NULL AND sgl.id IN (3, 11)
+                                        GROUP BY sgl.id
+                                ) temp_
+                            )
+                        """,
+                        (),
+                    ),
                 ),
-                default=RawSQL(relations_query, ()),
+                default=RawSQL(
+                    """
+                        (
+                            SELECT COALESCE(jsonb_agg(temp_), '[]'::jsonb)
+                            FROM (
+                                SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id, counts, status_group FROM (
+                                    SELECT COUNT(mr.id) AS counts, to_jsonb(sgl) AS status_group
+                                    FROM mineral_status ms
+                                    LEFT JOIN mineral_relation mr ON ms.id = mr.mineral_status_id
+                                    INNER JOIN status_list sl ON ms.status_id = sl.id
+                                    INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
+                                    WHERE ms.direct_status AND
+                                        ms.mineral_id = mineral_log.id AND
+                                        sgl.id IN (2, 3)
+                                    GROUP BY sgl.id
+                                    UNION
+                                    SELECT COUNT(ml_.id) AS counts, (SELECT to_jsonb(sgl) AS status_group FROM status_group_list sgl WHERE sgl.id = 11)
+                                    FROM mineral_log ml_
+                                    INNER JOIN mineral_status ms ON ms.mineral_id = ml_.id
+                                    WHERE ms.status_id = 1 AND ml_.ns_family = mineral_log.ns_family AND ml_.id <> mineral_log.id
+                                    HAVING count(ml_.id) > 0
+                                ) inner_
+                            ) temp_
+                        )
+                    """,
+                    (),
+                ),
                 output_field=JSONField(),
             ),
         )
@@ -382,223 +459,4 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         instance.seen += 1
         instance.save()
         serializer = self.get_serializer(instance)
-        return Response(serializer.data)
-
-    def list_(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-
-        page = self.paginate_queryset(queryset)
-        results = []
-
-        if page:
-            sql, params = page.query.sql_with_params()
-
-            results = Mineral.objects.raw(
-                """
-                SELECT ml.*,
-                CASE
-                WHEN ml.is_grouping
-                THEN (
-                        SELECT COALESCE(json_agg(
-                            JSONB_BUILD_OBJECT('id', ml_.id, 'name', ml_.name, 'url', concat('/mineral/', ml_.id)
-                        )  ORDER BY sl.status_id), '[]'::json)
-                        FROM mineral_hierarchy mh
-                        INNER JOIN mineral_log ml_ ON mh.mineral_id = ml_.id
-                        INNER JOIN mineral_status ms ON mh.mineral_id = ms.mineral_id
-                        INNER JOIN status_list sl ON ms.status_id = sl.id
-                        WHERE mh.parent_id = ml.id
-                    )
-                ELSE (
-                        SELECT COALESCE(json_agg(
-                            JSONB_BUILD_OBJECT('id', ml_.id, 'name', ml_.name, 'url', concat('/mineral/', ml_.id)
-                            )  ORDER BY sl.status_id), '[]'::json)
-                        FROM mineral_hierarchy mh
-                        INNER JOIN mineral_log ml_ ON mh.parent_id = ml_.id
-                        INNER JOIN mineral_status ms ON mh.parent_id  = ms.mineral_id
-                        INNER JOIN status_list sl ON ms.status_id = sl.id
-                        WHERE mh.mineral_id = ml.id
-                    )
-                END AS hierarchy_,
-
-                CASE
-                    WHEN ml.is_grouping
-                    THEN
-                        (
-                            SELECT COALESCE(json_agg(temp_), '[]'::json)
-                            FROM (
-                                    WITH RECURSIVE hierarchy as (
-                                        SELECT
-                                            id,
-                                            mineral_id,
-                                            parent_id
-                                        FROM mineral_hierarchy
-                                        WHERE mineral_id = ml.id
-                                        UNION
-                                        SELECT
-                                            e.id,
-                                            e.mineral_id,
-                                            e.parent_id
-                                        FROM mineral_hierarchy e
-                                        INNER JOIN hierarchy h ON h.mineral_id = e.parent_id
-                                    )
-                                    SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id,
-                                            count(h.mineral_id) AS counts,
-                                            to_jsonb(sgl) AS status_group
-                                    FROM hierarchy h
-                                    INNER JOIN mineral_status ms ON ms.mineral_id = h.mineral_id
-                                    INNER JOIN status_list sl ON sl.id = ms.status_id
-                                    INNER JOIN status_group_list sgl ON sgl.id = sl.status_group_id
-                                    WHERE h.parent_id IS NOT NULL AND sgl.id IN (3, 4, 11)
-                                    GROUP BY sgl.id
-                            ) temp_
-                        )
-                    ELSE
-                        (
-                            SELECT COALESCE(json_agg(temp_), '[]'::json)
-                            FROM (
-                                SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id, counts, status_group FROM (
-                                    SELECT COUNT(mr.id) AS counts, to_jsonb(sgl) AS status_group
-                                    FROM mineral_status ms
-                                    LEFT JOIN mineral_relation mr ON ms.id = mr.mineral_status_id
-                                    INNER JOIN status_list sl ON ms.status_id = sl.id
-                                    INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
-                                    WHERE ms.direct_status AND
-                                        ms.mineral_id = ml.id AND
-                                        sgl.id  IN (1, 4)
-                                    GROUP BY sgl.id
-                                    UNION
-                                    SELECT count(ml_.id) AS counts, (SELECT to_jsonb(sgl) AS status_group FROM status_group_list sgl WHERE sgl.id = 11)
-                                    FROM ns_family nf
-                                    INNER JOIN mineral_log ml_ ON nf.id = ml_.ns_family
-                                    INNER JOIN mineral_status ms ON ms.mineral_id = ml_.id
-                                    INNER JOIN status_list sl ON ms.status_id = sl.id
-                                    INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
-                                    WHERE sgl.id = 11 and nf.id = ml.ns_family and ml_.id <> ml.id
-                                    HAVING count(ml_.id) > 0
-                                ) inner_
-                            ) temp_
-                        )
-                END AS relations_,
-
-                (
-                    SELECT COALESCE(json_agg(
-                        JSONB_BUILD_OBJECT(
-                            'id', sl.status_id,
-                            'description_short', sl.description_short,
-                            'description_long', sl.description_long
-                        ) ORDER BY sl.status_id), '[]'::json ) AS statuses_
-                    FROM mineral_status ms
-                    INNER JOIN status_list sl ON ms.status_id = sl.id
-                    WHERE ms.mineral_id = ml.id
-                ),
-
-                CASE
-                    WHEN ml.is_grouping
-                    THEN
-                        (
-                            SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
-                                SELECT cl.id, cl.name, cl.alpha_2 AS iso_code, count(cl.id) AS counts
-                                FROM mineral_country mc
-                                INNER JOIN country_list cl ON mc.country_id = cl.id
-                                INNER JOIN mineral_hierarchy mh ON mh.mineral_id = mc.mineral_id
-                                WHERE mh.parent_id = ml.id
-                                AND cl.id <> 250
-                                GROUP BY cl.id
-                                ORDER BY counts DESC
-                            ) temp_
-                        )
-                    ELSE
-                        (
-                            SELECT COALESCE(json_agg(
-                                JSONB_BUILD_OBJECT(
-                                    'id', cl.id,
-                                    'name', cl.name,
-                                    'iso_code', cl.alpha_2
-                                ) ORDER BY cl.id), '[]'::json ) AS discovery_countries_
-                            FROM mineral_country mc
-                            INNER JOIN country_list cl ON mc.country_id = cl.id
-                            WHERE mc.mineral_id = ml.id
-                        )
-                    END AS discovery_countries_,
-
-                CASE
-                    WHEN ml.is_grouping
-                    THEN
-                        (
-                            SELECT COALESCE(json_agg(temp_), '[]'::json)
-                            FROM (
-                                SELECT csl.id, csl.name, COUNT(DISTINCT mh.mineral_id) AS counts
-                                FROM mineral_crystallography mc
-                                INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
-                                INNER JOIN mineral_hierarchy mh ON mh.mineral_id = mc.mineral_id
-                                WHERE mh.parent_id  = ml.id
-                                GROUP BY csl.id
-                                ORDER BY csl.id
-                            ) temp_
-                        )
-                    ELSE
-                        (
-                            SELECT COALESCE(json_agg(temp_), '[]'::json)
-                            FROM (
-                                SELECT csl.id, csl.name, COUNT(DISTINCT mc.mineral_id) AS counts
-                                FROM mineral_crystallography mc
-                                INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
-                                WHERE mc.mineral_id  = ml.id
-                                GROUP BY csl.id
-                                ORDER BY csl.id
-                            ) temp_
-                        )
-                END AS crystal_systems_,
-
-                (
-                    SELECT COALESCE(json_agg(temp_), '[]'::json) AS ions_
-                    FROM (
-                        SELECT mip.ion_position_id AS id, iol.name AS name,
-                        array_agg(
-                                    JSONB_BUILD_OBJECT('id', io.id, 'name', io.name, 'formula', io.formula)
-                                    ORDER BY io.id DESC
-                                )  AS ions
-                        FROM mineral_ion_position mip
-                        INNER JOIN ion_position_list iol ON (mip.ion_position_id = iol.id)
-                        INNER JOIN ion_log io ON (mip.ion_id = io.id)
-                        WHERE mip.mineral_id = ml.id
-                        GROUP BY mip.ion_position_id, iol.name
-                        ORDER BY mip.ion_position_id
-                    ) temp_
-                ),
-
-                CASE
-                    WHEN ml.is_grouping
-                    THEN (
-                            SELECT to_json(temp_) AS history_ FROM (
-                                SELECT MIN(mhis.discovery_year) AS discovery_year_min, MAX(mhis.discovery_year) AS discovery_year_max,
-                                MIN(mhis.ima_year) AS ima_year_min, MAX(mhis.ima_year) AS ima_year_max,
-                                MIN(mhis.publication_year) AS publication_year_min, MAX(mhis.publication_year) AS publication_year_max,
-                                MIN(mhis.approval_year) AS approval_year_min, MAX(mhis.approval_year) AS approval_year_max
-                                FROM mineral_hierarchy mh
-                                INNER JOIN mineral_log ml_ ON mh.mineral_id = ml_.id AND mh.parent_id = ml.id
-                                LEFT OUTER JOIN mineral_history mhis ON ml_.id = mhis.mineral_id
-                            ) temp_ WHERE COALESCE(temp_.discovery_year_min, temp_.ima_year_min, temp_.publication_year_min, temp_.approval_year_min) IS NOT NULL
-                        )
-                    ELSE
-                        (
-                            SELECT to_json(temp_) AS history_ FROM (
-                                SELECT mhis.discovery_year, mhis.ima_year, mhis.publication_year, mhis.approval_year
-                                FROM mineral_history mhis
-                                WHERE mhis.mineral_id = ml.id
-                            ) temp_ WHERE COALESCE(temp_.discovery_year, temp_.ima_year, temp_.publication_year, temp_.approval_year) IS NOT NULL
-                        )
-                END AS history_
-                FROM ("""
-                + sql
-                + """) ml;
-                """,
-                params,
-            )
-
-        if page is not None:
-            serializer = self.get_serializer(results, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
