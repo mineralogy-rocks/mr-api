@@ -30,6 +30,6 @@ pyjwt==2.6.0
 requests==2.28.1
 s3transfer==0.6.0
 six==1.16.0
-sqlparse==0.4.2
+sqlparse==0.4.3
 tzdata==2022.2
 urllib3==1.26.12
