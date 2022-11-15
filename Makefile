@@ -10,7 +10,7 @@ dump-prod-db:
 	$(eval include ./.envs/.prod/.db)
 	$(eval export $(shell sed 's/=.*//' ./.envs/.prod/.db))
 
-	docker-compose -f docker-compose.yml run \
+	docker-compose -f docker-compose.yaml run \
 		-e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
 		-e POSTGRES_HOST=${POSTGRES_HOST} \
 		-e POSTGRES_PORT=${POSTGRES_PORT} \
@@ -18,10 +18,10 @@ dump-prod-db:
 		-e POSTGRES_DB=${POSTGRES_DB} --rm --no-deps database backup
 
 backups:
-	docker-compose -f docker-compose.yml run --rm database backups
+	docker-compose -f docker-compose.yaml run --rm database backups
 
 restore-local-db:
-	docker-compose -f docker-compose.yml run --rm --no-deps database restore "${backup}"
+	docker-compose -f docker-compose.yaml run --rm --no-deps database restore "${backup}"
 
 run-sql:
 ifdef file
@@ -30,14 +30,14 @@ ifdef file
 
 		@echo "--> Running sql..."
 
-		docker-compose -f docker-compose.yml run --rm --no-deps database \
+		docker-compose -f docker-compose.yaml run --rm --no-deps database \
 			psql "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:${POSTGRES_PORT}/${POSTGRES_DB}" -a -f file
 else
 		@echo 'please, pass sql file as an argument!'
 endif
 
 start:
-	docker-compose -f docker-compose.yml up -d
+	docker-compose -f docker-compose.yaml up -d
 
 stop:
-	docker-compose -f docker-compose.yml down
+	docker-compose -f docker-compose.yaml down
