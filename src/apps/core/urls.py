@@ -7,7 +7,6 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.views import TokenVerifyView
 
 from . import views as views
-from .views import MindatSyncView
 
 app_name = "core"
 
@@ -25,7 +24,6 @@ def trigger_error(request):
 urlpatterns = [
     path("", include(router.urls)),
     path("sentry-debug/", trigger_error),
-    path("sync-log/<int:pk>/", MindatSyncView.as_view(), name="sync-log"),
     path("auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("auth/token/verify/", TokenVerifyView.as_view(), name="token_verify"),

@@ -1,6 +1,5 @@
 # -*- coding: UTF-8 -*-
 from dal import autocomplete
-from django.conf import settings
 from django.contrib.postgres.expressions import ArraySubquery
 from django.db.models import Case
 from django.db.models import CharField
@@ -17,8 +16,6 @@ from django.db.models.functions import Coalesce
 from django.db.models.functions import Concat
 from django.db.models.functions import JSONObject
 from django.db.models.functions import Right
-from django.urls import reverse
-from django.views.generic import DetailView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework import status
@@ -43,7 +40,6 @@ from .models.core import NsClass
 from .models.core import NsFamily
 from .models.core import NsSubclass
 from .models.core import Status
-from .models.mineral import MindatSync
 from .models.mineral import Mineral
 from .models.mineral import MineralCrystallography
 from .models.mineral import MineralStatus
@@ -53,21 +49,6 @@ from .serializers.core import NsSubclassListSerializer
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRetrieveSerializer
-
-
-class MindatSyncView(DetailView):
-
-    template_name = "sync/sync-detail.html"
-    model = MindatSync
-    context_object_name = "sync_object"
-
-    def get_context_data(self, **kwargs):
-        object = self.get_object()
-        context = super().get_context_data(**kwargs)
-        context["base_url"] = f"{settings.SCHEMA}://{settings.BACKEND_DOMAIN}"
-        context["link"] = reverse("admin:core_mindatsync_change", kwargs={"object_id": object.id})
-
-        return context
 
 
 class MineralSearch(autocomplete.Select2QuerySetView):

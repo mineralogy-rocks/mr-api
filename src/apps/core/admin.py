@@ -1,10 +1,16 @@
 # -*- coding: UTF-8 -*-
 import json
 
+from django.conf import settings
 from django.contrib import admin
+from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db.models import Exists
+from django.db.models import OuterRef
+from django.db.models import Q
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext
 from nested_admin import NestedModelAdmin
 
 from .forms import MineralRelationFormset
@@ -20,6 +26,7 @@ from .models.core import Status
 from .models.core import StatusGroup
 from .models.mineral import MindatSync
 from .models.mineral import Mineral
+from .models.mineral import MineralStatus
 
 
 @admin.register(StatusGroup)
@@ -117,6 +124,8 @@ class MindatSyncAdmin(admin.ModelAdmin):
 
     date_hierarchy = "created_at"
 
+    change_form_template = "admin/core/mindatsync/sync-detail.html"
+
     fields = ["id", "created_at", "pretty_values"]
     list_display = [
         "id",
@@ -138,6 +147,11 @@ class MindatSyncAdmin(admin.ModelAdmin):
         "mineral_names",
     ]
     search_help_text = "Search across the synced names."
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["base_url"] = f"{settings.SCHEMA}://{settings.BACKEND_DOMAIN}"
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
 
     def get_search_results(self, request, queryset, search_term):
         if search_term:
@@ -210,6 +224,11 @@ class StatusListFilter(admin.SimpleListFilter):
 @admin.register(Mineral)
 class MineralAdmin(NestedModelAdmin):
 
+    actions = [
+        "approve",
+        "request_revision",
+    ]
+
     empty_value_display = ""
 
     date_hierarchy = "updated_at"
@@ -218,6 +237,8 @@ class MineralAdmin(NestedModelAdmin):
         "name",
         "ns_index",
         "description_",
+        "statuses_",
+        "needs_approval",
         "mindat_link",
     ]
 
@@ -228,6 +249,7 @@ class MineralAdmin(NestedModelAdmin):
     ]
 
     list_display_links = ["name"]
+
     list_select_related = [
         "ns_class",
         "ns_subclass",
@@ -270,6 +292,38 @@ class MineralAdmin(NestedModelAdmin):
     ]
     search_help_text = "Fuzzy search against the species names."
 
+    @admin.action(description="Approve statuses for selected minerals")
+    def approve(self, request, queryset):
+        updated = MineralStatus.objects.filter(mineral__in=queryset).update(needs_revision=False)
+        self.message_user(
+            request,
+            ngettext(
+                "%d mineral was successfully marked as approved.",
+                "%d minerals were successfully marked as approved.",
+                updated,
+            )
+            % updated,
+            messages.SUCCESS,
+        )
+
+    @admin.action(description="Request revision for selected minerals")
+    def request_revision(self, request, queryset):
+        updated = MineralStatus.objects.filter(mineral__in=queryset).update(needs_revision=True)
+        self.message_user(
+            request,
+            ngettext(
+                "%d mineral was successfully requested a revision.",
+                "%d minerals were successfully requested a revision.",
+                updated,
+            )
+            % updated,
+            messages.SUCCESS,
+        )
+
+    @admin.display(description="Approved by Admin?", boolean=True)
+    def needs_approval(self, instance):
+        return instance.needs_approval
+
     @admin.display(description="Mindat Ref")
     def mindat_link(self, instance):
         if instance.mindat_id:
@@ -290,6 +344,11 @@ class MineralAdmin(NestedModelAdmin):
                 + "</a>"
             )
 
+    @admin.display(description="Statuses")
+    def statuses_(self, instance):
+        if instance.statuses:
+            return "; ".join([str(status.status_id) for status in instance.statuses.all()])
+
     @admin.display(description="Description")
     def description_(self, instance):
         return mark_safe(instance.description) if instance.description else ""
@@ -308,12 +367,17 @@ class MineralAdmin(NestedModelAdmin):
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
+        queryset = queryset.annotate(
+            needs_approval=~Exists(
+                MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(direct_status=True) & Q(needs_revision=True))
+            ),
+        )
         select_related = [
             "ns_class",
             "ns_subclass",
             "ns_family",
         ]
-        prefetch_related = []
+        prefetch_related = ["statuses"]
         return queryset.select_related(*select_related).prefetch_related(*prefetch_related)
 
     def add_view(self, request, form_url="", extra_context=None):
