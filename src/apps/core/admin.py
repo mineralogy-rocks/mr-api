@@ -193,7 +193,7 @@ class StatusFilter(admin.SimpleListFilter):
 class StatusListFilter(admin.SimpleListFilter):
 
     title = _("Status")
-    parameter_name = "id"
+    parameter_name = "statuses__status__id"
 
     def lookups(self, request, model_admin):
         status_list = []
@@ -270,13 +270,6 @@ class MineralAdmin(NestedModelAdmin):
     ]
     search_help_text = "Fuzzy search against the species names."
 
-    inlines = [
-        MineralStatusInline,
-        MineralDirectRelationSuggestionInline,
-        MineralReverseRelationSuggestionInline,
-        MineralFormulaInline,
-    ]
-
     @admin.display(description="Mindat Ref")
     def mindat_link(self, instance):
         if instance.mindat_id:
@@ -300,6 +293,18 @@ class MineralAdmin(NestedModelAdmin):
     @admin.display(description="Description")
     def description_(self, instance):
         return mark_safe(instance.description) if instance.description else ""
+
+    def get_inlines(self, request, obj):
+        inlines = [
+            MineralStatusInline,
+        ]
+        if obj:
+            if obj.suggested_relations.exists():
+                inlines.append(MineralDirectRelationSuggestionInline)
+            if obj.suggested_inverse_relations.exists():
+                inlines.append(MineralReverseRelationSuggestionInline)
+        inlines.append(MineralFormulaInline)
+        return inlines
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
