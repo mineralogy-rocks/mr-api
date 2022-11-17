@@ -1,0 +1,67 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls %}
+
+{% block content %}
+
+<div style="padding: 25px; background: #ffffff; max-width: 800px; margin: 0 10px;">
+  <p style="font-size: 15px; font-weight: 200; margin-top: 20px; margin-bottom: 10px; font-family: sans-serif;">
+    <strong>Synchronization datetime:</strong> {{ original.created_at }}
+  </p>
+  <p style="font-size: 15px; font-weight: 200; margin-top: 20px; margin-bottom: 10px; font-family: sans-serif;">
+    Mineralogy.rocks sync service updated the database with {{ original.values|length }} entries. See complete sync log details below.
+  </p>
+</div>
+
+{% regroup original.values|dictsort:"action" by action as mineral_list %}
+
+
+  {% for action in mineral_list %}
+    <h3 style="margin-top: 20px; font-weight: 600;">{{ action.grouper }} - {{ action.list|length }}</h2>
+
+    <div style="background-color: #fdf7f7; border-radius: 5px; padding: 10px; margin-top: 10px;">
+      <ul>
+      {% for mineral in action.list %}
+        <li style="list-style: none;">
+          <div style="display: flex; align-items: baseline; margin: 5px 0;">
+            <p style="font-size: 15px; font-weight: 200; font-family: sans-serif;">
+              {{ mineral.name }}
+            </p>
+            {% if mineral.ima_symbol %}
+              <div style="border-radius: 20px; width: 0.5rem; height: 0.5rem; margin-left: 10px; background: #0a8310;"></div>
+            {% else %}
+              <div style="border-radius: 20px; width: 0.5rem; height: 0.5rem; margin-left: 10px; background: #636463;"></div>
+            {% endif %}
+          </div>
+
+          {% if mineral.description %}
+            <p style="font-style: italic; font-weight: 200; font-size: 12px; margin-top: 0px; margin-bottom: 10px;">
+              {{ mineral.description|safe }}
+            </p>
+          {% endif %}
+
+          <p style="font-weight: 200; font-size: 12px; margin: 2px 0;">
+            See on mindat <a href="{{ mineral.mindat_link }}" target="_blank" rel="noopener noreferrer" style="color: #1874CD; font-weight: 200; text-decoration: underline; font-family: sans-serif;">
+              {{ mineral.mindat_link }}
+            </a>
+          </p>
+
+          <p style="font-weight: 200; font-size: 12px; margin: 2px 0;">
+            Edit entry in the admin <a href="{{ base_url }}{{ mineral.admin_link }}" target="_blank" style="color: #1874CD; font-weight: 200; text-decoration: underline; font-family: sans-serif;">
+              {{ base_url }}{{ mineral.admin_link }}
+            </a>
+          </p>
+        {% empty %}
+          <p style="font-size: 15px; font-weight: 200; margin-top: 20px; margin-bottom: 10px; font-family: sans-serif;">
+              No new entries.
+          </p>
+        </li>
+      {% endfor %}
+      </ul>
+    </div>
+  {% empty %}
+    <p style="font-size: 15px; font-weight: 200; margin-top: 20px; margin-bottom: 10px; font-family: sans-serif;">
+        No new or updated entries.
+    </p>
+  {% endfor %}
+</div>
+{% endblock %}

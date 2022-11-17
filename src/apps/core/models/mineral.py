@@ -119,10 +119,6 @@ class Mineral(Nameable, Creatable, Updatable):
         else:
             return None
 
-    def _statuses(self):
-        if self.statuses:
-            return "; ".join([str(status.status.status_id) for status in self.statuses.all()])
-
 
 class MineralStatus(BaseModel, Creatable, Updatable):
 
@@ -507,4 +503,4 @@ class MindatSync(BaseModel, Creatable):
         return str(self.id)
 
     def get_absolute_url(self):
-        return reverse("core:sync-log", kwargs={"pk": self.id})
+        return reverse("admin:core_mindatsync_change", kwargs={"object_id": self.id})
