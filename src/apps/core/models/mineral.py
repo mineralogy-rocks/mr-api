@@ -308,9 +308,15 @@ class MineralFormula(BaseModel, Creatable):
         verbose_name_plural = "Formulas"
 
     def __str__(self):
-        if self.source == 1:
+        if self.source.id == 1:
             return formula_to_html(self.formula)
         return self.formula or self.note
+
+    @property
+    def formula_escape(self):
+        if self.source.id == 1:
+            return formula_to_html(self.formula)
+        return self.formula
 
 
 class MineralImpurity(BaseModel):

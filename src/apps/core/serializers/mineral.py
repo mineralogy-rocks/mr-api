@@ -86,6 +86,7 @@ class HierarchyParentHyperlinkSerializer(serializers.ModelSerializer):
 
 class MineralFormulaSerializer(serializers.ModelSerializer):
 
+    formula = serializers.CharField(source="formula_escape")
     source = FormulaSourceSerializer()
     created_at = serializers.SerializerMethodField()
 
