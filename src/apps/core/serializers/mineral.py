@@ -326,8 +326,8 @@ class MineralListSerializer(serializers.ModelSerializer):
         ]
 
         prefetch_related = [
-            "formulas__source",
             "crystal_systems",
+            models.Prefetch("formulas", MineralFormula.objects.filter(show_on_site=True).select_related("source")),
             models.Prefetch(
                 "children_hierarchy",
                 MineralHierarchy.objects.select_related("mineral", "parent").order_by("mineral__name"),
