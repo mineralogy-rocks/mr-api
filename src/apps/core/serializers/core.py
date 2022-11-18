@@ -23,13 +23,13 @@ class StatusGroupSerializer(serializers.ModelSerializer):
 
 class StatusListSerializer(serializers.ModelSerializer):
 
-    status_group = StatusGroupSerializer()
+    group = StatusGroupSerializer()
 
     class Meta:
         model = Status
         fields = [
             "status_id",
-            "status_group",
+            "group",
             "description_short",
             "description_long",
         ]
@@ -39,7 +39,7 @@ class StatusListSerializer(serializers.ModelSerializer):
         queryset = kwargs.get("queryset")
 
         select_related = [
-            "status_group",
+            "group",
         ]
 
         queryset = queryset.select_related(*select_related)

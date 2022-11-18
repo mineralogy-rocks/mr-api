@@ -13,9 +13,9 @@ from .models.mineral import Mineral
 
 class StatusFilter(filters.FilterSet):
 
-    status_group = filters.ModelMultipleChoiceFilter(
+    group = filters.ModelMultipleChoiceFilter(
         label="Status Groups",
-        field_name="status_group",
+        field_name="group",
         to_field_name="id",
         queryset=StatusGroup.objects.all(),
     )
@@ -23,7 +23,7 @@ class StatusFilter(filters.FilterSet):
     class Meta:
         model = Status
         fields = [
-            "status_group",
+            "group",
         ]
 
 

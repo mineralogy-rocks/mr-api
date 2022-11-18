@@ -46,17 +46,17 @@ class StatusGroupAdmin(admin.ModelAdmin):
 class StatusAdmin(admin.ModelAdmin):
     list_display = [
         "status_id",
-        "group",
+        "group_name",
         "description_short",
         "description_long",
     ]
 
     list_display_links = ["status_id"]
 
-    list_select_related = ["status_group"]
+    list_select_related = ["group"]
 
-    list_filter = ["status_group"]
-    search_fields = ["group", "status_id", "description_short", "description_long"]
+    list_filter = ["group"]
+    search_fields = ["group_name", "status_id", "description_short", "description_long"]
 
 
 @admin.register(FormulaSource)

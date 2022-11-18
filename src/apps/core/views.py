@@ -87,7 +87,7 @@ class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
     ordering_fields = [
         "status_id",
-        "status_group",
+        "group",
     ]
     ordering = [
         "status_id",
@@ -101,7 +101,7 @@ class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     search_fields = [
         "description_short",
         "description_long",
-        "status_group__name",
+        "group__name",
     ]
     filterset_class = StatusFilter
 
@@ -276,7 +276,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             )
         )
 
-        is_grouping_ = MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(status__status_group=1))
+        is_grouping_ = MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(status__group=1))
 
         queryset = queryset.annotate(
             is_grouping=Exists(is_grouping_),

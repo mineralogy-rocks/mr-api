@@ -105,7 +105,7 @@ class StatusGroup(BaseModel, Nameable):
 class Status(BaseModel):
 
     status_id = models.FloatField(null=False)
-    status_group = models.ForeignKey(StatusGroup, models.CASCADE, db_column="status_group_id", to_field="id")
+    group = models.ForeignKey(StatusGroup, models.CASCADE, db_column="status_group_id", to_field="id")
     description_long = models.TextField(blank=True, null=True)
     description_short = models.CharField(max_length=100)
 
@@ -120,8 +120,8 @@ class Status(BaseModel):
         verbose_name_plural = "Statuses"
 
     @property
-    def group(self):
-        return self.status_group.name
+    def group_name(self):
+        return self.group.name
 
     def __str__(self):
         return "{} - {}".format(self.status_id, self.description_short)
