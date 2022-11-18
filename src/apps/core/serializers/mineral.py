@@ -140,7 +140,7 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
         ]
 
         prefetch_related = [
-            models.Prefetch("statuses", Status.objects.select_related("status_group")),
+            models.Prefetch("statuses", Status.objects.select_related("group")),
             models.Prefetch("crystal_systems", CrystalSystem.objects.all().distinct()),
             # models.Prefetch('crystal_systems', CrystalSystem.objects.filter(Q(minerals__mineral__parents_hierarchy__parent__in=queryset.values('id'))),
             #                 to_attr='crystal_system_counts'
@@ -340,7 +340,7 @@ class MineralListSerializer(serializers.ModelSerializer):
                 "discovery_countries",
                 Country.objects.filter(~Q(id=250)),
             ),
-            models.Prefetch("statuses", Status.objects.select_related("status_group")),
+            models.Prefetch("statuses", Status.objects.select_related("group")),
         ]
 
         queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
