@@ -350,7 +350,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                         )
                                         SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id,
                                                 count(h.mineral_id) AS counts,
-                                                to_jsonb(sgl) AS status_group
+                                                to_jsonb(sgl) AS group
                                         FROM hierarchy h
                                         INNER JOIN mineral_status ms ON ms.mineral_id = h.mineral_id
                                         INNER JOIN status_list sl ON sl.id = ms.status_id
