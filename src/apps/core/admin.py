@@ -5,9 +5,12 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db.models import Case
 from django.db.models import Exists
 from django.db.models import OuterRef
+from django.db.models import Prefetch
 from django.db.models import Q
+from django.db.models import When
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
@@ -196,13 +199,31 @@ class StatusFilter(admin.SimpleListFilter):
         return (
             ("accepted", "Accepted"),
             ("pending", "Pending revision"),
+            ("to_process", "Pending processing"),
         )
 
     def queryset(self, request, queryset):
         if self.value() == "accepted":
-            return queryset.filter(direct_relations__needs_revision=False)
+            return queryset.filter(
+                Exists(MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(direct_status=True)))
+                & ~Exists(
+                    MineralStatus.objects.filter(
+                        Q(mineral=OuterRef("id")) & Q(direct_status=True) & Q(needs_revision=True)
+                    )
+                )
+            )
         if self.value() == "pending":
-            return queryset.filter(direct_relations__needs_revision=True)
+            return queryset.filter(
+                Exists(
+                    MineralStatus.objects.filter(
+                        Q(mineral=OuterRef("id")) & Q(direct_status=True) & Q(needs_revision=True)
+                    )
+                )
+            )
+        if self.value() == "to_process":
+            return queryset.filter(
+                ~Exists(MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(direct_status=True)))
+            )
 
 
 class StatusListFilter(admin.SimpleListFilter):
@@ -348,7 +369,7 @@ class MineralAdmin(NestedModelAdmin):
     @admin.display(description="Statuses")
     def statuses_(self, instance):
         if instance.statuses:
-            return "; ".join([str(status.status_id) for status in instance.statuses.all()])
+            return "; ".join([str(status.status.status_id) for status in instance.direct_statuses])
 
     @admin.display(description="Description")
     def description_(self, instance):
@@ -370,8 +391,18 @@ class MineralAdmin(NestedModelAdmin):
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         queryset = queryset.annotate(
-            needs_approval=~Exists(
-                MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(direct_status=True) & Q(needs_revision=True))
+            needs_approval=(
+                Case(
+                    When(
+                        Exists(MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(direct_status=True))),
+                        then=~Exists(
+                            MineralStatus.objects.filter(
+                                Q(mineral=OuterRef("id")) & Q(direct_status=True) & Q(needs_revision=True)
+                            )
+                        ),
+                    ),
+                    default=False,
+                )
             ),
         )
         select_related = [
@@ -380,7 +411,13 @@ class MineralAdmin(NestedModelAdmin):
             "ns_family",
             "history",
         ]
-        prefetch_related = ["statuses"]
+        prefetch_related = [
+            Prefetch(
+                "direct_relations",
+                queryset=MineralStatus.objects.filter(direct_status=True).select_related("status"),
+                to_attr="direct_statuses",
+            )
+        ]
         return queryset.select_related(*select_related).prefetch_related(*prefetch_related)
 
     def add_view(self, request, form_url="", extra_context=None):
