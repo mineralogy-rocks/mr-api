@@ -9,9 +9,32 @@ from django.forms import Textarea
 
 from .models.core import Status
 from .models.mineral import MineralFormula
+from .models.mineral import MineralHistory
 from .models.mineral import MineralRelation
 from .models.mineral import MineralRelationSuggestion
 from .models.mineral import MineralStatus
+
+
+class MineralHistoryForm(ModelForm):
+    class Meta:
+        model = MineralHistory
+        fields = [
+            "discovery_year_min",
+            "discovery_year_max",
+            "discovery_year_note",
+            "discovery_year",
+            "ima_year",
+            "publication_year",
+            "approval_year",
+            "certain",
+            "first_usage_date",
+            "first_known_use",
+        ]
+        widgets = {
+            "discovery_year_note": Textarea(attrs={"rows": 2}),
+            "first_usage_date": Textarea(attrs={"rows": 2}),
+            "first_known_use": Textarea(attrs={"rows": 2}),
+        }
 
 
 class MineralFormulaForm(ModelForm):
