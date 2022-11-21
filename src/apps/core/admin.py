@@ -16,6 +16,7 @@ from nested_admin import NestedModelAdmin
 from .forms import MineralRelationFormset
 from .inlines import MineralDirectRelationSuggestionInline
 from .inlines import MineralFormulaInline
+from .inlines import MineralHistoryInline
 from .inlines import MineralReverseRelationSuggestionInline
 from .inlines import MineralStatusInline
 from .models.core import FormulaSource
@@ -363,6 +364,7 @@ class MineralAdmin(NestedModelAdmin):
             if obj.suggested_inverse_relations.exists():
                 inlines.append(MineralReverseRelationSuggestionInline)
         inlines.append(MineralFormulaInline)
+        inlines.append(MineralHistoryInline)
         return inlines
 
     def get_queryset(self, request):
@@ -376,6 +378,7 @@ class MineralAdmin(NestedModelAdmin):
             "ns_class",
             "ns_subclass",
             "ns_family",
+            "history",
         ]
         prefetch_related = ["statuses"]
         return queryset.select_related(*select_related).prefetch_related(*prefetch_related)

@@ -6,6 +6,7 @@ from nested_admin import NestedStackedInline
 from nested_admin import NestedTabularInline
 
 from .forms import MineralFormulaForm
+from .forms import MineralHistoryForm
 from .forms import MineralRelationForm
 from .forms import MineralRelationFormset
 from .forms import MineralRelationSuggestionForm
@@ -14,10 +15,40 @@ from .forms import MineralStatusFormset
 from .forms import ModelChoiceField
 from .models.core import Status
 from .models.mineral import MineralFormula
+from .models.mineral import MineralHistory
 from .models.mineral import MineralRelation
 from .models.mineral import MineralRelationSuggestion
 from .models.mineral import MineralStatus
 from .utils import get_relation_note
+
+
+class MineralHistoryInline(NestedStackedInline):
+    model = MineralHistory
+    form = MineralHistoryForm
+
+    extra = 0
+    fields = [
+        "discovery_year_min",
+        "discovery_year_max",
+        "discovery_year_note",
+        "certain",
+        "discovery_year",
+        "ima_year",
+        "publication_year",
+        "approval_year",
+        "first_usage_date",
+        "first_known_use",
+    ]
+
+    readonly_fields = [
+        "discovery_year",
+        "ima_year",
+        "publication_year",
+        "approval_year",
+    ]
+
+    verbose_name = "Historical data"
+    verbose_name_plural = "Historical data"
 
 
 class MineralFormulaInline(NestedTabularInline):

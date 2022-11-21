@@ -412,18 +412,30 @@ class MineralCountry(BaseModel):
 class MineralHistory(BaseModel):
 
     mineral = models.OneToOneField(Mineral, models.CASCADE, db_column="mineral_id", related_name="history")
-    discovery_year_min = models.IntegerField(blank=True, null=True)
-    discovery_year_max = models.IntegerField(blank=True, null=True)
-    discovery_year_note = models.TextField(blank=True, null=True)
+    discovery_year_min = models.IntegerField(blank=True, null=True, help_text="Discovery year min ")
+    discovery_year_max = models.IntegerField(
+        blank=True, null=True, help_text="Discovery year max (leave empty if not known)"
+    )
+    discovery_year_note = models.TextField(blank=True, null=True, help_text="Note about discovery year")
 
-    discovery_year = models.SmallIntegerField(blank=True, null=True)
-    ima_year = models.SmallIntegerField(blank=True, null=True)
-    publication_year = models.SmallIntegerField(blank=True, null=True)
-    approval_year = models.SmallIntegerField(blank=True, null=True)
+    discovery_year = models.SmallIntegerField(
+        blank=True, null=True, help_text="Discovery year (fetched from mindat.org)"
+    )
+    ima_year = models.SmallIntegerField(
+        blank=True, null=True, help_text="IMA submission year (fetched from mindat.org)"
+    )
+    publication_year = models.SmallIntegerField(
+        blank=True, null=True, help_text="First publication year (fetched from mindat.org)"
+    )
+    approval_year = models.SmallIntegerField(
+        blank=True, null=True, help_text="IMA approval year (fetched from mindat.org)"
+    )
 
-    certain = models.BooleanField(null=False, default=True)
-    first_usage_date = models.TextField(blank=True, null=True)
-    first_known_use = models.TextField(blank=True, null=True)
+    certain = models.BooleanField(null=False, default=True, help_text="Has the discovery year been confirmed?")
+    first_usage_date = models.TextField(
+        blank=True, null=True, help_text="First usage date (e.g. century, year or approximate timespan)"
+    )
+    first_known_use = models.TextField(blank=True, null=True, help_text="First known use notation")
 
     class Meta:
         managed = False
