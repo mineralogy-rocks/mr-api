@@ -182,7 +182,7 @@ class MineralListSerializer_(serializers.ModelSerializer):
     ns_index = serializers.CharField(source="ns_index_")
     updated_at = serializers.SerializerMethodField()
     formulas = MineralFormulaSerializer(many=True)
-    description = serializers.CharField()
+    description = serializers.CharField(source="short_description")
     is_grouping = serializers.BooleanField()
     seen = serializers.IntegerField()
 
@@ -285,7 +285,7 @@ class MineralListSerializer(serializers.ModelSerializer):
 
     url = serializers.URLField(source="get_absolute_url")
     ns_index = serializers.CharField(source="ns_index_")
-    description = serializers.CharField()
+    description = serializers.CharField(source="short_description")
     is_grouping = serializers.BooleanField()
     seen = serializers.IntegerField()
     updated_at = serializers.SerializerMethodField()
