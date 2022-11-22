@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.urls import reverse
 
 from ..utils import formula_to_html
+from ..utils import shorten_text
 from .base import BaseModel
 from .base import Creatable
 from .base import Nameable
@@ -118,6 +119,9 @@ class Mineral(Nameable, Creatable, Updatable):
             )
         else:
             return None
+
+    def short_description(self):
+        return shorten_text(self.description, limit=200) if self.description else None
 
 
 class MineralStatus(BaseModel, Creatable, Updatable):
