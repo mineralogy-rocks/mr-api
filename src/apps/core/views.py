@@ -308,15 +308,28 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                         """
                         (
                             SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
-                                SELECT cl.id, cl.name, count(cl.id) AS count
-                                FROM mineral_country mc
-                                INNER JOIN country_list cl ON mc.country_id = cl.id
-                                INNER JOIN mineral_hierarchy mh ON mh.mineral_id = mc.mineral_id
-                                WHERE mh.parent_id = mineral_log.id
-                                AND cl.id <> 250
-                                GROUP BY cl.id
-                                ORDER BY count DESC, name DESC
-                                LIMIT 5
+                                WITH RECURSIVE hierarchy as (
+                                    SELECT
+                                        id,
+                                        mineral_id,
+                                        parent_id
+                                    FROM mineral_hierarchy
+                                    WHERE mineral_id = mineral_log.id
+                                    UNION
+                                    SELECT
+                                        e.id,
+                                        e.mineral_id,
+                                        e.parent_id
+                                    FROM mineral_hierarchy e
+                                    INNER JOIN hierarchy h ON h.mineral_id = e.parent_id
+                                ) SELECT cl.id, cl.name, count(cl.id) AS count
+                                  FROM mineral_country mc
+                                  INNER JOIN country_list cl ON mc.country_id = cl.id
+                                  INNER JOIN hierarchy mh ON mh.mineral_id = mc.mineral_id
+                                  AND cl.id <> 250
+                                  GROUP BY cl.id
+                                  ORDER BY count DESC, name DESC
+                                  LIMIT 5
                             ) temp_
                         )
                     """,
