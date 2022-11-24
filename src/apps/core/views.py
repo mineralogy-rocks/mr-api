@@ -362,7 +362,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                             INNER JOIN hierarchy h ON h.mineral_id = e.parent_id
                                         )
                                         SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id,
-                                                count(h.mineral_id) AS counts,
+                                                count(h.mineral_id) AS count,
                                                 to_jsonb(sgl) AS group
                                         FROM hierarchy h
                                         INNER JOIN mineral_status ms ON ms.mineral_id = h.mineral_id
@@ -381,8 +381,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                         (
                             SELECT COALESCE(jsonb_agg(temp_), '[]'::jsonb)
                             FROM (
-                                SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id, counts, status_group FROM (
-                                    SELECT COUNT(mr.id) AS counts, to_jsonb(sgl) AS status_group
+                                SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id, inner_.count, inner_.group FROM (
+                                    SELECT COUNT(mr.id) AS count, to_jsonb(sgl) AS group
                                     FROM mineral_status ms
                                     LEFT JOIN mineral_relation mr ON ms.id = mr.mineral_status_id
                                     INNER JOIN status_list sl ON ms.status_id = sl.id
@@ -392,7 +392,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                         sgl.id IN (2, 3)
                                     GROUP BY sgl.id
                                     UNION
-                                    SELECT COUNT(ml_.id) AS counts, (SELECT to_jsonb(sgl) AS status_group FROM status_group_list sgl WHERE sgl.id = 11)
+                                    SELECT COUNT(ml_.id) AS count, (SELECT to_jsonb(sgl) AS group FROM status_group_list sgl WHERE sgl.id = 11)
                                     FROM mineral_log ml_
                                     INNER JOIN mineral_status ms ON ms.mineral_id = ml_.id
                                     WHERE ms.status_id = 1 AND ml_.ns_family = mineral_log.ns_family AND ml_.id <> mineral_log.id
