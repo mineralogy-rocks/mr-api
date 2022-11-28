@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import urllib
 import uuid
 
 from django.conf import settings
@@ -107,6 +108,12 @@ class Mineral(Nameable, Creatable, Updatable):
 
     def get_admin_url(self):
         return reverse("admin:core_mineral_change", args=(self.id,))
+
+    def get_mindat_url(self):
+        return "https://www.mindat.org/min-{}.html".format(self.mindat_id) if self.mindat_id else None
+
+    def get_rruff_url(self):
+        return "https://rruff.info/{}".format(urllib.parse.quote_plus(self.name))
 
     @admin.display(description="Nickel-Strunz Index")
     def ns_index(self):
