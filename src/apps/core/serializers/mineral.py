@@ -281,11 +281,24 @@ class MineralListSerializer_(serializers.ModelSerializer):
         return CrystalSystemSerializer(instance.crystal_systems, many=True).data
 
 
+class MineralLinkSerializer(serializers.Serializer):
+
+    mindat = serializers.URLField(source="get_mindat_url")
+    rruff = serializers.URLField(source="get_rruff_url")
+
+    class Meta:
+        model = Mineral
+        fields = [
+            "mindat",
+            "rruff",
+        ]
+
+
 class MineralListSerializer(serializers.ModelSerializer):
 
     url = serializers.URLField(source="get_absolute_url")
     ns_index = serializers.CharField(source="ns_index_")
-    description = serializers.CharField(source="short_description")
+    description = serializers.CharField()  # source="short_description"
     is_grouping = serializers.BooleanField()
     seen = serializers.IntegerField()
     updated_at = serializers.SerializerMethodField()
@@ -297,6 +310,7 @@ class MineralListSerializer(serializers.ModelSerializer):
     relations = serializers.JSONField(source="relations_")
     discovery_countries = serializers.SerializerMethodField()
     history = MineralHistorySerializer()
+    links = MineralLinkSerializer(source="*")
 
     class Meta:
         model = Mineral
@@ -317,6 +331,7 @@ class MineralListSerializer(serializers.ModelSerializer):
             "relations",
             "discovery_countries",
             "history",
+            "links",
         ]
 
     @staticmethod
@@ -332,11 +347,11 @@ class MineralListSerializer(serializers.ModelSerializer):
             models.Prefetch("formulas", MineralFormula.objects.select_related("source")),
             models.Prefetch(
                 "children_hierarchy",
-                MineralHierarchy.objects.select_related("mineral", "parent").order_by("mineral__name"),
+                MineralHierarchy.objects.select_related("mineral", "parent").order_by("mineral__statuses__status_id"),
             ),
             models.Prefetch(
                 "parents_hierarchy",
-                MineralHierarchy.objects.select_related("mineral", "parent").order_by("parent__name"),
+                MineralHierarchy.objects.select_related("mineral", "parent").order_by("parent__statuses__status_id"),
             ),
             models.Prefetch(
                 "discovery_countries",

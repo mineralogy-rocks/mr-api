@@ -387,8 +387,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                     LEFT JOIN mineral_relation mr ON ms.id = mr.mineral_status_id
                                     INNER JOIN status_list sl ON ms.status_id = sl.id
                                     INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
-                                    WHERE ms.direct_status AND
-                                        ms.mineral_id = mineral_log.id AND
+                                    WHERE NOT ms.direct_status AND
+                                        mr.mineral_id = mineral_log.id AND
                                         sgl.id IN (2, 3)
                                     GROUP BY sgl.id
                                     UNION
