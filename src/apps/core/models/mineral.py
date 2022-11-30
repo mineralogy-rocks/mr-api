@@ -128,7 +128,7 @@ class Mineral(Nameable, Creatable, Updatable):
             return None
 
     def short_description(self):
-        return shorten_text(self.description, limit=200) if self.description else None
+        return shorten_text(self.description, limit=700) if self.description else None
 
 
 class MineralStatus(BaseModel, Creatable, Updatable):

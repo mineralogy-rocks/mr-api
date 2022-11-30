@@ -281,24 +281,11 @@ class MineralListSerializer_(serializers.ModelSerializer):
         return CrystalSystemSerializer(instance.crystal_systems, many=True).data
 
 
-class MineralLinkSerializer(serializers.Serializer):
-
-    mindat = serializers.URLField(source="get_mindat_url")
-    rruff = serializers.URLField(source="get_rruff_url")
-
-    class Meta:
-        model = Mineral
-        fields = [
-            "mindat",
-            "rruff",
-        ]
-
-
 class MineralListSerializer(serializers.ModelSerializer):
 
     url = serializers.URLField(source="get_absolute_url")
     ns_index = serializers.CharField(source="ns_index_")
-    description = serializers.CharField()  # source="short_description"
+    description = serializers.CharField(source="short_description")
     is_grouping = serializers.BooleanField()
     seen = serializers.IntegerField()
     updated_at = serializers.SerializerMethodField()
@@ -310,7 +297,7 @@ class MineralListSerializer(serializers.ModelSerializer):
     relations = serializers.JSONField(source="relations_")
     discovery_countries = serializers.SerializerMethodField()
     history = MineralHistorySerializer()
-    links = MineralLinkSerializer(source="*")
+    links = serializers.SerializerMethodField()
 
     class Meta:
         model = Mineral
@@ -384,3 +371,21 @@ class MineralListSerializer(serializers.ModelSerializer):
         return HierarchyParentHyperlinkSerializer(
             instance.parents_hierarchy.all()[:5], context=self.context, many=True
         ).data
+
+    def get_links(self, instance):
+        links = [
+            {
+                "name": "rruff.info",
+                "link": instance.get_rruff_url(),
+            }
+        ]
+        mindat_link = instance.get_mindat_url()
+        if mindat_link:
+            links.append(
+                {
+                    "name": "mindat.org",
+                    "link": mindat_link,
+                }
+            )
+
+        return links
