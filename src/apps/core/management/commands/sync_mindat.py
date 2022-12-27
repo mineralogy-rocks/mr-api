@@ -64,7 +64,7 @@ class Command(BaseCommand):
                     "non_utf": False,
                 }
                 r = requests.get(
-                    MINDAT_API_URL + "/items/mr-sync",
+                    MINDAT_API_URL + "/mr-items/sync",
                     params=query_params,
                     headers=headers,
                     timeout=10,
