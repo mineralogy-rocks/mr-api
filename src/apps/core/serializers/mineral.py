@@ -305,6 +305,7 @@ class MineralListSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "url",
+            "mindat_id",
             "ns_index",
             "ima_symbol",
             "description",
