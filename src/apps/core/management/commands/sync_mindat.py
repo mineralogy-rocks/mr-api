@@ -82,7 +82,7 @@ class Command(BaseCommand):
                         if "next" in response and response["next"]:
                             print(response["next"])
                             time.sleep(3)
-                            r = requests.get(response["next"], headers=headers, timeout=10)
+                            r = requests.get(response["next"], headers=headers, timeout=100)
                             if r.status_code == 200:
                                 response = r.json()
                                 if response["results"]:
