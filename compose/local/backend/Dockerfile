@@ -1,7 +1,7 @@
 ARG PYTHON_VERSION=3.8.3-alpine
 
 # define an alias for the specfic python version used in this file.
-FROM python:${PYTHON_VERSION} as python
+FROM --platform=linux/arm64 python:${PYTHON_VERSION} as python
 
 # Python build stage
 FROM python as python-build-stage

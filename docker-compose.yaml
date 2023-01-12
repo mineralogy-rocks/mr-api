@@ -5,6 +5,7 @@ services:
         container_name: nginx-dev
         restart: unless-stopped
         image: nginx:stable-alpine
+        platofrm: linux/arm64
         ports:
             - "80:80"
         command: >
@@ -42,7 +43,6 @@ services:
             context: .
             dockerfile: ./compose/local/backend/Dockerfile
         command: /start.sh
-        platform: linux/x86_64
         restart: unless-stopped
         depends_on:
             - database
