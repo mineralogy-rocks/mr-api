@@ -4,9 +4,10 @@ import uuid
 
 from django.conf import settings
 from django.contrib import admin
-from django.db import models, connection
-from django.db.models import Q
 from django.contrib.postgres.fields import ArrayField
+from django.db import connection
+from django.db import models
+from django.db.models import Q
 from django.urls import reverse
 
 from ..utils import formula_to_html
@@ -26,7 +27,6 @@ from .crystal import CrystalSystem
 from .crystal import SpaceGroup
 from .ion import Ion
 from .ion import IonPosition
-
 
 
 class Mineral(Nameable, Creatable, Updatable):
@@ -486,14 +486,15 @@ class MineralHierarchy(BaseModel):
 
 class HierarchyView(BaseModel):
 
-
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="hierarchy")
     relation = models.ForeignKey(Mineral, models.CASCADE, db_column="relation_id", related_name="inverse_hierarchy")
 
     class Meta:
         managed = False
         db_table = "mineral_hierarchy_view"
-        ordering = ["id",]
+        ordering = [
+            "id",
+        ]
 
         verbose_name = "Hierarchy View"
         verbose_name_plural = "Hierarchy View"
