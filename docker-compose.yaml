@@ -5,7 +5,7 @@ services:
         container_name: nginx-dev
         restart: unless-stopped
         image: nginx:stable-alpine
-        platofrm: linux/arm64
+        platform: linux/arm64
         ports:
             - "80:80"
         command: >

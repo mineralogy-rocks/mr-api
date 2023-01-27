@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "storages",
     "corsheaders",
     "core",
+    "bond",
 ]
 
 MIDDLEWARE = [

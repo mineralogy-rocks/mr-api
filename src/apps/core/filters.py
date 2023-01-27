@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 from django.db.models import Q
 from django_filters import rest_framework as filters
+from django_filters import widgets
 
 from .models.core import NsClass
 from .models.core import NsFamily
@@ -54,6 +55,7 @@ class NickelStrunzFilter(filters.FilterSet):
 
 class MineralFilter(filters.FilterSet):
 
+    ima_only = filters.BooleanFilter(field_name="", method="filter_ima_only", widget=widgets.BooleanWidget, label="Subset to IMA-Approved minerals")
     discovery_year__gte = filters.NumberFilter(field_name="history__discovery_year_min", lookup_expr="gte")
     discovery_year__lte = filters.NumberFilter(field_name="history__discovery_year_max", lookup_expr="lte")
     discovery_year__exact = filters.NumberFilter(field_name="history__discovery_year_min", lookup_expr="lte")
@@ -97,6 +99,11 @@ class MineralFilter(filters.FilterSet):
             "silicate",
             "other_compound",
         ]
+
+    def filter_ima_only(self, queryset, name, value):
+        if value:
+            queryset = queryset.filter(Q(statuses__group__id=11))
+        return queryset
 
     def filter_group_members_(self, queryset, name, value):
 

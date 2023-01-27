@@ -13,7 +13,7 @@ from ..models.mineral import Mineral
 from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHierarchy
 from ..models.mineral import MineralHistory
-from ..models.mineral import MineralIonPosition
+from ..models.mineral import MineralIonPosition, MineralCrystallography, HierarchyView
 from .core import CountryListSerializer
 from .core import FormulaSourceSerializer
 from .core import StatusListSerializer
@@ -292,7 +292,7 @@ class MineralListSerializer(serializers.ModelSerializer):
 
     formulas = MineralFormulaSerializer(many=True)
     hierarchy = serializers.SerializerMethodField()
-    crystal_systems = serializers.SerializerMethodField()
+    crystal_systems = serializers.JSONField()
     statuses = StatusListSerializer(many=True)
     relations = serializers.JSONField(source="relations_")
     discovery_countries = serializers.SerializerMethodField()
@@ -331,7 +331,6 @@ class MineralListSerializer(serializers.ModelSerializer):
         ]
 
         prefetch_related = [
-            "crystal_systems",
             models.Prefetch("formulas", MineralFormula.objects.select_related("source")),
             models.Prefetch(
                 "children_hierarchy",
@@ -353,11 +352,6 @@ class MineralListSerializer(serializers.ModelSerializer):
 
     def get_updated_at(self, instance):
         return naturalday(instance.updated_at)
-
-    def get_crystal_systems(self, instance):
-        if instance.is_grouping:
-            return instance.crystal_systems_
-        return CrystalSystemSerializer(instance.crystal_systems, many=True).data
 
     def get_discovery_countries(self, instance):
         if instance.is_grouping:
