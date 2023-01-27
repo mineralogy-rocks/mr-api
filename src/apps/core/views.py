@@ -1,6 +1,5 @@
 # -*- coding: UTF-8 -*-
 from dal import autocomplete
-from django.contrib.postgres.expressions import ArraySubquery
 from django.db.models import Case
 from django.db.models import CharField
 from django.db.models import Count
@@ -10,7 +9,7 @@ from django.db.models import JSONField
 from django.db.models import OuterRef
 from django.db.models import Q
 from django.db.models import Value
-from django.db.models import When
+from django.db.models import When, Subquery
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Coalesce
 from django.db.models.functions import Concat
@@ -33,6 +32,7 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_api_key.permissions import HasAPIKey
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from .pagination import CustomLimitOffsetPagination
 from .filters import MineralFilter
 from .filters import NickelStrunzFilter
 from .filters import StatusFilter
@@ -265,16 +265,11 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         serializer_class = self.get_serializer_class()
         if hasattr(serializer_class, "setup_eager_loading"):
             queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
+        return queryset
 
-        crystal_systems_ = (
-            MineralCrystallography.objects.values("crystal_system")
-            .filter(Q(mineral__parents_hierarchy__parent=OuterRef("id")))
-            .annotate(
-                crystal_systems_=JSONObject(
-                    id=F("crystal_system__id"), name=F("crystal_system__name"), count=Count("mineral", distinct=True)
-                )
-            )
-        )
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
 
         is_grouping_ = MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(status__group=1))
 
@@ -298,8 +293,39 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         )
 
         queryset = queryset.annotate(
-            crystal_systems_=Case(
-                When(is_grouping=True, then=ArraySubquery(crystal_systems_.values("crystal_systems_"))), default=[]
+            crystal_systems=Case(
+                When(
+                    is_grouping=True,
+                    then=RawSQL(
+                        """
+                        (
+                            SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
+                                SELECT csl.id, csl.name, count(csl.id) AS count
+                                FROM mineral_crystallography mc
+                                INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
+                                LEFT JOIN mineral_hierarchy_view mhv ON mc.mineral_id = mhv.relation_id
+                                WHERE mhv.mineral_id = mineral_log.id
+                                GROUP BY csl.id
+                                ORDER BY count DESC, name DESC
+                            ) temp_
+                        )
+                        """,
+                        (),
+                    )
+                ),
+                default=RawSQL(
+                    """
+                    (
+                        SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
+                            SELECT csl.id, csl.name
+                            FROM mineral_crystallography mc
+                            INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
+                            WHERE mc.mineral_id = mineral_log.id
+                        ) temp_
+                    )
+                    """,
+                    (),
+                ),
             ),
             discovery_countries_=Case(
                 When(
@@ -308,28 +334,14 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                         """
                         (
                             SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
-                                WITH RECURSIVE hierarchy as (
-                                    SELECT
-                                        id,
-                                        mineral_id,
-                                        parent_id
-                                    FROM mineral_hierarchy
-                                    WHERE mineral_id = mineral_log.id
-                                    UNION
-                                    SELECT
-                                        e.id,
-                                        e.mineral_id,
-                                        e.parent_id
-                                    FROM mineral_hierarchy e
-                                    INNER JOIN hierarchy h ON h.mineral_id = e.parent_id
-                                ) SELECT cl.id, cl.name, count(cl.id) AS count
-                                  FROM mineral_country mc
-                                  INNER JOIN country_list cl ON mc.country_id = cl.id
-                                  INNER JOIN hierarchy mh ON mh.mineral_id = mc.mineral_id
-                                  AND cl.id <> 250
-                                  GROUP BY cl.id
-                                  ORDER BY count DESC, name DESC
-                                  LIMIT 5
+                                SELECT cl.id, cl.name, count(cl.id) AS count
+                                FROM mineral_country mc
+                                INNER JOIN country_list cl ON mc.country_id = cl.id
+                                LEFT JOIN mineral_hierarchy_view mhv ON mc.mineral_id = mhv.relation_id
+                                WHERE mhv.mineral_id = mineral_log.id AND cl.id <> 250
+                                GROUP BY cl.id
+                                ORDER BY count DESC, name DESC
+                                LIMIT 5
                             ) temp_
                         )
                     """,
@@ -346,29 +358,14 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                             (
                                 SELECT COALESCE(jsonb_agg(temp_), '[]'::jsonb)
                                 FROM (
-                                        WITH RECURSIVE hierarchy as (
-                                            SELECT
-                                                id,
-                                                mineral_id,
-                                                parent_id
-                                            FROM mineral_hierarchy
-                                            WHERE mineral_id = mineral_log.id
-                                            UNION
-                                            SELECT
-                                                e.id,
-                                                e.mineral_id,
-                                                e.parent_id
-                                            FROM mineral_hierarchy e
-                                            INNER JOIN hierarchy h ON h.mineral_id = e.parent_id
-                                        )
                                         SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id,
-                                                count(h.mineral_id) AS count,
+                                                count(mhv.mineral_id) AS count,
                                                 to_jsonb(sgl) AS group
-                                        FROM hierarchy h
-                                        INNER JOIN mineral_status ms ON ms.mineral_id = h.mineral_id
+                                        FROM mineral_hierarchy_view mhv
+                                        INNER JOIN mineral_status ms ON ms.mineral_id = mhv.relation_id
                                         INNER JOIN status_list sl ON sl.id = ms.status_id
                                         INNER JOIN status_group_list sgl ON sgl.id = sl.status_group_id
-                                        WHERE h.parent_id IS NOT NULL AND sgl.id IN (3, 11)
+                                        WHERE mhv.mineral_id = mineral_log.id AND sgl.id IN (3, 11)
                                         GROUP BY sgl.id
                                 ) temp_
                             )
@@ -415,7 +412,13 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             "created_at",
         )
 
-        return queryset
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)

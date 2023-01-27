@@ -13,8 +13,10 @@ from django.utils import timezone
 
 from ...models.core import FormulaSource
 from ...models.core import Status
+from ...models.crystal import CrystalSystem
 from ...models.mineral import MindatSync
 from ...models.mineral import Mineral
+from ...models.mineral import MineralCrystallography
 from ...models.mineral import MineralFormula
 from ...models.mineral import MineralHistory
 from ...models.mineral import MineralStatus
@@ -46,6 +48,7 @@ class Command(BaseCommand):
 
         is_successful = True
         last_datetime = datetime.strftime(last_datetime, "%Y-%m-%d %H:%M:%S")
+        # last_datetime = '2023-01-23 19:56:58'
         print(last_datetime)
 
         try:
@@ -154,6 +157,20 @@ class Command(BaseCommand):
 
                             if created_:
                                 is_updated = True
+
+                        if entry["crystal_system"]:
+                            try:
+                                crystal_system = CrystalSystem.objects.get(name=entry["crystal_system"].lower())
+                                entry_, updated_ = MineralCrystallography.objects.update_or_create(
+                                    mineral=mineral,
+                                    defaults={
+                                        "crystal_system": crystal_system,
+                                    },
+                                )
+                                if updated_:
+                                    is_updated = True
+                            except CrystalSystem.DoesNotExist:
+                                pass
 
                         if any(
                             [
