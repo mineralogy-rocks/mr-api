@@ -55,7 +55,9 @@ class NickelStrunzFilter(filters.FilterSet):
 
 class MineralFilter(filters.FilterSet):
 
-    ima_only = filters.BooleanFilter(field_name="", method="filter_ima_only", widget=widgets.BooleanWidget, label="Subset to IMA-Approved minerals")
+    ima_only = filters.BooleanFilter(
+        field_name="", method="filter_ima_only", widget=widgets.BooleanWidget, label="Subset to IMA-Approved minerals"
+    )
     discovery_year__gte = filters.NumberFilter(field_name="history__discovery_year_min", lookup_expr="gte")
     discovery_year__lte = filters.NumberFilter(field_name="history__discovery_year_max", lookup_expr="lte")
     discovery_year__exact = filters.NumberFilter(field_name="history__discovery_year_min", lookup_expr="lte")
