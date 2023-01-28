@@ -9,11 +9,13 @@ from rest_framework import serializers
 from ..models.core import Country
 from ..models.core import Status
 from ..models.crystal import CrystalSystem
+from ..models.mineral import HierarchyView
 from ..models.mineral import Mineral
+from ..models.mineral import MineralCrystallography
 from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHierarchy
 from ..models.mineral import MineralHistory
-from ..models.mineral import MineralIonPosition, MineralCrystallography, HierarchyView
+from ..models.mineral import MineralIonPosition
 from .core import CountryListSerializer
 from .core import FormulaSourceSerializer
 from .core import StatusListSerializer

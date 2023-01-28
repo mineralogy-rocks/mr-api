@@ -2,23 +2,27 @@
 import io
 import re
 
-from django.http import HttpResponse, FileResponse
+from bs4 import BeautifulSoup
+from django.http import FileResponse
+from django.http import HttpResponse
+from openpyxl import Workbook
 from rest_framework import renderers
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
-
 from svg.path import parse_path
-from bs4 import BeautifulSoup
-from openpyxl import Workbook
 
 from .serializers import SVGSerializer
 
 
-
 class SVGView(APIView):
 
-    renderer_classes = [renderers.JSONRenderer, renderers.BrowsableAPIRenderer,]
-    permission_classes = [AllowAny,]
+    renderer_classes = [
+        renderers.JSONRenderer,
+        renderers.BrowsableAPIRenderer,
+    ]
+    permission_classes = [
+        AllowAny,
+    ]
     serializer_class = SVGSerializer
 
     def post(self, request, *args, **kwargs):
@@ -27,7 +31,13 @@ class SVGView(APIView):
 
         wb = Workbook()
         ws = wb.active
-        ws.append(["id", "x", "y",])
+        ws.append(
+            [
+                "id",
+                "x",
+                "y",
+            ]
+        )
 
         svg_str = serializer.validated_data["file"].read().decode("utf-8")
 
@@ -43,7 +53,13 @@ class SVGView(APIView):
                 print(path_data)
                 for segment in path_data:
                     coordinates.append((segment.start.real, segment.start.imag))
-                ws.append([g.get("id"), coordinates[0][0], coordinates[0][1],])
+                ws.append(
+                    [
+                        g.get("id"),
+                        coordinates[0][0],
+                        coordinates[0][1],
+                    ]
+                )
 
         file_name = "coordinates.xlsx"
 
@@ -55,8 +71,8 @@ class SVGView(APIView):
 
         buffer.seek(0)
         response = FileResponse(buffer, as_attachment=True, filename=file_name)
-        response['Content-Disposition'] = f'attachment; filename={file_name}'
-        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response["Content-Disposition"] = f"attachment; filename={file_name}"
+        response["Content-Type"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
         return response
 
