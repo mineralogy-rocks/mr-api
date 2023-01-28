@@ -389,10 +389,15 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                                         sgl.id IN (2, 3)
                                     GROUP BY sgl.id
                                     UNION
-                                    SELECT COUNT(ml_.id) AS count, (SELECT to_jsonb(sgl) AS group FROM status_group_list sgl WHERE sgl.id = 11)
+                                    SELECT COUNT(ml_.id) AS count, (
+                                        SELECT to_jsonb(temp_) AS group FROM
+                                            (
+                                                SELECT sgl.id, 'Isostructural minerals' AS name FROM status_group_list sgl WHERE sgl.id = 11
+                                            ) temp_
+                                        )
                                     FROM mineral_log ml_
                                     INNER JOIN mineral_status ms ON ms.mineral_id = ml_.id
-                                    WHERE ms.status_id = 1 AND ml_.ns_family = mineral_log.ns_family AND ml_.id <> mineral_log.id
+                                    WHERE ms.status_id = 1 AND NOT ms.needs_revision AND ml_.ns_family = mineral_log.ns_family AND ml_.id <> mineral_log.id
                                     HAVING count(ml_.id) > 0
                                 ) inner_
                             ) temp_
