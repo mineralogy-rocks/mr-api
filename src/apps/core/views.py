@@ -8,8 +8,9 @@ from django.db.models import F
 from django.db.models import JSONField
 from django.db.models import OuterRef
 from django.db.models import Q
+from django.db.models import Subquery
 from django.db.models import Value
-from django.db.models import When, Subquery
+from django.db.models import When
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Coalesce
 from django.db.models.functions import Concat
@@ -32,7 +33,6 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_api_key.permissions import HasAPIKey
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .pagination import CustomLimitOffsetPagination
 from .filters import MineralFilter
 from .filters import NickelStrunzFilter
 from .filters import StatusFilter
@@ -43,6 +43,7 @@ from .models.core import Status
 from .models.mineral import Mineral
 from .models.mineral import MineralCrystallography
 from .models.mineral import MineralStatus
+from .pagination import CustomLimitOffsetPagination
 from .serializers.core import NsClassSubclassFamilyListSerializer
 from .serializers.core import NsFamilyListSerializer
 from .serializers.core import NsSubclassListSerializer
@@ -267,7 +268,6 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
         return queryset
 
-
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
@@ -311,7 +311,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                         )
                         """,
                         (),
-                    )
+                    ),
                 ),
                 default=RawSQL(
                     """

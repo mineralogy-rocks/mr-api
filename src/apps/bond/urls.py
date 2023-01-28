@@ -12,7 +12,4 @@ router = DefaultRouter()
 # router.register(r"svg", views.SVGView, basename="svg")
 
 
-urlpatterns = [
-    path("", include(router.urls)),
-    path("svg/", views.SVGView.as_view(), name="svg")
-]
+urlpatterns = [path("", include(router.urls)), path("svg/", views.SVGView.as_view(), name="svg")]
