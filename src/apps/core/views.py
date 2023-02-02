@@ -5,17 +5,16 @@ from django.db.models import CharField
 from django.db.models import Count
 from django.db.models import Exists
 from django.db.models import F
-from django.db.models import JSONField
 from django.db.models import OuterRef
 from django.db.models import Q
-from django.db.models import Subquery
 from django.db.models import Value
 from django.db.models import When
-from django.db.models.expressions import RawSQL
+from django.db.models import Window
 from django.db.models.functions import Coalesce
 from django.db.models.functions import Concat
-from django.db.models.functions import JSONObject
 from django.db.models.functions import Right
+from django.db.models.functions import RowNumber
+from django.contrib.postgres.search import SearchRank, SearchQuery
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework import status
@@ -23,7 +22,6 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
 from rest_framework.mixins import RetrieveModelMixin
-from rest_framework.pagination import CursorPagination
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import BrowsableAPIRenderer
@@ -41,15 +39,16 @@ from .models.core import NsFamily
 from .models.core import NsSubclass
 from .models.core import Status
 from .models.mineral import Mineral
-from .models.mineral import MineralCrystallography
 from .models.mineral import MineralStatus
-from .pagination import CustomLimitOffsetPagination
+from .pagination import CustomCursorPagination
 from .serializers.core import NsClassSubclassFamilyListSerializer
 from .serializers.core import NsFamilyListSerializer
 from .serializers.core import NsSubclassListSerializer
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRetrieveSerializer
+from .serializers.mineral import MineralListSecondarySerializer
+from .queries import LIST_VIEW_QUERY
 
 
 class MineralSearch(autocomplete.Select2QuerySetView):
@@ -223,6 +222,8 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
         return self._get_paginated_response(queryset, serializer_class)
 
 
+
+
 class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
     http_method_names = [
@@ -238,7 +239,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         JSONRenderer,
         BrowsableAPIRenderer,
     ]
-    pagination_class = CursorPagination
+    pagination_class = CustomCursorPagination
 
     permission_classes = [HasAPIKey | IsAuthenticated]
     authentication_classes = [
@@ -250,7 +251,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         "name",
     ]
     ordering = [
-        "name",
+        "-name",
     ]
 
     filter_backends = [
@@ -260,16 +261,47 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     ]
     filterset_class = MineralFilter
 
+    @staticmethod
+    def _setup_eager_loading(serializer_class, queryset, request):
+        if hasattr(serializer_class, "setup_eager_loading"):
+            queryset = serializer_class.setup_eager_loading(queryset=queryset, request=request)
+
+        return queryset
+
+    def _get_secondary_queryset(self):
+        # secondary queryset is a mirror of the primary queryset with id only
+        # used for prefetching related objects
+        queryset = super().get_queryset()
+        queryset = queryset.only("id")
+
+        serializer_class = self.get_serializer_class(is_secondary=True)
+        queryset = self._setup_eager_loading(serializer_class, queryset, self.request)
+
+        return queryset
+
+    def paginate_queryset(self, queryset, query=None):
+        """
+        Return a single page of results, or `None` if pagination is disabled.
+        """
+        if self.paginator is None:
+            return None
+        if self.action in ['list',]:
+            return self.paginator.paginate_raw_queryset(queryset, self.request, view=self, query=query)
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
     def get_queryset(self):
         queryset = super().get_queryset()
 
         serializer_class = self.get_serializer_class()
-        if hasattr(serializer_class, "setup_eager_loading"):
-            queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
+        queryset = self._setup_eager_loading(serializer_class, queryset, self.request)
+
         return queryset
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.get_queryset()
+        _queryset = self._get_secondary_queryset()
+
+        queryset = self.filter_queryset(queryset)
 
         is_grouping_ = MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(status__group=1))
 
@@ -292,123 +324,6 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             ),
         )
 
-        queryset = queryset.annotate(
-            crystal_systems=Case(
-                When(
-                    is_grouping=True,
-                    then=RawSQL(
-                        """
-                        (
-                            SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
-                                SELECT csl.id, csl.name, count(csl.id) AS count
-                                FROM mineral_crystallography mc
-                                INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
-                                LEFT JOIN mineral_hierarchy_view mhv ON mc.mineral_id = mhv.relation_id
-                                WHERE mhv.mineral_id = mineral_log.id
-                                GROUP BY csl.id
-                                ORDER BY count DESC, name DESC
-                            ) temp_
-                        )
-                        """,
-                        (),
-                    ),
-                ),
-                default=RawSQL(
-                    """
-                    (
-                        SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
-                            SELECT csl.id, csl.name
-                            FROM mineral_crystallography mc
-                            INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
-                            WHERE mc.mineral_id = mineral_log.id
-                        ) temp_
-                    )
-                    """,
-                    (),
-                ),
-            ),
-            discovery_countries_=Case(
-                When(
-                    is_grouping=True,
-                    then=RawSQL(
-                        """
-                        (
-                            SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
-                                SELECT cl.id, cl.name, count(cl.id) AS count
-                                FROM mineral_country mc
-                                INNER JOIN country_list cl ON mc.country_id = cl.id
-                                LEFT JOIN mineral_hierarchy_view mhv ON mc.mineral_id = mhv.relation_id
-                                WHERE mhv.mineral_id = mineral_log.id AND cl.id <> 250
-                                GROUP BY cl.id
-                                ORDER BY count DESC, name DESC
-                                LIMIT 5
-                            ) temp_
-                        )
-                    """,
-                        (),
-                    ),
-                ),
-                default=[],
-            ),
-            relations_=Case(
-                When(
-                    is_grouping=True,
-                    then=RawSQL(
-                        """
-                            (
-                                SELECT COALESCE(jsonb_agg(temp_), '[]'::jsonb)
-                                FROM (
-                                        SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id,
-                                                count(mhv.mineral_id) AS count,
-                                                to_jsonb(sgl) AS group
-                                        FROM mineral_hierarchy_view mhv
-                                        INNER JOIN mineral_status ms ON ms.mineral_id = mhv.relation_id
-                                        INNER JOIN status_list sl ON sl.id = ms.status_id
-                                        INNER JOIN status_group_list sgl ON sgl.id = sl.status_group_id
-                                        WHERE mhv.mineral_id = mineral_log.id AND sgl.id IN (3, 11)
-                                        GROUP BY sgl.id
-                                ) temp_
-                            )
-                        """,
-                        (),
-                    ),
-                ),
-                default=RawSQL(
-                    """
-                        (
-                            SELECT COALESCE(jsonb_agg(temp_), '[]'::jsonb)
-                            FROM (
-                                SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id, inner_.count, inner_.group FROM (
-                                    SELECT COUNT(mr.id) AS count, to_jsonb(sgl) AS group
-                                    FROM mineral_status ms
-                                    LEFT JOIN mineral_relation mr ON ms.id = mr.mineral_status_id
-                                    INNER JOIN status_list sl ON ms.status_id = sl.id
-                                    INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
-                                    WHERE NOT ms.direct_status AND
-                                        mr.mineral_id = mineral_log.id AND
-                                        sgl.id IN (2, 3)
-                                    GROUP BY sgl.id
-                                    UNION
-                                    SELECT COUNT(ml_.id) AS count, (
-                                        SELECT to_jsonb(temp_) AS group FROM
-                                            (
-                                                SELECT sgl.id, 'Isostructural minerals' AS name FROM status_group_list sgl WHERE sgl.id = 11
-                                            ) temp_
-                                        )
-                                    FROM mineral_log ml_
-                                    INNER JOIN mineral_status ms ON ms.mineral_id = ml_.id
-                                    WHERE ms.status_id = 1 AND NOT ms.needs_revision AND ml_.ns_family = mineral_log.ns_family AND ml_.id <> mineral_log.id
-                                    HAVING count(ml_.id) > 0
-                                ) inner_
-                            ) temp_
-                        )
-                    """,
-                    (),
-                ),
-                output_field=JSONField(),
-            ),
-        )
-
         queryset = queryset.defer(
             "ns_class",
             "ns_subclass",
@@ -417,10 +332,25 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             "created_at",
         )
 
-        page = self.paginate_queryset(queryset)
+        page = self.paginate_queryset(queryset, query=LIST_VIEW_QUERY)
         if page is not None:
+            _queryset = _queryset.filter(id__in=[x.id for x in page])
+            _serializer_class = self.get_serializer_class(is_secondary=True)
+
+            _serializer = _serializer_class(_queryset, many=True)
             serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+
+            _data = _serializer.data
+            data = serializer.data
+
+            output = []
+            for x in data:
+                for y in _data:
+                    if x["id"] == y["id"]:
+                        x.update(y)
+                        output.append(x)
+                        break
+            return self.get_paginated_response(output)
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
@@ -429,8 +359,14 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         queryset = super().filter_queryset(queryset)
 
         if "q" in self.request.query_params:
+
             query = self.request.query_params.get("q", "")
-            queryset = queryset.filter(name__unaccent__trigram_word_similar=query)
+            # queryset = queryset.filter(name__unaccent__trigram_word_similar=query)
+            _filter = (Q(search_vector=SearchQuery(query, config="mrdict") | SearchQuery(query, config="english")))
+            _query = SearchQuery(query, config="mrdict") | SearchQuery(query, config="english")
+            queryset = queryset.annotate(rank=SearchRank(F('search_vector'), _query, normalization=0))
+            queryset = queryset.filter(_filter)
+            queryset = queryset.annotate(ordering=Window(expression=RowNumber(), order_by=F('rank').desc()))
 
         discovery_countries = self.request.query_params.get("discovery_countries")
 
@@ -447,7 +383,9 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         return queryset
 
-    def get_serializer_class(self):
+    def get_serializer_class(self, is_secondary=False):
+        if is_secondary:
+            return MineralListSecondarySerializer
 
         if self.action in ["list"]:
             return MineralListSerializer
@@ -462,3 +400,4 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         instance.save()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
