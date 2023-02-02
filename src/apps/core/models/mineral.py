@@ -32,7 +32,6 @@ from .ion import IonPosition
 class Mineral(Nameable, Creatable, Updatable):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    new_id = models.IntegerField(blank=True, null=True)
 
     note = models.TextField(
         blank=True,
