@@ -4,7 +4,7 @@ import uuid
 
 from django.conf import settings
 from django.contrib import admin
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.search import SearchVectorField
 from django.db import connection
 from django.db import models
 from django.db.models import Q
@@ -32,6 +32,7 @@ from .ion import IonPosition
 class Mineral(Nameable, Creatable, Updatable):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    new_id = models.IntegerField(blank=True, null=True)
 
     note = models.TextField(
         blank=True,
@@ -73,6 +74,7 @@ class Mineral(Nameable, Creatable, Updatable):
     description = models.TextField(null=True, blank=True, help_text="Description from mindat.org")
     mindat_id = models.IntegerField(blank=True, null=True)
     ima_symbol = models.CharField(max_length=12, null=True, blank=True, help_text="Official IMA symbol.")
+    search_vector = SearchVectorField(null=True)
 
     discovery_countries = models.ManyToManyField(Country, through="MineralCountry")
     statuses = models.ManyToManyField(
@@ -486,8 +488,8 @@ class MineralHierarchy(BaseModel):
 
 class HierarchyView(BaseModel):
 
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="hierarchy")
-    relation = models.ForeignKey(Mineral, models.CASCADE, db_column="relation_id", related_name="inverse_hierarchy")
+    mineral = models.ForeignKey(Mineral, models.DO_NOTHING, db_column="mineral_id", related_name="hierarchy")
+    relation = models.ForeignKey(Mineral, models.DO_NOTHING, db_column="relation_id", related_name="inverse_hierarchy")
 
     class Meta:
         managed = False
