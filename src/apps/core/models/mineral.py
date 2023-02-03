@@ -4,7 +4,6 @@ import uuid
 
 from django.conf import settings
 from django.contrib import admin
-from django.contrib.postgres.search import SearchVectorField
 from django.db import connection
 from django.db import models
 from django.db.models import Q
@@ -73,7 +72,6 @@ class Mineral(Nameable, Creatable, Updatable):
     description = models.TextField(null=True, blank=True, help_text="Description from mindat.org")
     mindat_id = models.IntegerField(blank=True, null=True)
     ima_symbol = models.CharField(max_length=12, null=True, blank=True, help_text="Official IMA symbol.")
-    search_vector = SearchVectorField(null=True)
 
     discovery_countries = models.ManyToManyField(Country, through="MineralCountry")
     statuses = models.ManyToManyField(

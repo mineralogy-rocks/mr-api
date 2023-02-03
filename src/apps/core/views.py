@@ -13,8 +13,6 @@ from django.db.models import Window
 from django.db.models.functions import Coalesce
 from django.db.models.functions import Concat
 from django.db.models.functions import Right
-from django.db.models.functions import RowNumber
-from django.contrib.postgres.search import SearchRank, SearchQuery
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework import status
@@ -362,11 +360,15 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
             query = self.request.query_params.get("q", "")
             # queryset = queryset.filter(name__unaccent__trigram_word_similar=query)
-            _filter = (Q(search_vector=SearchQuery(query, config="mrdict") | SearchQuery(query, config="english")))
-            _query = SearchQuery(query, config="mrdict") | SearchQuery(query, config="english")
-            queryset = queryset.annotate(rank=SearchRank(F('search_vector'), _query, normalization=0))
-            queryset = queryset.filter(_filter)
-            queryset = queryset.annotate(ordering=Window(expression=RowNumber(), order_by=F('rank').desc()))
+            queryset = queryset.extra(
+                select={"ordering": """ROW_NUMBER() OVER (ORDER BY ts_rank(mineral_log.search_vector,
+                                       (plainto_tsquery('mrdict'::regconfig, %s) || plainto_tsquery('english'::regconfig, %s)), 0) DESC)"""},
+                select_params=(query, query),
+                where=[
+                    "mineral_log.search_vector @@ (plainto_tsquery('english', %s) || plainto_tsquery('mrdict', %s))",
+                ],
+                params=(query, query),
+            )
 
         discovery_countries = self.request.query_params.get("discovery_countries")
 
