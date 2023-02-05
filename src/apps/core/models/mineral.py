@@ -181,6 +181,12 @@ class MineralStatus(BaseModel, Creatable, Updatable):
     def __str__(self):
         return self.mineral.name + " " + self.status.description_short
 
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+
+        _direction = not self.direct_status
+        MineralStatus.objects.filter(mineral=self.mineral, status=self.status, direct_status=_direction).delete()
+
 
 class MineralRelation(BaseModel):
 
@@ -190,6 +196,7 @@ class MineralRelation(BaseModel):
         models.CASCADE,
         null=True,
         db_column="mineral_status_id",
+        related_name="mineral_status",
     )
     relation = models.ForeignKey(
         Mineral,

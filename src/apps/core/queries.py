@@ -28,7 +28,7 @@ LIST_VIEW_QUERY = """
             FROM mineral_status ms
             INNER JOIN status_list sl ON ms.status_id = sl.id
             INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
-            WHERE ms.mineral_id = main_table.id
+            WHERE ms.mineral_id = main_table.id and ms.direct_status
         ) AS _statuses,
         CASE WHEN main_table.is_grouping THEN (
                 SELECT COALESCE(json_agg(temp_), '[]'::json) FROM (
