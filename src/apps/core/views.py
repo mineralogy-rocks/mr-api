@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+import subprocess
+
 from dal import autocomplete
 from django.db.models import Case
 from django.db.models import CharField
@@ -26,6 +28,7 @@ from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
+from rest_framework.views import APIView
 from rest_framework_api_key.permissions import HasAPIKey
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
@@ -403,3 +406,18 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+
+class SyncView(APIView):
+
+    http_method_names = ["get",]
+    authentication_classes = [
+        JWTAuthentication,
+    ]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        if request.user.is_superuser:
+            command = "python manage.py check"
+            subprocess.Popen(command, shell=True)
+            return Response({"sync_triggered": True})
+        return Response(status=status.HTTP_403_FORBIDDEN)
