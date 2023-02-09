@@ -25,7 +25,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("_nested_admin/", include("nested_admin.urls")),
     path("", include("core.urls")),
-    path("bond/", include("bond.urls")),
+    path('auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path("bond/", include("bond.urls"), name="bond"),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "schema/swagger-ui/",
