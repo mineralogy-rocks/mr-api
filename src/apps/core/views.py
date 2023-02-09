@@ -417,7 +417,7 @@ class SyncView(APIView):
 
     def get(self, request, *args, **kwargs):
         if request.user.is_superuser:
-            command = "python manage.py check"
+            command = "python manage.py sync_mindat"
             subprocess.Popen(command, shell=True)
-            return Response({"sync_triggered": True})
+            return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_403_FORBIDDEN)
