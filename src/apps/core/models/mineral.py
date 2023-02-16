@@ -183,9 +183,7 @@ class MineralStatus(BaseModel, Creatable, Updatable):
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
-
-        _direction = not self.direct_status
-        MineralStatus.objects.filter(mineral=self.mineral, status=self.status, direct_status=_direction).delete()
+        MineralStatus.objects.filter(mineral=self.mineral, status=self.status, direct_status=(not self.direct_status)).delete()
 
 
 class MineralRelation(BaseModel):
