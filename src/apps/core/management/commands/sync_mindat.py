@@ -181,7 +181,7 @@ class Command(BaseCommand):
 
                         formula_note = entry["formula_note"] or None
                         if entry["formula"]:
-                            entry_, _created = MineralFormula.objects.get_or_create(
+                            _, _created = MineralFormula.objects.get_or_create(
                                 mineral=mineral,
                                 formula=entry["formula"],
                                 source=formula_mindat,
@@ -193,7 +193,7 @@ class Command(BaseCommand):
                                 is_updated = True
 
                         if entry["ima_formula"]:
-                            entry_, _created = MineralFormula.objects.get_or_create(
+                            _, _created = MineralFormula.objects.get_or_create(
                                 mineral=mineral,
                                 formula=entry["ima_formula"],
                                 source=formula_ima,
@@ -208,7 +208,7 @@ class Command(BaseCommand):
                         if entry["crystal_system"]:
                             try:
                                 crystal_system = CrystalSystem.objects.get(name=entry["crystal_system"].lower())
-                                entry_, updated_ = MineralCrystallography.objects.update_or_create(
+                                _, updated_ = MineralCrystallography.objects.update_or_create(
                                     mineral=mineral,
                                     defaults={
                                         "crystal_system": crystal_system,
@@ -227,7 +227,7 @@ class Command(BaseCommand):
                                 entry["approval_year"],
                             ]
                         ):
-                            entry_, updated_ = MineralHistory.objects.update_or_create(
+                            _, updated_ = MineralHistory.objects.update_or_create(
                                 mineral=mineral,
                                 defaults={
                                     "discovery_year": entry["discovery_year"] or None,
