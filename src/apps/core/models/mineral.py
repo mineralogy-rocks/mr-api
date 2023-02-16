@@ -11,6 +11,7 @@ from django.urls import reverse
 
 from ..utils import formula_to_html
 from ..utils import shorten_text
+from ..utils import unique_slugify
 from .base import BaseModel
 from .base import Creatable
 from .base import Nameable
@@ -31,6 +32,7 @@ from .ion import IonPosition
 class Mineral(Nameable, Creatable, Updatable):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True, help_text="Slug used for retrieving through website.")
 
     note = models.TextField(
         blank=True,
@@ -120,15 +122,20 @@ class Mineral(Nameable, Creatable, Updatable):
         if self.ns_class:
             return "{ns_class}.{ns_subclass}{ns_family}.{ns_mineral}".format(
                 ns_class=str(self.ns_class.id),
-                ns_subclass=str(self.ns_subclass.ns_subclass)[-1] if self.ns_subclass is not None else "0",
-                ns_family=str(self.ns_family.ns_family)[-1] if self.ns_family is not None else "0",
-                ns_mineral=str(self.ns_mineral) if self.ns_mineral is not None else "0",
+                ns_subclass=str(self.ns_subclass.ns_subclass)[-1] if self.ns_subclass else "0",
+                ns_family=str(self.ns_family.ns_family)[-1] if self.ns_family else "0",
+                ns_mineral=str(self.ns_mineral) if self.ns_mineral else "0",
             )
         else:
             return None
 
     def short_description(self):
         return shorten_text(self.description, limit=700) if self.description else None
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = unique_slugify(self, getattr(self, "name"))
+        super().save(*args, **kwargs)
 
 
 class MineralStatus(BaseModel, Creatable, Updatable):
