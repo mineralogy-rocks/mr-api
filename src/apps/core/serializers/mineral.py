@@ -161,7 +161,6 @@ class MineralListSerializer(serializers.ModelSerializer):
     data from raw sql query; therefore, it doesn't support prefetching.
     MineralListSecondarySerializer allows injecting prefetched data into this serializer.
     '''
-    url = serializers.URLField(source="get_absolute_url")
     ns_index = serializers.CharField(source="ns_index_")
     description = serializers.CharField(source="short_description")
     is_grouping = serializers.BooleanField()
@@ -182,7 +181,7 @@ class MineralListSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
-            "url",
+            "slug",
             "mindat_id",
             "ns_index",
             "ima_symbol",

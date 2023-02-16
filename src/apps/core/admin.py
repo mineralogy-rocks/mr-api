@@ -281,6 +281,7 @@ class MineralAdmin(NestedModelAdmin):
     fields = [
         "id",
         "name",
+        "slug",
         "ima_symbol",
         "seen",
         "note",
@@ -297,6 +298,7 @@ class MineralAdmin(NestedModelAdmin):
 
     readonly_fields = [
         "id",
+        "slug",
         "seen",
         "description_",
         "created_at",
@@ -423,6 +425,7 @@ class MineralAdmin(NestedModelAdmin):
     def add_view(self, request, form_url="", extra_context=None):
         self.readonly_fields = [
             "id",
+            "slug",
             "seen",
             "description_",
             "created_at",
