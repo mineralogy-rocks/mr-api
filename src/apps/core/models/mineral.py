@@ -511,7 +511,7 @@ class HierarchyView(BaseModel):
         verbose_name_plural = "Hierarchy View"
 
     def __str__(self):
-        return self.id.name
+        return self.mineral.name
 
     @classmethod
     def refresh_view(cls):

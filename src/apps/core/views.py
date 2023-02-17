@@ -6,13 +6,12 @@ from django.db.models import Case
 from django.db.models import CharField
 from django.db.models import Count
 from django.db.models import Exists
-from django.db.models import F
 from django.db.models import OuterRef
 from django.db.models import Q
-from django.db.models import Subquery
+from django.db.models import F
 from django.db.models import Value
+from django.db.models import Prefetch
 from django.db.models import When
-from django.db.models import Window
 from django.db.models.functions import Coalesce
 from django.db.models.functions import Concat
 from django.db.models.functions import Right
@@ -21,6 +20,7 @@ from rest_framework import filters
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.mixins import ListModelMixin
 from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.pagination import LimitOffsetPagination
@@ -42,6 +42,8 @@ from .models.core import NsSubclass
 from .models.core import Status
 from .models.mineral import Mineral
 from .models.mineral import MineralStatus
+from .models.mineral import MineralRelation
+from .models.mineral import HierarchyView
 from .pagination import CustomCursorPagination
 from .serializers.core import NsClassSubclassFamilyListSerializer
 from .serializers.core import NsFamilyListSerializer
@@ -49,6 +51,8 @@ from .serializers.core import NsSubclassListSerializer
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRetrieveSerializer
+from .serializers.mineral import MineralRelationsSerializer
+from .serializers.mineral import BaseMineralRelationsSerializer
 from .serializers.mineral import MineralListSecondarySerializer
 from .queries import LIST_VIEW_QUERY
 
@@ -236,6 +240,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
     queryset = Mineral.objects.all()
     serializer_class = MineralListSerializer
+    lookup_field = "slug"
+    lookup_url_kwarg = "slug"
 
     renderer_classes = [
         JSONRenderer,
@@ -300,15 +306,12 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         return queryset
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        _queryset = self._get_secondary_queryset()
-
+        queryset, _queryset = self.get_queryset(), self._get_secondary_queryset()
         queryset = self.filter_queryset(queryset)
-
-        is_grouping_ = MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(status__group=1))
+        _is_grouping = MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(status__group=1))
 
         queryset = queryset.annotate(
-            is_grouping=Exists(is_grouping_),
+            is_grouping=Exists(_is_grouping),
             ns_index_=Case(
                 When(
                     ns_class__isnull=False,
@@ -363,7 +366,6 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         if "q" in self.request.query_params:
 
             query = self.request.query_params.get("q", "")
-            # queryset = queryset.filter(name__unaccent__trigram_word_similar=query)
             queryset = queryset.extra(
                 select={"ordering": """ROW_NUMBER() OVER (ORDER BY ts_rank(mineral_log.search_vector,
                                        (plainto_tsquery('mrdict'::regconfig, %s) || plainto_tsquery('english'::regconfig, %s)), 0) DESC)"""},
@@ -397,6 +399,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             return MineralListSerializer
         elif self.action in ["retrieve"]:
             return MineralRetrieveSerializer
+        elif self.action in ["varieties", "synonyms", "approved_minerals",]:
+            return MineralRelationsSerializer
 
         return super().get_serializer_class()
 
@@ -407,8 +411,108 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    def _get_raw_object(self):
+        """
+        Returns the raw object without filtering queryset initially.
+        """
+        queryset = self.queryset
+
+        # Perform the lookup filtering.
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+
+        assert lookup_url_kwarg in self.kwargs, (
+            'Expected view %s to be called with a URL keyword argument '
+            'named "%s". Fix your URL conf, or set the `.lookup_field` '
+            'attribute on the view correctly.' %
+            (self.__class__.__name__, lookup_url_kwarg)
+        )
+
+        filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
+        obj = get_object_or_404(queryset, **filter_kwargs)
+
+        # May raise a permission denied
+        self.check_object_permissions(self.request, obj)
+
+        return obj
+
+    def _is_grouping(self, instance):
+        _is_grouping = MineralStatus.objects.filter(mineral=instance, status__group=1).exists()
+        return _is_grouping
+
+    def _get_related_objects(self, instance):
+        """
+        Returns related objects for a given instance.
+        """
+        _is_grouping = self._is_grouping(instance)
+        annotate = { "name": F("relation__name"), "slug": F("relation__slug") }
+
+        if _is_grouping:
+            queryset = HierarchyView.objects.all()
+        else:
+            queryset = MineralRelation.objects.all()
+            queryset = queryset.filter(status__direct_status=False)
+
+        queryset = queryset.filter(mineral=instance).distinct()
+        queryset = queryset.annotate(**annotate)
+        queryset = queryset.order_by("relation__name")
+        queryset = queryset.only("relation__name", "relation__slug")
+
+        return queryset
+
+    @action(detail=True, methods=["get"], url_path="varieties")
+    def varieties(self, request, *args, **kwargs):
+        instance = self._get_raw_object()
+
+        queryset = self._get_related_objects(instance)
+        queryset = queryset.filter(relation__statuses__group=3)
+
+        serializer_cls = self.get_serializer_class()
+        queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request)
+
+        return Response(serializer_cls(queryset, many=True).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"], url_path="synonyms")
+    def synonyms(self, request, *args, **kwargs):
+        instance = self._get_raw_object()
+
+        queryset = self._get_related_objects(instance)
+        queryset = queryset.filter(relation__statuses__group=2)
+
+        serializer_cls = self.get_serializer_class()
+        queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request)
+
+        return Response(serializer_cls(queryset, many=True).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"], url_path="approved-minerals")
+    def approved_minerals(self, request, *args, **options):
+        instance = self._get_raw_object()
+
+        _is_grouping = self._is_grouping(instance)
+
+        if _is_grouping:
+            # retrieving all approved minerals for a given grouping
+            queryset = HierarchyView.objects.all()
+            queryset = queryset.filter(mineral=instance, relation__statuses__group=11).distinct()
+            queryset = queryset.annotate(name=F("relation__name"), slug=F("relation__slug"))
+            queryset = queryset.order_by("relation__name")
+            queryset = queryset.only("relation__name", "relation__slug")
+            serializer_cls = self.get_serializer_class()
+        else:
+            # here we are retrieving all isostructural minerals
+            queryset = Mineral.objects.all()
+            queryset = queryset.filter(Q(statuses__group=11) & Q(ns_family=instance.ns_family) & ~Q(id=instance.id)).distinct()
+            queryset = queryset.order_by("name")
+            queryset = queryset.only("name", "slug")
+            serializer_cls = BaseMineralRelationsSerializer
+
+        queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request)
+        return Response(serializer_cls(queryset, many=True).data, status=status.HTTP_200_OK)
+
 
 class SyncView(APIView):
+    """
+    This view is used to sync the database with the mindat.org database.
+    """
 
     http_method_names = ["get",]
     authentication_classes = [
