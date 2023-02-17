@@ -1,19 +1,20 @@
 # -*- coding: UTF-8 -*-
 from django.contrib.humanize.templatetags.humanize import naturalday
 from django.db import models
+from django.db.models import Prefetch
 from rest_framework import serializers
 
 from ..models.core import Status
 from ..models.crystal import CrystalSystem
 from ..models.mineral import HierarchyView
 from ..models.mineral import Mineral
-from ..models.mineral import MineralCrystallography
 from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHierarchy
 from ..models.mineral import MineralHistory
 from ..models.mineral import MineralIonPosition
 from .core import CountryListSerializer
 from .core import FormulaSourceSerializer
+from ..utils import formula_to_html
 
 
 class MineralHistorySerializer(serializers.ModelSerializer):
@@ -283,3 +284,60 @@ class MineralListSecondarySerializer(serializers.ModelSerializer):
 
         queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
         return queryset
+
+
+class BaseMineralRelationsSerializer(serializers.Serializer):
+
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+    slug = serializers.CharField()
+    formula = serializers.SerializerMethodField()
+
+    class Meta:
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "formula",
+        ]
+
+    @staticmethod
+    def setup_eager_loading(**kwargs):
+        queryset, request = kwargs.get("queryset"), kwargs.get("request")
+
+        select_related = [
+        ]
+        prefetch_related = [
+            Prefetch("formulas", MineralFormula.objects.select_related("source").filter(source=1), to_attr="_formulas"),
+        ]
+        queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
+
+        return queryset
+
+    def get_formula(self, instance):
+        return formula_to_html(instance._formulas[0].formula) if instance._formulas else None
+
+
+
+class MineralRelationsSerializer(BaseMineralRelationsSerializer):
+
+    id = serializers.IntegerField()
+
+    class Meta:
+        fields = BaseMineralRelationsSerializer.Meta.fields
+
+    @staticmethod
+    def setup_eager_loading(**kwargs):
+        queryset, request = kwargs.get("queryset"), kwargs.get("request")
+
+        select_related = [
+        ]
+        prefetch_related = [
+            Prefetch("relation__formulas", MineralFormula.objects.select_related("source").filter(source=1), to_attr="_formulas"),
+        ]
+        queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
+
+        return queryset
+
+    def get_formula(self, instance):
+        return formula_to_html(instance.relation._formulas[0].formula) if instance.relation._formulas else None
