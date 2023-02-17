@@ -10,7 +10,7 @@ from django.db.models import OuterRef
 from django.db.models import Q
 from django.db.models import F
 from django.db.models import Value
-from django.db.models import Prefetch
+from django.db.models import FilteredRelation
 from django.db.models import When
 from django.db.models.functions import Coalesce
 from django.db.models.functions import Concat
@@ -439,7 +439,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         _is_grouping = MineralStatus.objects.filter(mineral=instance, status__group=1).exists()
         return _is_grouping
 
-    def _get_related_objects(self, instance):
+    def _get_related_objects(self, instance, group):
         """
         Returns related objects for a given instance.
         """
@@ -448,9 +448,10 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         if _is_grouping:
             queryset = HierarchyView.objects.all()
+            queryset = queryset.filter(relation__statuses__group=group)
         else:
             queryset = MineralRelation.objects.all()
-            queryset = queryset.filter(status__direct_status=False)
+            queryset = queryset.filter(status__direct_status=False, status__status__group=group)
 
         queryset = queryset.filter(mineral=instance).distinct()
         queryset = queryset.annotate(**annotate)
@@ -463,8 +464,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     def varieties(self, request, *args, **kwargs):
         instance = self._get_raw_object()
 
-        queryset = self._get_related_objects(instance)
-        queryset = queryset.filter(relation__statuses__group=3)
+        queryset = self._get_related_objects(instance, 3)
 
         serializer_cls = self.get_serializer_class()
         queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request)
@@ -475,8 +475,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     def synonyms(self, request, *args, **kwargs):
         instance = self._get_raw_object()
 
-        queryset = self._get_related_objects(instance)
-        queryset = queryset.filter(relation__statuses__group=2)
+        queryset = self._get_related_objects(instance, 2)
 
         serializer_cls = self.get_serializer_class()
         queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request)
