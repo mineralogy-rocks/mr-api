@@ -119,7 +119,7 @@ class Command(BaseCommand):
                             mineral.mindat_id = entry["id"]
                             mineral.ima_symbol = entry["ima_symbol"] or None
                             mineral.description = entry["description"] or None
-                            mineral.save(update_fields=["mindat_id", "ima_symbol", "description"])
+                            mineral.save()
 
                             if entry["ima_symbol"]:
                                 status = Status.objects.get(status_id=0)
@@ -137,7 +137,7 @@ class Command(BaseCommand):
                                 mineral.mindat_id = entry["id"]
                                 mineral.ima_symbol = entry["ima_symbol"] or None
                                 mineral.description = entry["description"] or None
-                                mineral.save(update_fields=["mindat_id", "ima_symbol", "description"])
+                                mineral.save()
 
                         if entry["description"]:
                             entry["description"] = shorten_text(entry["description"], limit=500, html=True)

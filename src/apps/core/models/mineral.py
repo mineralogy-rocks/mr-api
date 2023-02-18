@@ -134,7 +134,7 @@ class Mineral(Nameable, Creatable, Updatable):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = unique_slugify(self, getattr(self, "name"))
+            unique_slugify(self, getattr(self, "name"))
         super().save(*args, **kwargs)
 
 
