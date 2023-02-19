@@ -453,7 +453,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             queryset = MineralRelation.objects.all()
             queryset = queryset.filter(status__direct_status=False, status__status__group=group)
 
-        queryset = queryset.filter(mineral=instance).distinct()
+        queryset = queryset.filter(mineral=instance).distinct('relation__name')
         queryset = queryset.annotate(**annotate)
         queryset = queryset.order_by("relation__name")
         queryset = queryset.only("relation__name", "relation__slug")
@@ -491,7 +491,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         if _is_grouping:
             # retrieving all approved minerals for a given grouping
             queryset = HierarchyView.objects.all()
-            queryset = queryset.filter(mineral=instance, relation__statuses__group=11).distinct()
+            queryset = queryset.filter(mineral=instance, relation__statuses__group=11).distinct('relation__name')
             queryset = queryset.annotate(name=F("relation__name"), slug=F("relation__slug"))
             queryset = queryset.order_by("relation__name")
             queryset = queryset.only("relation__name", "relation__slug")
