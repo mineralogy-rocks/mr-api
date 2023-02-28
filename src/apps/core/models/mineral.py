@@ -117,6 +117,12 @@ class Mineral(Nameable, Creatable, Updatable):
     def get_rruff_url(self):
         return "https://rruff.info/{}".format(urllib.parse.quote_plus(self.name))
 
+    def get_cod_url(self):
+        return "https://www.crystallography.net/cod/result?text={}".format(urllib.parse.quote_plus(self.name))
+
+    def get_amcsd_url(self):
+        return "http://rruff.geo.arizona.edu/AMS/result.php?mineral={}".format(urllib.parse.quote_plus(self.name))
+
     @admin.display(description="Nickel-Strunz Index")
     def ns_index(self):
         if self.ns_class:
@@ -499,6 +505,7 @@ class HierarchyView(BaseModel):
 
     mineral = models.ForeignKey(Mineral, models.DO_NOTHING, db_column="mineral_id", related_name="hierarchy")
     relation = models.ForeignKey(Mineral, models.DO_NOTHING, db_column="relation_id", related_name="inverse_hierarchy")
+    is_parent = models.BooleanField()
 
     class Meta:
         managed = False

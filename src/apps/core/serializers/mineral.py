@@ -168,7 +168,6 @@ class MineralListSerializer(serializers.ModelSerializer):
     seen = serializers.IntegerField()
     updated_at = serializers.SerializerMethodField()
 
-    hierarchy = serializers.JSONField(source="_hierarchy")
     crystal_systems = serializers.JSONField()
     statuses = serializers.JSONField(source='_statuses')
     relations = serializers.JSONField(source="_relations")
@@ -190,7 +189,6 @@ class MineralListSerializer(serializers.ModelSerializer):
             "is_grouping",
             "seen",
             "updated_at",
-            "hierarchy",
             "crystal_systems",
             "statuses",
             "relations",
@@ -238,15 +236,23 @@ class MineralListSerializer(serializers.ModelSerializer):
     def get_links(self, instance):
         links = [
             {
-                "name": "rruff.info",
+                "name": "RRUFF",
                 "link": instance.get_rruff_url(),
+            },
+            {
+                "name": "COD",
+                "link": instance.get_cod_url(),
+            },
+            {
+                "name": "AMCSD",
+                "link": instance.get_amcsd_url(),
             }
         ]
         mindat_link = instance.get_mindat_url()
         if mindat_link:
             links.append(
                 {
-                    "name": "mindat.org",
+                    "name": "Mindat",
                     "link": mindat_link,
                 }
             )

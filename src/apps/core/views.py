@@ -399,7 +399,16 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             return MineralListSerializer
         elif self.action in ["retrieve"]:
             return MineralRetrieveSerializer
-        elif self.action in ["varieties", "synonyms", "approved_minerals",]:
+        elif self.action in [
+                "varieties",
+                "synonyms",
+                "approved_minerals",
+                "supergroups",
+                "groups",
+                "subgroups",
+                "roots",
+                "series",
+            ]:
             return MineralRelationsSerializer
 
         return super().get_serializer_class()
@@ -448,7 +457,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         if _is_grouping:
             queryset = HierarchyView.objects.all()
-            queryset = queryset.filter(relation__statuses__group=group)
+            queryset = queryset.filter(relation__statuses__group=group, relation__direct_relations__direct_status=True)
         else:
             queryset = MineralRelation.objects.all()
             queryset = queryset.filter(status__direct_status=False, status__status__group=group)
@@ -459,6 +468,75 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         queryset = queryset.only("relation__name", "relation__slug")
 
         return queryset
+
+    def _get_grouping_objects(self, instance, status):
+        """
+        Returns grouping objects for a given instance.
+        """
+        queryset = HierarchyView.objects.filter(mineral=instance, relation__statuses__status_id=status, relation__direct_relations__direct_status=True)
+        annotate = { "name": F("relation__name"), "slug": F("relation__slug") }
+
+        queryset = queryset.filter(mineral=instance).distinct('relation__name')
+        queryset = queryset.annotate(**annotate)
+        queryset = queryset.order_by("relation__name")
+        queryset = queryset.only("relation__name", "relation__slug")
+
+        return queryset
+
+    @action(detail=True, methods=["get"], url_path="supergroups")
+    def supergroups(self, request, *args, **kwargs):
+        instance = self._get_raw_object()
+
+        queryset = self._get_grouping_objects(instance, 1)
+
+        serializer_cls = self.get_serializer_class()
+        queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request)
+
+        return Response(serializer_cls(queryset, many=True).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"], url_path="groups")
+    def groups(self, request, *args, **kwargs):
+        instance = self._get_raw_object()
+
+        queryset = self._get_grouping_objects(instance, 1.1)
+
+        serializer_cls = self.get_serializer_class()
+        queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request)
+
+        return Response(serializer_cls(queryset, many=True).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"], url_path="subgroups")
+    def subgroups(self, request, *args, **kwargs):
+        instance = self._get_raw_object()
+
+        queryset = self._get_grouping_objects(instance, 1.2)
+
+        serializer_cls = self.get_serializer_class()
+        queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request)
+
+        return Response(serializer_cls(queryset, many=True).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"], url_path="roots")
+    def roots(self, request, *args, **kwargs):
+        instance = self._get_raw_object()
+
+        queryset = self._get_grouping_objects(instance, 1.3)
+
+        serializer_cls = self.get_serializer_class()
+        queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request)
+
+        return Response(serializer_cls(queryset, many=True).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"], url_path="series")
+    def series(self, request, *args, **kwargs):
+        instance = self._get_raw_object()
+
+        queryset = self._get_grouping_objects(instance, 1.4)
+
+        serializer_cls = self.get_serializer_class()
+        queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request)
+
+        return Response(serializer_cls(queryset, many=True).data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"], url_path="varieties")
     def varieties(self, request, *args, **kwargs):

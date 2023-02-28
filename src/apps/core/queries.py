@@ -75,19 +75,36 @@ LIST_VIEW_QUERY = """
         CASE WHEN main_table.is_grouping THEN (
                 SELECT COALESCE(json_agg(_temp), '[]'::json) FROM (
                         SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id,
-                                count(mhv.mineral_id) AS count,
-                                to_jsonb(sgl) AS group
-                        FROM mineral_hierarchy_view mhv
-                        INNER JOIN mineral_status ms ON ms.mineral_id = mhv.relation_id
-                        INNER JOIN status_list sl ON sl.id = ms.status_id
-                        INNER JOIN status_group_list sgl ON sgl.id = sl.status_group_id
-                        WHERE mhv.mineral_id = main_table.id AND sgl.id IN (3, 11)
-                        GROUP BY sgl.id
+                                _inner.count, _inner.is_parent, _inner.group
+                        FROM (
+                            SELECT COUNT(DISTINCT mhv.relation_id) AS count,
+                                    mhv.is_parent,
+                                    to_jsonb(sgl) AS group
+                            FROM mineral_hierarchy_view mhv
+                            INNER JOIN mineral_status ms ON ms.mineral_id = mhv.relation_id
+                            INNER JOIN status_list sl ON sl.id = ms.status_id
+                            INNER JOIN status_group_list sgl ON sgl.id = sl.status_group_id
+                            WHERE ms.direct_status AND mhv.mineral_id = main_table.id AND sgl.id IN (3, 11)
+                            GROUP BY sgl.id, mhv.is_parent
+                            UNION
+                            SELECT COUNT(ml.id),
+                            mhv.is_parent,
+                            JSONB_BUILD_OBJECT(
+                                'id', sl.id + 100,
+                                'name', CONCAT(sl.description_short, 's')
+                            ) AS group
+                            FROM mineral_hierarchy_view mhv
+                            INNER JOIN mineral_log ml ON mhv.relation_id = ml.id
+                            INNER JOIN mineral_status ms ON ms.mineral_id = ml.id
+                            INNER JOIN status_list sl ON ms.status_id = sl.id
+                            WHERE ms.direct_status AND mhv.mineral_id = main_table.id AND sl.status_group_id  = 1
+                            GROUP BY sl.id, mhv.is_parent
+                        ) _inner ORDER BY _inner.count desc
                 ) _temp
             ) ELSE (
                 SELECT COALESCE(json_agg(_temp), '[]'::json)
                 FROM (
-                    SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id, inner_.count, inner_.group FROM (
+                    SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id, FALSE AS is_parent, inner_.count, inner_.group FROM (
                         SELECT COUNT(mr.id) AS count, to_jsonb(sgl) AS group
                         FROM mineral_status ms
                         LEFT JOIN mineral_relation mr ON ms.id = mr.mineral_status_id
@@ -101,27 +118,27 @@ LIST_VIEW_QUERY = """
                         SELECT COUNT(ml_.id) AS count, (
                             SELECT to_jsonb(_temp) AS group FROM
                                 (
-                                    SELECT sgl.id, 'Isostructural minerals' AS name FROM status_group_list sgl WHERE sgl.id = 11
+                                    SELECT sgl.id, 'Nickel-Strunz related minerals' AS name FROM status_group_list sgl WHERE sgl.id = 11
                                 ) _temp
                             )
                         FROM mineral_log ml_
                         INNER JOIN mineral_status ms ON ms.mineral_id = ml_.id
                         WHERE ms.status_id = 1 AND NOT ms.needs_revision AND ml_.ns_family = main_table.ns_family AND ml_.id <> main_table.id
                         HAVING count(ml_.id) > 0
+                        UNION
+                        SELECT count(ml.id), JSONB_BUILD_OBJECT(
+                            'id', sl.id + 100,
+                            'name', CONCAT(sl.description_short, 's')
+                            ) AS group
+                        FROM mineral_hierarchy_view mhv
+                        INNER JOIN mineral_log ml ON mhv.relation_id = ml.id
+                        INNER JOIN mineral_status ms ON ms.mineral_id = ml.id
+                        INNER JOIN status_list sl ON ms.status_id = sl.id
+                        WHERE mhv.mineral_id = main_table.id AND sl.status_group_id  = 1
+                        GROUP BY sl.id
                     ) inner_
                 ) _temp
             )
-        END AS _relations,
-        (
-            SELECT COALESCE(json_agg(_temp), '[]'::json) FROM (
-                SELECT ml.id, ml.name, CONCAT('/mineral/', ml.id::text) AS url
-                FROM mineral_hierarchy_view mhv
-                INNER JOIN mineral_log ml ON mhv.relation_id = ml.id
-                WHERE mhv.mineral_id = main_table.id
-                GROUP BY ml.id
-                ORDER BY name ASC
-                LIMIT 5
-            ) _temp
-        ) AS _hierarchy
+        END AS _relations
     FROM ( %s ) AS main_table
 """
