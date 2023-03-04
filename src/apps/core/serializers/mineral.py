@@ -237,14 +237,17 @@ class MineralListSerializer(serializers.ModelSerializer):
         links = [
             {
                 "name": "RRUFF",
+                "display_name": "rruff.info",
                 "link": instance.get_rruff_url(),
             },
             {
                 "name": "COD",
+                "display_name": "Open Crystallography Database",
                 "link": instance.get_cod_url(),
             },
             {
                 "name": "AMCSD",
+                "display_name": "American Mineralogist Crystal Structure Database",
                 "link": instance.get_amcsd_url(),
             }
         ]
@@ -253,6 +256,7 @@ class MineralListSerializer(serializers.ModelSerializer):
             links.append(
                 {
                     "name": "Mindat",
+                    "display_name": "mindat.org",
                     "link": mindat_link,
                 }
             )

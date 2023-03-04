@@ -32,11 +32,12 @@ LIST_VIEW_QUERY = """
         ) AS _statuses,
         CASE WHEN main_table.is_grouping THEN (
                 SELECT COALESCE(json_agg(_temp), '[]'::json) FROM (
-                    SELECT csl.id, csl.name, count(csl.id) AS count
+                    SELECT csl.id, csl.name, COUNT(csl.id) AS count
                     FROM mineral_crystallography mc
                     INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
                     WHERE mc.mineral_id IN (
                         SELECT mhv.relation_id FROM mineral_hierarchy_view mhv
+                        INNER JOIN mineral_status ms ON ms.mineral_id = mhv.relation_id AND ms.direct_status AND ms.status_id = 1
                         WHERE mhv.mineral_id = main_table.id
                         GROUP BY mhv.relation_id
                     )
@@ -54,11 +55,17 @@ LIST_VIEW_QUERY = """
         END AS crystal_systems,
         CASE WHEN main_table.is_grouping THEN (
                 SELECT COALESCE(json_agg(_temp), '[]'::json) FROM (
-                    SELECT cl.id, cl.name, count(cl.id) AS count
+                    SELECT cl.id, cl.name, COUNT(cl.id) AS count
                     FROM mineral_country mc
                     INNER JOIN country_list cl ON mc.country_id = cl.id AND cl.id <> 250
                     LEFT JOIN mineral_hierarchy_view mhv ON mc.mineral_id = mhv.relation_id
                     WHERE mhv.mineral_id = main_table.id
+                    AND EXISTS (
+                        SELECT 1
+                        FROM mineral_status ms
+                        INNER JOIN status_list sl ON ms.status_id = sl.id
+                        WHERE ms.mineral_id = mhv.relation_id AND ms.direct_status AND sl.status_group_id = 11
+                    )
                     GROUP BY cl.id
                     ORDER BY count DESC, name DESC
                     LIMIT 5
