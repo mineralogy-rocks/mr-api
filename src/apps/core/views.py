@@ -47,7 +47,7 @@ from .models.mineral import Mineral
 from .models.mineral import MineralStatus
 from .models.mineral import MineralRelation
 from .models.mineral import HierarchyView
-from .models.mineral import MineralRecursiveRelationView, MineralFormula
+from .models.mineral import MineralFormula
 from .pagination import CustomCursorPagination
 from .serializers.core import NsClassSubclassFamilyListSerializer
 from .serializers.core import NsFamilyListSerializer
