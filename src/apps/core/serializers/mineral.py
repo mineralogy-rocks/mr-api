@@ -1,17 +1,18 @@
 # -*- coding: UTF-8 -*-
 from django.contrib.humanize.templatetags.humanize import naturalday
 from django.db import models
+from django.db.models import Q, F, OuterRef, Subquery
 from django.db.models import Prefetch
 from rest_framework import serializers
 
 from ..models.core import Status
 from ..models.crystal import CrystalSystem
-from ..models.mineral import HierarchyView
 from ..models.mineral import Mineral
 from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHierarchy
 from ..models.mineral import MineralHistory
 from ..models.mineral import MineralIonPosition
+from ..models.mineral import MineralRecursiveRelationView
 from .core import CountryListSerializer
 from .core import FormulaSourceSerializer
 from ..utils import formula_to_html
@@ -82,6 +83,16 @@ class MineralFormulaSerializer(serializers.ModelSerializer):
 
     def get_created_at(self, instance):
         return naturalday(instance.created_at)
+
+
+class MineralFormulaRelatedSerializer(MineralFormulaSerializer):
+
+    mineral = serializers.PrimaryKeyRelatedField(read_only=True)
+    from_ = serializers.JSONField(source="from")
+
+    class Meta:
+        model = MineralFormula
+        fields = MineralFormulaSerializer.Meta.fields + ["mineral", "from_",]
 
 
 class MineralRetrieveSerializer(serializers.ModelSerializer):
