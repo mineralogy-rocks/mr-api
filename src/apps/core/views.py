@@ -356,7 +356,9 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                 _fields = [x[0] for x in cursor.description]
                 _related_objects = pd.DataFrame([dict(zip(_fields, x)) for x in _related_objects])
 
-            _formula, _crystal_system = self._get_related_formula(_related_objects), self._get_related_crystal_system(_related_objects)
+            _formula, _crystal_system = [], []
+            if len(_related_objects):
+                _formula, _crystal_system = self._get_related_formula(_related_objects), self._get_related_crystal_system(_related_objects)
 
             _serializer_class = self.get_serializer_class(is_secondary=True)
             _serializer = _serializer_class(_queryset, many=True)
@@ -397,11 +399,11 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         _crystal_systems = MineralCrystallography.objects.select_related('crystal_system') \
             .filter(mineral__in=related_objects['relation']) \
             .annotate(**{
-            'from': JSONObject(
-                slug=F('mineral__slug'),
-                name=F('mineral__name')
-            ),
-        })
+                'from': JSONObject(
+                    slug=F('mineral__slug'),
+                    name=F('mineral__name')
+                ),
+            })
 
         _crystal_systems_data = MineralCrystallographyRelatedSerializer(_crystal_systems, many=True).data
 
