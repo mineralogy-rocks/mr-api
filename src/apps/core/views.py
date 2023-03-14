@@ -12,7 +12,7 @@ from django.db.models import Exists
 from django.db.models import OuterRef
 from django.db.models import Q
 from django.db.models import F
-from django.db.models import Value, Subquery, BooleanField
+from django.db.models import Value
 from django.db.models import When
 from django.db.models.functions import Coalesce
 from django.db.models.functions import Concat
@@ -47,6 +47,7 @@ from .models.mineral import Mineral
 from .models.mineral import MineralStatus
 from .models.mineral import MineralRelation
 from .models.mineral import HierarchyView
+from .models.mineral import MineralCrystallography
 from .models.mineral import MineralFormula
 from .pagination import CustomCursorPagination
 from .serializers.core import NsClassSubclassFamilyListSerializer
@@ -57,6 +58,7 @@ from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRetrieveSerializer
 from .serializers.mineral import MineralRelationsSerializer
 from .serializers.mineral import BaseMineralRelationsSerializer
+from .serializers.mineral import MineralCrystallographyRelatedSerializer
 from .serializers.mineral import MineralFormulaRelatedSerializer
 from .serializers.mineral import MineralListSecondarySerializer
 from .queries import LIST_VIEW_QUERY, GET_RELATIONS_QUERY
@@ -346,9 +348,17 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         page = self.paginate_queryset(queryset, query=LIST_VIEW_QUERY)
         if page is not None:
             _queryset = _queryset.filter(id__in=[x.id for x in page])
-            _relations = self._get_related_data([x.id for x in page if not x.is_grouping])
-            _serializer_class = self.get_serializer_class(is_secondary=True)
 
+            base_ids = [str(x.id) for x in page if not x.is_grouping]
+            with connection.cursor() as cursor:
+                cursor.execute(GET_RELATIONS_QUERY, [tuple(base_ids)])
+                _related_objects = cursor.fetchall()
+                _fields = [x[0] for x in cursor.description]
+                _related_objects = pd.DataFrame([dict(zip(_fields, x)) for x in _related_objects])
+
+            _formula, _crystal_system = self._get_related_formula(_related_objects), self._get_related_crystal_system(_related_objects)
+
+            _serializer_class = self.get_serializer_class(is_secondary=True)
             _serializer = _serializer_class(_queryset, many=True)
             serializer = self.get_serializer(page, many=True)
 
@@ -360,14 +370,20 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                 _merge = pd.merge(pd.DataFrame(data), pd.DataFrame(_data), on='id', how='left')
 
                 _merge['_statuses'] = _merge.apply(lambda x: [y['status_id'] for y in x['statuses']], axis=1)
-                _merge['_is_primary_status'] = _merge.apply(lambda x: any([y in [0.0, 4.04] for y in x['_statuses']]), axis=1)
+                _merge['has_formula'] = _merge.apply(lambda x: any([y in [0.0, 4] for y in x['_statuses']]) and x['formulas'], axis=1)
+                _merge['has_crystal_system'] = _merge.apply(lambda x: any([y in [0.0, 4.04] for y in x['_statuses']]), axis=1)
 
-                _drop_columns = ['_statuses', '_is_primary_status',]
-                if len(_relations):
-                    _merge = _merge.merge(_relations, left_on='id', right_on='base_mineral', how='left', suffixes=('', '__relation'))
-                    _merge['formulas'] = _merge.apply(lambda x: x['formulas'] if x['_is_primary_status'] else x['formulas__relation'], axis=1)
+                _drop_columns = ['_statuses', 'has_formula', 'has_crystal_system',]
+                if len(_formula):
+                    _merge = _merge.merge(_formula, left_on='id', right_on='base_mineral', how='left', suffixes=('', '__relation'))
+                    _merge['formulas'] = _merge.apply(lambda x: x['formulas'] if x['has_formula'] else x['formulas__relation'], axis=1)
                     _merge['formulas'] = _merge['formulas'].apply(lambda x: [] if x is np.nan else x)
                     _drop_columns += ['formulas__relation', 'base_mineral']
+                if len(_crystal_system):
+                    _merge = _merge.merge(_crystal_system, left_on='id', right_on='base_mineral', how='left', suffixes=('', '__relation'))
+                    _merge['crystal_systems'] = _merge.apply(lambda x: x['crystal_systems'] if x['has_crystal_system'] else x['crystal_systems__relation'], axis=1)
+                    _merge['crystal_systems'] = _merge['crystal_systems'].apply(lambda x: [] if x is np.nan else x)
+                    _drop_columns += ['crystal_systems__relation', 'base_mineral__relation']
 
                 _merge = _merge.drop(columns=_drop_columns)
                 _merge = _merge.replace({ np.nan: None })
@@ -377,32 +393,58 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    def _get_related_data(self, base_ids):
-        base_ids = [str(x) for x in base_ids]
-        with connection.cursor() as cursor:
-            cursor.execute(GET_RELATIONS_QUERY, [tuple(base_ids)])
-            _related_objects = cursor.fetchall()
-            _fields = [x[0] for x in cursor.description]
-            _related_objects = [dict(zip(_fields, x)) for x in _related_objects]
-
-        _formulas = MineralFormula.objects.select_related('source') \
-            .filter(mineral__in=[x['relation'] for x in _related_objects]) \
+    def _get_related_crystal_system(self, related_objects):
+        _crystal_systems = MineralCrystallography.objects.select_related('crystal_system') \
+            .filter(mineral__in=related_objects['relation']) \
             .annotate(**{
-                            'from': JSONObject(
-                                slug=F('mineral__slug'),
-                                name=F('mineral__name')
-                            ),
-                        })
-        _formulas_data = MineralFormulaRelatedSerializer(_formulas, many=True).data
-        _related_objects_data = pd.DataFrame(_related_objects)
+            'from': JSONObject(
+                slug=F('mineral__slug'),
+                name=F('mineral__name')
+            ),
+        })
 
-        if not len(_related_objects_data) or not len(_formulas_data):
+        _crystal_systems_data = MineralCrystallographyRelatedSerializer(_crystal_systems, many=True).data
+
+        if not len(related_objects) or not len(_crystal_systems_data):
             return pd.DataFrame()
-        _relations = pd.merge(_related_objects_data, pd.DataFrame(_formulas_data), left_on='relation',
+
+        _relations = pd.merge(related_objects, pd.DataFrame(_crystal_systems_data), left_on='relation',
                               right_on='mineral', how='inner')
         _relations['from_'] = _relations.apply(lambda x: {
-            'slug': x['from_']['slug'],
-            'name': x['from_']['name'],
+            **x['from_'],
+            'statuses': x['statuses'],
+        }, axis=1)
+
+        _relations['crystal_systems'] = _relations.apply(lambda x: [{
+            **x['crystal_system'],
+            'from': x['from_'],
+        }], axis=1)
+        _relations = _relations.drop(columns=['from_'])
+        _relations = _relations.sort_values(by=['depth'], ascending=True).drop_duplicates(
+            subset=['base_mineral'], keep='first')
+        _relations.drop(columns=['mineral', 'relation', 'statuses', 'depth', 'crystal_system',], inplace=True)
+        _relations['base_mineral'] = _relations['base_mineral'].astype('str')
+
+        return _relations
+
+    def _get_related_formula(self, related_objects):
+        _formulas = MineralFormula.objects.select_related('source') \
+            .filter(mineral__in=related_objects['relation']) \
+            .annotate(**{
+                'from': JSONObject(
+                    slug=F('mineral__slug'),
+                    name=F('mineral__name')
+                ),
+            })
+        _formulas_data = MineralFormulaRelatedSerializer(_formulas, many=True).data
+
+        if not len(related_objects) or not len(_formulas_data):
+            return pd.DataFrame()
+
+        _relations = pd.merge(related_objects, pd.DataFrame(_formulas_data), left_on='relation',
+                              right_on='mineral', how='inner')
+        _relations['from_'] = _relations.apply(lambda x: {
+            **x['from_'],
             'statuses': x['statuses'],
         }, axis=1)
 
@@ -420,8 +462,9 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             'formulas': lambda x: list(x),
             'statuses': lambda x: list(x)[0] if len(list(x)) else None,
         }).reset_index()
-        _relations = _relations.sort_values(by=['relation', 'depth'], ascending=True).drop_duplicates(subset=['base_mineral'], keep='first')
-        _relations.drop(columns=['relation', 'statuses', 'depth',], inplace=True)
+        _relations = _relations.sort_values(by=['depth'], ascending=True).drop_duplicates(
+            subset=['base_mineral'], keep='first')
+        _relations.drop(columns=['relation', 'statuses', 'depth', ], inplace=True)
         _relations['base_mineral'] = _relations['base_mineral'].astype('str')
 
         return _relations

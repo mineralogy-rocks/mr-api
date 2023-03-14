@@ -7,10 +7,12 @@ from rest_framework import serializers
 from ..models.core import Status
 from ..models.crystal import CrystalSystem
 from ..models.mineral import Mineral
+from ..models.mineral import MineralCrystallography
 from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHierarchy
 from ..models.mineral import MineralHistory
 from ..models.mineral import MineralIonPosition
+from .crystal import CrystalSystemSerializer
 from .core import CountryListSerializer
 from .core import FormulaSourceSerializer
 from ..utils import formula_to_html
@@ -91,6 +93,21 @@ class MineralFormulaRelatedSerializer(MineralFormulaSerializer):
     class Meta:
         model = MineralFormula
         fields = MineralFormulaSerializer.Meta.fields + ["mineral", "from_",]
+
+
+class MineralCrystallographyRelatedSerializer(serializers.ModelSerializer):
+
+    mineral = serializers.PrimaryKeyRelatedField(read_only=True)
+    crystal_system = CrystalSystemSerializer()
+    from_ = serializers.JSONField(source="from")
+
+    class Meta:
+        model = MineralCrystallography
+        fields = [
+            "mineral",
+            "crystal_system",
+            "from_",
+        ]
 
 
 class MineralRetrieveSerializer(serializers.ModelSerializer):
