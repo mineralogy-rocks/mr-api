@@ -23,11 +23,17 @@ LIST_VIEW_QUERY = """
                     'status_id', sl.status_id,
                     'group', to_jsonb(sgl),
                     'description_short', sl.description_short,
-                    'description_long', sl.description_long
+                    'description_long', sl.description_long,
+                    'mineral', JSONB_BUILD_OBJECT(
+                        'slug', ml.slug,
+                        'name', ml.name
+                    )
                 ) ORDER BY sl.status_id), '[]'::json ) AS statuses_
             FROM mineral_status ms
             INNER JOIN status_list sl ON ms.status_id = sl.id
             INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
+            LEFT JOIN mineral_relation mr on ms.id = mr.mineral_status_id
+            LEFT JOIN mineral_log ml ON mr.relation_id = ml.id
             WHERE ms.mineral_id = main_table.id and ms.direct_status
         ) AS _statuses,
         CASE WHEN main_table.is_grouping THEN (
@@ -45,12 +51,37 @@ LIST_VIEW_QUERY = """
                     ORDER BY count DESC, name DESC
                 ) _temp
             ) ELSE (
-                SELECT COALESCE(json_agg(_temp), '[]'::json) FROM (
-                    SELECT csl.id, csl.name
-                    FROM mineral_crystallography mc
-                    INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
-                    WHERE mc.mineral_id = main_table.id
-                ) _temp
+                CASE WHEN NOT EXISTS(
+                        SELECT 1 FROM mineral_status ms
+                        INNER JOIN status_list sl ON ms.status_id = sl.id
+                        WHERE ms.mineral_id = main_table.id AND ms.direct_status AND sl.status_id IN (0.0, 4.04)
+                ) THEN (
+                    SELECT COALESCE(json_agg(
+                                JSON_BUILD_OBJECT(
+                                'id', _temp.crystal_system_id,
+                                'name', _temp.crystal_system_name,
+                                'from', JSON_BUILD_OBJECT( 'slug', _temp.slug, 'name', _temp.name, 'statuses', _temp.status_id )
+                            )
+                        ), '[]'::json)
+                    FROM (
+                        SELECT csl.id AS crystal_system_id, csl.name AS crystal_system_name, ml.name, ml.slug, mrrv.status_id
+                        FROM mineral_recursive_relation_view mrrv
+                        INNER JOIN mineral_crystallography mc ON mc.mineral_id = mrrv.relation_id
+                        INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
+                        INNER JOIN mineral_log ml ON ml.id = mc.mineral_id
+                        WHERE mrrv.base_id = main_table.id
+                            AND ARRAY[0.0, 4.0, 4.01, 4.02, 4.03, 4.05] @> mrrv.status_id
+                        ORDER BY mrrv.status_id DESC
+                        LIMIT 1
+                    ) _temp
+                ) ELSE (
+                    SELECT COALESCE(json_agg(_temp), '[]'::json) FROM (
+                        SELECT csl.id, csl.name
+                        FROM mineral_crystallography mc
+                        INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
+                        WHERE mc.mineral_id = main_table.id
+                    ) _temp
+                ) END
             )
         END AS crystal_systems,
         CASE WHEN main_table.is_grouping THEN (
@@ -112,7 +143,7 @@ LIST_VIEW_QUERY = """
                 SELECT COALESCE(json_agg(_temp), '[]'::json)
                 FROM (
                     SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id, FALSE AS is_parent, inner_.count, inner_.group FROM (
-                        SELECT COUNT(mr.id) AS count, to_jsonb(sgl) AS group
+                        SELECT COUNT(DISTINCT mr.relation_id) AS count, to_jsonb(sgl) AS group
                         FROM mineral_status ms
                         LEFT JOIN mineral_relation mr ON ms.id = mr.mineral_status_id
                         INNER JOIN status_list sl ON ms.status_id = sl.id
@@ -148,4 +179,40 @@ LIST_VIEW_QUERY = """
             )
         END AS _relations
     FROM ( %s ) AS main_table
+"""
+
+
+GET_RELATIONS_QUERY = """
+              SELECT
+                    temp.id AS base_mineral,
+                    temp.relation_id AS relation,
+                    ARRAY(
+                        SELECT DISTINCT sl.status_id
+                        FROM mineral_status ms
+                        INNER JOIN status_list sl ON ms.status_id = sl.id
+                        WHERE ms.mineral_id = temp.relation_id AND ms.direct_status
+                    ) AS statuses,
+                    temp.depth
+                FROM (
+                    WITH RECURSIVE cte(id, mineral_id, relation_id, DEPTH) AS (
+                        SELECT
+                            mr.mineral_id,
+                            mr.mineral_id,
+                            mr.relation_id,
+                            0
+                        FROM mineral_relation mr
+                        INNER JOIN mineral_status ms ON mr.mineral_status_id = ms.id AND ms.direct_status
+                        WHERE ms.status_id <> 1 AND mr.mineral_id IN %s
+                        UNION
+                        SELECT
+                            cte.id,
+                            mr.mineral_id,
+                            mr.relation_id,
+                            DEPTH + 1
+                        FROM mineral_relation mr
+                        INNER JOIN cte ON mr.mineral_id = cte.relation_id
+                        INNER JOIN mineral_status ms ON mr.mineral_status_id = ms.id AND ms.direct_status
+                    )
+                    SELECT cte.* FROM cte
+                ) temp;
 """
