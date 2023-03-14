@@ -51,37 +51,12 @@ LIST_VIEW_QUERY = """
                     ORDER BY count DESC, name DESC
                 ) _temp
             ) ELSE (
-                CASE WHEN NOT EXISTS(
-                        SELECT 1 FROM mineral_status ms
-                        INNER JOIN status_list sl ON ms.status_id = sl.id
-                        WHERE ms.mineral_id = main_table.id AND ms.direct_status AND sl.status_id IN (0.0, 4.04)
-                ) THEN (
-                    SELECT COALESCE(json_agg(
-                                JSON_BUILD_OBJECT(
-                                'id', _temp.crystal_system_id,
-                                'name', _temp.crystal_system_name,
-                                'from', JSON_BUILD_OBJECT( 'slug', _temp.slug, 'name', _temp.name, 'statuses', _temp.status_id )
-                            )
-                        ), '[]'::json)
-                    FROM (
-                        SELECT csl.id AS crystal_system_id, csl.name AS crystal_system_name, ml.name, ml.slug, mrrv.status_id
-                        FROM mineral_recursive_relation_view mrrv
-                        INNER JOIN mineral_crystallography mc ON mc.mineral_id = mrrv.relation_id
-                        INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
-                        INNER JOIN mineral_log ml ON ml.id = mc.mineral_id
-                        WHERE mrrv.base_id = main_table.id
-                            AND ARRAY[0.0, 4.0, 4.01, 4.02, 4.03, 4.05] @> mrrv.status_id
-                        ORDER BY mrrv.status_id DESC
-                        LIMIT 1
-                    ) _temp
-                ) ELSE (
-                    SELECT COALESCE(json_agg(_temp), '[]'::json) FROM (
-                        SELECT csl.id, csl.name
-                        FROM mineral_crystallography mc
-                        INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
-                        WHERE mc.mineral_id = main_table.id
-                    ) _temp
-                ) END
+                SELECT COALESCE(json_agg(_temp), '[]'::json) FROM (
+                    SELECT csl.id, csl.name
+                    FROM mineral_crystallography mc
+                    INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
+                    WHERE mc.mineral_id = main_table.id
+                ) _temp
             )
         END AS crystal_systems,
         CASE WHEN main_table.is_grouping THEN (
