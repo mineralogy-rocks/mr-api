@@ -350,13 +350,15 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             _queryset = _queryset.filter(id__in=[x.id for x in page])
 
             base_ids = [str(x.id) for x in page if not x.is_grouping]
-            with connection.cursor() as cursor:
-                cursor.execute(GET_RELATIONS_QUERY, [tuple(base_ids)])
-                _related_objects = cursor.fetchall()
-                _fields = [x[0] for x in cursor.description]
-                _related_objects = pd.DataFrame([dict(zip(_fields, x)) for x in _related_objects])
+            _related_objects, _formula, _crystal_system = [], [], []
 
-            _formula, _crystal_system = [], []
+            if len(base_ids):
+                with connection.cursor() as cursor:
+                    cursor.execute(GET_RELATIONS_QUERY, [tuple(base_ids)])
+                    _related_objects = cursor.fetchall()
+                    _fields = [x[0] for x in cursor.description]
+                    _related_objects = pd.DataFrame([dict(zip(_fields, x)) for x in _related_objects])
+
             if len(_related_objects):
                 _formula, _crystal_system = self._get_related_formula(_related_objects), self._get_related_crystal_system(_related_objects)
 
@@ -407,8 +409,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         _crystal_systems_data = MineralCrystallographyRelatedSerializer(_crystal_systems, many=True).data
 
-        if not len(related_objects) or not len(_crystal_systems_data):
-            return pd.DataFrame()
+        if not len(_crystal_systems_data):
+            return []
 
         _relations = pd.merge(related_objects, pd.DataFrame(_crystal_systems_data), left_on='relation',
                               right_on='mineral', how='inner')
@@ -440,8 +442,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             })
         _formulas_data = MineralFormulaRelatedSerializer(_formulas, many=True).data
 
-        if not len(related_objects) or not len(_formulas_data):
-            return pd.DataFrame()
+        if not len(_formulas_data):
+            return []
 
         _relations = pd.merge(related_objects, pd.DataFrame(_formulas_data), left_on='relation',
                               right_on='mineral', how='inner')
