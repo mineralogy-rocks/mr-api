@@ -52,13 +52,13 @@ COPY --from=python-build-stage /app/wheels /wheels
 COPY --from=python-build-stage /app/src/requirements /requirements
 RUN pip install --no-cache /wheels/*
 
-COPY --chown=backend:backend ./compose/production/backend/entrypoint.sh /entrypoint.sh
-RUN sed -i 's/\r$//g' /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY --chown=backend:backend ./compose/production/backend/entrypoint /entrypoint
+RUN sed -i 's/\r$//g' /entrypoint
+RUN chmod +x /entrypoint
 
-COPY --chown=backend:backend ./compose/production/backend/start.sh /start.sh
-RUN sed -i 's/\r$//g' /start.sh
-RUN chmod +x /start.sh
+COPY --chown=backend:backend ./compose/production/backend/start /start
+RUN sed -i 's/\r$//g' /start
+RUN chmod +x /start
 
 COPY . $APP_HOME
 
@@ -67,4 +67,4 @@ RUN chown backend:backend ${APP_HOME}
 
 USER backend
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint"]

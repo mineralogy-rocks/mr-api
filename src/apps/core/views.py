@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import subprocess
-import pandas as pd
+# import polars as pl
+# import pandas as pd
 import numpy as np
 
 from dal import autocomplete
@@ -357,10 +358,10 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                     cursor.execute(GET_RELATIONS_QUERY, [tuple(base_ids)])
                     _related_objects = cursor.fetchall()
                     _fields = [x[0] for x in cursor.description]
-                    _related_objects = pd.DataFrame([dict(zip(_fields, x)) for x in _related_objects])
+                    # _related_objects = pl.DataFrame([dict(zip(_fields, x)) for x in _related_objects])
 
-            if len(_related_objects):
-                _formula, _crystal_system = self._get_related_formula(_related_objects), self._get_related_crystal_system(_related_objects)
+            # if len(_related_objects):
+            #     _formula, _crystal_system = self._get_related_formula(_related_objects), self._get_related_crystal_system(_related_objects)
 
             _serializer_class = self.get_serializer_class(is_secondary=True)
             _serializer = _serializer_class(_queryset, many=True)
@@ -368,30 +369,31 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
             _data = _serializer.data
             data = serializer.data
-            output = []
+            # output = []
 
-            if len(_data) and len(data):
-                _merge = pd.merge(pd.DataFrame(data), pd.DataFrame(_data), on='id', how='left')
-
-                _merge['_statuses'] = _merge.apply(lambda x: [y['status_id'] for y in x['statuses']], axis=1)
-                _merge['has_formula'] = _merge.apply(lambda x: any([y in [0.0, 4, 4.05] for y in x['_statuses']]) and x['formulas'], axis=1)
-                _merge['has_crystal_system'] = _merge.apply(lambda x: any([y in [0.0, 4.04, 4.05] for y in x['_statuses']] and x['crystal_systems']), axis=1)
-
-                _drop_columns = ['_statuses', 'has_formula', 'has_crystal_system',]
-                if len(_formula):
-                    _merge = _merge.merge(_formula, left_on='id', right_on='base_mineral', how='left', suffixes=('', '__relation'))
-                    _merge['formulas'] = _merge.apply(lambda x: x['formulas'] if x['has_formula'] else x['formulas__relation'], axis=1)
-                    _merge['formulas'] = _merge['formulas'].apply(lambda x: [] if x is np.nan else x)
-                    _drop_columns += ['formulas__relation', 'base_mineral']
-                if len(_crystal_system):
-                    _merge = _merge.merge(_crystal_system, left_on='id', right_on='base_mineral', how='left', suffixes=('', '__relation'))
-                    _merge['crystal_systems'] = _merge.apply(lambda x: x['crystal_systems'] if x['has_crystal_system'] else x['crystal_systems__relation'], axis=1)
-                    _merge['crystal_systems'] = _merge['crystal_systems'].apply(lambda x: [] if x is np.nan else x)
-                    _drop_columns += ['crystal_systems__relation', 'base_mineral__relation']
-
-                _merge = _merge.drop(columns=_drop_columns)
-                _merge = _merge.replace({ np.nan: None })
-                output = _merge.to_dict('records')
+            # if len(_data) and len(data):
+            #     _merge = pd.merge(pd.DataFrame(data), pd.DataFrame(_data), on='id', how='left')
+            #
+            #     _merge['_statuses'] = _merge.apply(lambda x: [y['status_id'] for y in x['statuses']], axis=1)
+            #     _merge['has_formula'] = _merge.apply(lambda x: any([y in [0.0, 4, 4.05] for y in x['_statuses']]) and x['formulas'], axis=1)
+            #     _merge['has_crystal_system'] = _merge.apply(lambda x: any([y in [0.0, 4.04, 4.05] for y in x['_statuses']] and x['crystal_systems']), axis=1)
+            #
+            #     _drop_columns = ['_statuses', 'has_formula', 'has_crystal_system',]
+            #     if len(_formula):
+            #         _merge = _merge.merge(_formula, left_on='id', right_on='base_mineral', how='left', suffixes=('', '__relation'))
+            #         _merge['formulas'] = _merge.apply(lambda x: x['formulas'] if x['has_formula'] else x['formulas__relation'], axis=1)
+            #         _merge['formulas'] = _merge['formulas'].apply(lambda x: [] if x is np.nan else x)
+            #         _drop_columns += ['formulas__relation', 'base_mineral']
+            #     if len(_crystal_system):
+            #         _merge = _merge.merge(_crystal_system, left_on='id', right_on='base_mineral', how='left', suffixes=('', '__relation'))
+            #         _merge['crystal_systems'] = _merge.apply(lambda x: x['crystal_systems'] if x['has_crystal_system'] else x['crystal_systems__relation'], axis=1)
+            #         _merge['crystal_systems'] = _merge['crystal_systems'].apply(lambda x: [] if x is np.nan else x)
+            #         _drop_columns += ['crystal_systems__relation', 'base_mineral__relation']
+            #
+            #     _merge = _merge.drop(columns=_drop_columns)
+            #     _merge = _merge.replace({ np.nan: None })
+            #     output = _merge.to_dict('records')
+            output = _serializer.data
 
             return self.get_paginated_response(output)
         serializer = self.get_serializer(queryset, many=True)
@@ -411,6 +413,10 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         if not len(_crystal_systems_data):
             return []
+
+        # use polars
+        _crystal_systems_df = pl.DataFrame(_crystal_systems_data)
+        return []
 
         _relations = pd.merge(related_objects, pd.DataFrame(_crystal_systems_data), left_on='relation',
                               right_on='mineral', how='inner')
@@ -444,7 +450,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         if not len(_formulas_data):
             return []
-
+        return []
         _relations = pd.merge(related_objects, pd.DataFrame(_formulas_data), left_on='relation',
                               right_on='mineral', how='inner')
         _relations['from_'] = _relations.apply(lambda x: {

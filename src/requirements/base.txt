@@ -21,7 +21,7 @@ isort==5.10.1
 jmespath==1.0.1
 mccabe==0.7.0
 openpyxl==3.0.10
-pandas==1.5.3
+polars==0.16.14
 psycopg2-binary==2.9.5
 pylint==2.15.5
 pylint-django==2.5.3
