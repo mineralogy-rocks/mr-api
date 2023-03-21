@@ -2,7 +2,7 @@
 # BUILDER #
 ###########
 
-ARG PYTHON_VERSION=3.8.3-alpine
+ARG PYTHON_VERSION=3.9
 
 FROM python:${PYTHON_VERSION} as python
 
@@ -16,9 +16,11 @@ ENV PYTHONUNBUFFERED 1
 
 WORKDIR ${APP_HOME}
 
-# install psycopg2 dependencies
-RUN apk update \
-    && apk add postgresql-dev gcc python3-dev musl-dev libffi-dev make libevent-dev build-base
+RUN apt-get update && apt-get install --no-install-recommends -y \
+  # dependencies for building Python packages
+  build-essential \
+  # psycopg2 dependencies
+  libpq-dev
 
 # install dependencies
 COPY src/requirements/base.txt src/requirements/base.txt
@@ -45,8 +47,11 @@ WORKDIR ${APP_HOME}/src
 RUN addgroup --system backend \
     && adduser --system --ingroup backend backend
 
-# install dependencies
-RUN apk update && apk add libpq gcc python3-dev musl-dev libffi-dev make libevent-dev build-base
+RUN apt-get update && apt-get install --no-install-recommends -y \
+  # dependencies for building Python packages
+  build-essential \
+  # psycopg2 dependencies
+  libpq-dev
 
 COPY --from=python-build-stage /app/wheels /wheels
 COPY --from=python-build-stage /app/src/requirements /requirements
