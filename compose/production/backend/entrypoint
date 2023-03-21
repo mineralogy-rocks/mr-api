@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -o errexit
 set -o pipefail
@@ -25,6 +25,9 @@ try:
         host="${POSTGRES_HOST}",
         port="${POSTGRES_PORT}",
     )
+except Exception as e:
+    print(e)
+    sys.exit(-1)
 except psycopg2.OperationalError:
     sys.exit(-1)
 sys.exit(0)
