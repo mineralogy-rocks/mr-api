@@ -2,10 +2,10 @@
 from .models.mineral import MineralRelation, MineralStatus
 
 
-def get_or_create_relation(mineral, relation, status, status_group_name, direct_status=True):
+def get_or_create_relation(mineral, relation, status, status_group_id, direct_status=True):
 
     _match_status = MineralStatus.objects.filter(
-        status__group__name=status_group_name,
+        status__group=status_group_id,
         mineral=mineral,
         direct_status=direct_status,
     )

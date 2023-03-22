@@ -146,7 +146,7 @@ class Command(BaseCommand):
                         if entry["variety_of"]:
                             try:
                                 relation = Mineral.objects.get(mindat_id=entry["variety_of"])
-                                _created = get_or_create_relation(mineral, relation, status_uncertain_variety, "Varieties")
+                                _created = get_or_create_relation(mineral, relation, status_uncertain_variety, 3)
                             except Mineral.DoesNotExist:
                                 print("Entry with mindat_id={} not found.".format(entry["variety_of"]))
                                 continue
@@ -157,7 +157,7 @@ class Command(BaseCommand):
                         if entry["synonym_of"]:
                             try:
                                 relation = Mineral.objects.get(mindat_id=entry["synonym_of"])
-                                _created = get_or_create_relation(mineral, relation, status_uncertain_synonym, "Synonyms")
+                                _created = get_or_create_relation(mineral, relation, status_uncertain_synonym, 2)
                             except Mineral.DoesNotExist:
                                 print("Entry with mindat_id={} not found.".format(entry["synonym_of"]))
                                 continue
@@ -168,7 +168,7 @@ class Command(BaseCommand):
                         if entry["polytype_of"]:
                             try:
                                 relation = Mineral.objects.get(mindat_id=entry["polytype_of"])
-                                _created = get_or_create_relation(mineral, relation, status_polytype, "Polytypes")
+                                _created = get_or_create_relation(mineral, relation, status_polytype, 4)
                             except Mineral.DoesNotExist:
                                 print("Entry with mindat_id={} not found.".format(entry["polytype_of"]))
                                 continue
