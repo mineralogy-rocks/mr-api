@@ -374,8 +374,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                 _merge = pd.merge(pd.DataFrame(data), pd.DataFrame(_data), on='id', how='left')
 
                 _merge['_statuses'] = _merge.apply(lambda x: [y['status_id'] for y in x['statuses']], axis=1)
-                _merge['has_formula'] = _merge.apply(lambda x: any([y in [0.0, 4, 4.05] for y in x['_statuses']]) and x['formulas'], axis=1)
-                _merge['has_crystal_system'] = _merge.apply(lambda x: any([y in [0.0, 4.04, 4.05] for y in x['_statuses']] and x['crystal_systems']), axis=1)
+                _merge['has_formula'] = _merge.apply(lambda x: len(np.intersect1d([0.0, 4.04, 4.05], x['_statuses'])) and x['formulas'], axis=1)
+                _merge['has_crystal_system'] = _merge.apply(lambda x: len(np.intersect1d([0.0, 4.04, 4.05], x['_statuses'])) and x['crystal_systems'], axis=1)
 
                 _drop_columns = ['_statuses', 'has_formula', 'has_crystal_system',]
                 if len(_formula):

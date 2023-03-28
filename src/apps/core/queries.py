@@ -24,16 +24,24 @@ LIST_VIEW_QUERY = """
                     'group', to_jsonb(sgl),
                     'description_short', sl.description_short,
                     'description_long', sl.description_long,
-                    'mineral', JSONB_BUILD_OBJECT(
-                        'slug', ml.slug,
-                        'name', ml.name
+                    'mineral', (
+                        SELECT JSONB_BUILD_OBJECT(
+                            'slug', ml.slug,
+                            'name', ml.name,
+                            'statuses', ARRAY(
+                                SELECT sl.status_id FROM mineral_status ms
+                                INNER JOIN status_list sl ON ms.status_id = sl.id
+                                WHERE ms.mineral_id = ml.id AND ms.direct_status
+                            )
+                        )
+                        FROM mineral_log ml
+                        WHERE ml.id = mr.relation_id AND ml.id IS NOT NULL
                     )
                 ) ORDER BY sl.status_id), '[]'::json ) AS statuses_
             FROM mineral_status ms
             INNER JOIN status_list sl ON ms.status_id = sl.id
             INNER JOIN status_group_list sgl ON sl.status_group_id = sgl.id
             LEFT JOIN mineral_relation mr on ms.id = mr.mineral_status_id
-            LEFT JOIN mineral_log ml ON mr.relation_id = ml.id
             WHERE ms.mineral_id = main_table.id and ms.direct_status
         ) AS _statuses,
         CASE WHEN main_table.is_grouping THEN (
