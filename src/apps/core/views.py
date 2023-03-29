@@ -532,7 +532,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         """
         Returns the raw object without filtering queryset initially.
         """
-        queryset = self.queryset
+        queryset = self.queryset.only('id')
 
         # Perform the lookup filtering.
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
