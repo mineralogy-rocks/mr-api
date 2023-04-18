@@ -1,0 +1,61 @@
+version: "3.7"
+
+services:
+
+    nginx:
+        container_name: nginx
+        build:
+            context: .
+            dockerfile: ./compose/production/nginx/Dockerfile
+            # args:
+            #   - DOMAIN=mineralogy.rocks
+        restart: always
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - ./nginx/prod/:/etc/nginx/
+            - ./nginx/_data/log:/var/log/nginx
+
+            - ./nginx/certbot/conf:/etc/letsencrypt
+            - ./nginx/certbot/www:/var/www/certbot
+        env_file:
+            - ./.envs/.prod/.nginx
+        # depends_on:
+        #     - backend
+        networks:
+            - main
+        command: >
+            /bin/sh -c "envsubst '$${DOMAIN}' < /etc/nginx/conf.d/templates/domain.conf > /etc/nginx/conf.d/domain.conf && \
+                        envsubst '$${DOMAIN}' < /etc/nginx/conf.d/templates/no-ssl.domain.conf > /etc/nginx/conf.d/no-ssl.domain.conf && \
+                        while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"
+
+    certbot:
+        image: certbot/certbot
+        restart: unless-stopped
+        volumes:
+            - ./nginx/certbot/conf:/etc/letsencrypt
+            - ./nginx/certbot/www:/var/www/certbot
+        entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+        networks:
+            - main
+
+    backend:
+        container_name: backend
+        build:
+            context: .
+            dockerfile: ./compose/production/backend/Dockerfile
+        # image: registry.digitalocean.com/mr-project/backend:latest
+        command: gunicorn wsgi:application --pythonpath 'src' --bind 0.0.0.0:8000 --worker-class=gevent --worker-connections=1000 --workers=5
+        ports:
+            - 8000:8000
+        env_file:
+            - ./.envs/.prod/.backend
+            - ./.envs/.prod/.db
+            - ./.envs/.prod/.nginx
+        networks:
+            - main
+
+networks:
+    main:
+        driver: bridge
