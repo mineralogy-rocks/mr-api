@@ -12,6 +12,7 @@ on:
       - 'src/**'
       - 'nginx/prod/**'
       - 'docker-compose.prod.yaml'
+      - '.deploy/**'
 
   workflow_dispatch:
 
