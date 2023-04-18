@@ -54,11 +54,17 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Add the private SSH key
+      - name: Add the private SSH key to the ssh-agent
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          echo ${{ secrets.SSH_KEY }} | base64 -d > github.key
-          chmod 400 github.key
+          mkdir -p ~/.ssh
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          ssh-add - <<< "${{ secrets.SSH_KEY }}"
 
       - name: Deploy Application
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          ssh -o StrictHostKeyChecking=no -i github.key liubomyr@{{ secrets.DIGITAL_OCEAN_IP_ADDRESS }} < ./.deploy/deploy.sh
+          ssh -o StrictHostKeyChecking=no liubomyr@{{ secrets.DIGITAL_OCEAN_IP_ADDRESS }} < ./.deploy/deploy.sh
