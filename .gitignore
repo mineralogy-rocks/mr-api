@@ -9,3 +9,8 @@ nginx/_data/*
 .envs/.prod/*
 .tmp/messages/*
 .idea/*
+
+.DS_Store
+
+nginx/_data/*
+nginx/certbot/*
