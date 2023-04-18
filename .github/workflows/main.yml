@@ -67,4 +67,4 @@ jobs:
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          ssh -o StrictHostKeyChecking=no liubomyr@{{ secrets.DIGITAL_OCEAN_IP_ADDRESS }} < ./.deploy/deploy.sh
+          ssh -o StrictHostKeyChecking=no liubomyr@${{ secrets.DIGITAL_OCEAN_IP_ADDRESS }} < ./.deploy/deploy.sh
