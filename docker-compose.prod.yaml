@@ -45,6 +45,7 @@ services:
             - 8000:8000
         env_file:
             - ./.envs/.prod/.backend
-            - ./.envs/.prod/.aws
             - ./.envs/.prod/.db
             - ./.envs/.prod/.nginx
+            - ./.envs/.prod/.do
+
