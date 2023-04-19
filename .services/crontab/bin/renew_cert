@@ -3,4 +3,4 @@ set -e
 
 cd /home/ubuntu/backend
 /usr/local/bin/docker compose -f docker-compose.certbot.yml run --rm --no-deps certbot-renew
-/usr/local/bin/docker compose -f docker-compose.prod.yml restart nginx
+# /usr/local/bin/docker compose -f docker-compose.prod.yml restart nginx
