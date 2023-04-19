@@ -18,11 +18,11 @@ sudo cp ./.services/crontab/config /etc/cron.d/backend
 # echo 'Building latest nginx image...'
 # docker compose -f docker-compose.prod.yaml build nginx
 
-echo 'Logging into DigitalOcean container registry...'
-doctl registry login --expiry-seconds 300
+# echo 'Logging into DigitalOcean container registry...'
+# doctl registry login --expiry-seconds 300
 
-echo 'Pulling latest backend image...'
-docker pull registry.digitalocean.com/mr-project/backend:latest
+# echo 'Pulling latest backend image...'
+# docker pull registry.digitalocean.com/mr-project/backend:latest
 
 # echo 'Restarting containers...'
 # docker compose -f docker-compose.prod.yaml up -d --no-deps backend nginx
