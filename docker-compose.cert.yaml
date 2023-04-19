@@ -26,4 +26,4 @@ services:
       DOMAIN: ${DOMAIN}
     volumes:
       - ./nginx/certbot:/etc/letsencrypt
-    command: ['renew', '--dry-run', '--deploy-hook', '/usr/bin/docker compose -f /home/ubuntu/docker-compose.prod.yml exec -T nginx nginx -s reload']
+    command: ['renew', '--dry-run', '--deploy-hook', './.services/post-renew.sh']
