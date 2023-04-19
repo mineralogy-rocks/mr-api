@@ -8,4 +8,3 @@ CMD ["/bin/sh", "-c", "envsubst '$${DOMAIN}' < /etc/nginx/conf.d/templates/domai
                        envsubst '$${DOMAIN}' < /etc/nginx/conf.d/templates/no-ssl.domain.conf > /etc/nginx/conf.d/no-ssl.domain.conf && \
                        envsubst '$${DOMAIN}' < /etc/nginx/h5bp/tls/templates/certificate_files.conf > /etc/nginx/h5bp/tls/certificate_files.conf && \
                        exec nginx -g 'daemon off;'"]
-                      #  while :; do sleep 6h & wait $!; nginx -s reload; done & nginx -g 'daemon off;'"]
