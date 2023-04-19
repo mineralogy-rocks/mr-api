@@ -1,11 +1,6 @@
 #!/bin/bash
 export $(grep -v '^#' ./.envs/.prod/.backend | xargs -d '\n')
 
-if ! [ -x "$(command -v docker compose)" ]; then
-  echo 'Error: docker compose is not installed.' >&2
-  exit 1
-fi
-
 domains=(api-dev.$DOMAIN)
 rsa_key_size=4096
 data_path="./nginx/certbot"

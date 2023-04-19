@@ -3,6 +3,9 @@ set -e
 
 export COMPOSE_INTERACTIVE_NO_CLI=1
 
+echo 'Setting cronjobs...'
+sudo cp ./services/crontab/config /etc/cron.d/backend
+
 echo 'Changing directory to project repository...'
 cd ./backend
 

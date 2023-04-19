@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+
+  certbot:
+    image: certbot/dns-route53:v2.5.0
+    platform: linux/amd64
+    restart: 'no'
+    env_file:
+      - .envs/.prod/.aws
+    volumes:
+      - ./nginx/certbot:/etc/letsencrypt
+    command: ['certonly', '--dns-route53', '--agree-tos', '--no-eff-email', '--email', '${AWS_EMAIL}', '--cert-name', '${DOMAIN}', '-d', '${DOMAIN}']
+
+  certbot-renew:
+    image: certbot/dns-route53:v2.5.0
+    platform: linux/amd64
+    restart: 'no'
+    env_file:
+      - .envs/.prod/.aws
+    volumes:
+      - ./nginx/certbot:/etc/letsencrypt
+    command: ['renew', '--deploy-hook', 'docker compose -f /home/ubuntu/docker-compose.prod.yml exec -T nginx nginx -s reload']
