@@ -6,14 +6,14 @@ export COMPOSE_INTERACTIVE_NO_CLI=1
 echo 'Changing directory to project repository...'
 cd ./backend
 
-echo 'Setting cronjobs...'
-sudo cp ./.services/crontab/config /etc/cron.d/backend
-
 echo 'Setting environment variables...'
 source ./.envs/.prod/.do
 
 echo 'Pulling latest source code...'
 git pull
+
+echo 'Setting cronjobs...'
+sudo cp ./.services/crontab/config /etc/cron.d/backend
 
 # echo 'Building latest nginx image...'
 # docker compose -f docker-compose.prod.yaml build nginx
