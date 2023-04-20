@@ -1,10 +1,19 @@
-FROM nginx:1.17.10-alpine
+# Build stage
+FROM nginx:1.17.10-alpine AS build
 
-COPY ./nginx/prod/ ./etc/nginx/
+COPY ./nginx/prod/ /etc/nginx/
 
 RUN chown -R nginx:nginx /etc/nginx
 
-CMD ["/bin/sh", "-c", "envsubst '$${DOMAIN}' < /etc/nginx/conf.d/templates/domain.conf > /etc/nginx/conf.d/domain.conf && \
-                       envsubst '$${DOMAIN}' < /etc/nginx/conf.d/templates/no-ssl.domain.conf > /etc/nginx/conf.d/no-ssl.domain.conf && \
-                       envsubst '$${DOMAIN}' < /etc/nginx/h5bp/tls/templates/certificate_files.conf > /etc/nginx/h5bp/tls/certificate_files.conf && \
-                       exec nginx -g 'daemon off;'"]
+
+# Production stage
+FROM nginx:1.17.10-alpine
+
+COPY --from=build /etc/nginx /etc/nginx
+
+COPY --chown=nginx:nginx ./compose/production/nginx/entrypoint /entrypoint
+RUN sed -i 's/\r$//g' /entrypoint
+RUN chmod +x /entrypoint
+
+ENTRYPOINT ["/entrypoint"]
+CMD ["nginx", "-g", "daemon off;"]
