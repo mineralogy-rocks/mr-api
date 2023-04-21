@@ -21,36 +21,36 @@ env:
   BACKEND_IMAGE: registry.digitalocean.com/mr-project/backend
 
 jobs:
-  # build:
-  #   name: Build Docker Images and Deploy to k8s
-  #   runs-on: ubuntu-latest
+  build:
+    name: Build Docker Images and Deploy to k8s
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Checkout master
-  #       uses: actions/checkout@v3
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v3
 
-  #     - name: Set environment variables
-  #       run: |
-  #         echo "BACKEND_IMAGE=$(echo ${{env.BACKEND_IMAGE}} )" >> $GITHUB_ENV
+      - name: Set environment variables
+        run: |
+          echo "BACKEND_IMAGE=$(echo ${{env.BACKEND_IMAGE}} )" >> $GITHUB_ENV
 
-  #     - name: Install doctl
-  #       uses: digitalocean/action-doctl@v2
-  #       with:
-  #         token: ${{ secrets.DIGITAL_OCEAN_ACCESS_TOKEN }}
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITAL_OCEAN_ACCESS_TOKEN }}
 
-  #     - name: Build images
-  #       run: |
-  #         docker build -f $GITHUB_WORKSPACE/compose/production/backend/Dockerfile -t ${{ env.BACKEND_IMAGE }}:latest .
+      - name: Build images
+        run: |
+          docker build -f $GITHUB_WORKSPACE/compose/production/backend/Dockerfile -t ${{ env.BACKEND_IMAGE }}:latest .
 
-  #     - name: Log in to DO Container Registry
-  #       run: doctl registry login --expiry-seconds 800
+      - name: Log in to DO Container Registry
+        run: doctl registry login --expiry-seconds 800
 
-  #     - name: Push image to DigitalOcean Container Registry
-  #       run: docker push ${{ env.BACKEND_IMAGE }}:latest
+      - name: Push image to DigitalOcean Container Registry
+        run: docker push ${{ env.BACKEND_IMAGE }}:latest
 
   deploy:
     runs-on: ubuntu-latest
-    # needs: build
+    needs: build
     if: github.ref == 'refs/heads/master'
 
     steps:
