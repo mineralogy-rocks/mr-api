@@ -2,7 +2,7 @@
 
 🌍 [api.mineralogy.rocks](https://api.mineralogy.rocks)
 
-![example branch parameter](https://github.com/github/docs/actions/workflows/main.yml/badge.svg?branch=master)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/mineralogy-rocks/mr-api/main.yml)
 [![Black code style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)]()
 
