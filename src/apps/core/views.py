@@ -653,22 +653,3 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request)
         return Response(serializer_cls(queryset, many=True).data, status=status.HTTP_200_OK)
-
-
-class SyncView(APIView):
-    """
-    This view is used to sync the database with the mindat.org database.
-    """
-
-    http_method_names = ["get",]
-    authentication_classes = [
-        JWTAuthentication,
-    ]
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        if request.user.is_superuser:
-            command = "python manage.py sync_mindat"
-            subprocess.Popen(command, shell=True)
-            return Response(status=status.HTTP_200_OK)
-        return Response(status=status.HTTP_403_FORBIDDEN)

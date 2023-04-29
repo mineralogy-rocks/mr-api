@@ -21,5 +21,4 @@ urlpatterns = [
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("auth/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("mineral-search/", views.MineralSearch.as_view(), name="mineral-search"),
-    path("_trigger-sync/", views.SyncView.as_view(), name="trigger-sync")
 ]
