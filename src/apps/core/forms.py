@@ -47,7 +47,8 @@ class MineralFormulaForm(ModelForm):
             "show_on_site",
         ]
         widgets = {
-            "note": Textarea(attrs={"rows": 2}),
+            "formula": Textarea(attrs={"rows": 3}),
+            "note": Textarea(attrs={"rows": 3}),
         }
 
 
