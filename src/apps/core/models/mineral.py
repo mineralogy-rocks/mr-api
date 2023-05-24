@@ -4,12 +4,13 @@ import uuid
 
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.postgres.fields import ArrayField
 from django.db import connection
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 
-from ..utils import formula_to_html
 from ..utils import shorten_text
 from ..utils import unique_slugify
 from .base import BaseModel
@@ -333,19 +334,57 @@ class MineralFormula(BaseModel, Creatable):
         managed = False
         db_table = "mineral_formula"
 
-        verbose_name = "Formula"
-        verbose_name_plural = "Formulas"
+        verbose_name = "Ideal Formula"
+        verbose_name_plural = "Ideal Formulas"
 
     def __str__(self):
-        if self.source.id == 1:
-            return formula_to_html(self.formula)
-        return self.formula or self.note
+        return mark_safe(self.formula) or self.note
 
     @property
     def formula_escape(self):
-        if self.source.id == 1:
-            return formula_to_html(self.formula)
-        return self.formula
+        return mark_safe(self.formula)
+
+
+class MineralStructure(BaseModel, Creatable, Updatable):
+
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="structures")
+    cod = models.IntegerField(null=True, blank=True, db_column="cod_id", help_text="Open Crystallography Database id")
+    amcsd = models.CharField(max_length=50, null=True, blank=True, db_column="amcsd_id", help_text="American Mineralogist Crystal Structure Database id")
+
+    source = models.ForeignKey(FormulaSource, models.CASCADE, db_column="source_id", related_name="structures")
+
+    a = models.FloatField(null=True, blank=True, help_text="a parameter of the structure.")
+    a_sigma = models.FloatField(null=True, blank=True, help_text="a parameter sigma of the structure.")
+    b = models.FloatField(null=True, blank=True, help_text="b parameter of the structure.")
+    b_sigma = models.FloatField(null=True, blank=True, help_text="b parameter sigma of the structure.")
+    c = models.FloatField(null=True, blank=True, help_text="c parameter of the structure.")
+    c_sigma = models.FloatField(null=True, blank=True, help_text="c parameter sigma of the structure.")
+    alpha = models.FloatField(null=True, blank=True, help_text="alpha parameter of the structure.")
+    alpha_sigma = models.FloatField(null=True, blank=True, help_text="alpha parameter sigma of the structure.")
+    beta = models.FloatField(null=True, blank=True, help_text="beta parameter of the structure.")
+    beta_sigma = models.FloatField(null=True, blank=True, help_text="beta parameter sigma of the structure.")
+    gamma = models.FloatField(null=True, blank=True, help_text="gamma parameter of the structure.")
+    gamma_sigma = models.FloatField(null=True, blank=True, help_text="gamma parameter sigma of the structure.")
+    volume = models.FloatField(null=True, blank=True, help_text="Volume of the structure.")
+    volume_sigma = models.FloatField(null=True, blank=True, help_text="Volume sigma of the structure.")
+    space_group = models.CharField(max_length=100, null=True, blank=True, help_text="Space group")
+
+    formula = models.CharField(max_length=1000, null=True, blank=True, help_text="Formula of the structure.")
+    calculated_formula = models.CharField(max_length=1000, null=True, blank=True, help_text="Calculated formula of the structure.")
+
+    reference = models.TextField(null=True, blank=True, help_text="Reference of the structure.")
+    links = ArrayField(models.TextField(null=True, blank=True), null=True, blank=True, help_text="Links to other resources.")
+    note = models.TextField(null=True, blank=True, help_text="Note of the structure.")
+
+    class Meta:
+        managed = False
+        db_table = "mineral_structure"
+
+        verbose_name = "Analytical Measurement"
+        verbose_name_plural = "Analytical Measurements"
+
+    def __str__(self):
+        return mark_safe(self.formula) or self.note
 
 
 class MineralImpurity(BaseModel):
