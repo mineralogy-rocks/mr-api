@@ -34,6 +34,6 @@ echo 'Restarting containers...'
 docker compose -f docker-compose.prod.yaml up -d --no-deps backend nginx
 
 echo 'Restarting nginx...'
-docker-compose restart nginx
+docker compose -f docker-compose.prod.yaml restart nginx
 
 export COMPOSE_INTERACTIVE_NO_CLI=0
