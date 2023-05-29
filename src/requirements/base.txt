@@ -22,7 +22,6 @@ jmespath==1.0.1
 mccabe==0.7.0
 openpyxl==3.0.10
 pandas==1.5.3
-psycopg2==2.9.5
 pylint==2.15.5
 pylint-django==2.5.3
 pylint-plugin-utils==0.7
