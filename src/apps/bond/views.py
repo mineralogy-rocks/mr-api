@@ -28,7 +28,6 @@ class SVGView(APIView):
         renderers.BrowsableAPIRenderer,
     ]
     permission_classes = [
-        # AllowAny,
         IsAuthenticated,
     ]
     serializer_class = SVGSerializer
@@ -85,4 +84,5 @@ class SVGView(APIView):
         response = FileResponse(buffer, as_attachment=True, filename=file_name)
         response["Content-Disposition"] = f"attachment; filename={file_name}"
         response["Content-Type"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        
         return response
