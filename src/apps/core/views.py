@@ -10,7 +10,6 @@ from django.db.models import Exists
 from django.db.models import F
 from django.db.models import OuterRef
 from django.db.models import Q
-from django.db.models import Subquery
 from django.db.models import Value
 from django.db.models import When
 from django.db.models.functions import Coalesce
