@@ -1,23 +1,21 @@
 # -*- coding: UTF-8 -*-
-import subprocess
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 from dal import autocomplete
 from django.db import connection
 from django.db.models import Case
 from django.db.models import CharField
 from django.db.models import Count
 from django.db.models import Exists
+from django.db.models import F
 from django.db.models import OuterRef
 from django.db.models import Q
-from django.db.models import F
 from django.db.models import Value
 from django.db.models import When
 from django.db.models.functions import Coalesce
 from django.db.models.functions import Concat
-from django.db.models.functions import Right
 from django.db.models.functions import JSONObject
+from django.db.models.functions import Right
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework import status
@@ -32,7 +30,6 @@ from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.views import APIView
 from rest_framework_api_key.permissions import HasAPIKey
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
@@ -43,25 +40,26 @@ from .models.core import NsClass
 from .models.core import NsFamily
 from .models.core import NsSubclass
 from .models.core import Status
-from .models.mineral import Mineral
-from .models.mineral import MineralStatus
-from .models.mineral import MineralRelation
 from .models.mineral import HierarchyView
+from .models.mineral import Mineral
 from .models.mineral import MineralCrystallography
 from .models.mineral import MineralFormula
+from .models.mineral import MineralRelation
+from .models.mineral import MineralStatus
 from .pagination import CustomCursorPagination
+from .queries import GET_RELATIONS_QUERY
+from .queries import LIST_VIEW_QUERY
 from .serializers.core import NsClassSubclassFamilyListSerializer
 from .serializers.core import NsFamilyListSerializer
 from .serializers.core import NsSubclassListSerializer
 from .serializers.core import StatusListSerializer
-from .serializers.mineral import MineralListSerializer
-from .serializers.mineral import MineralRetrieveSerializer
-from .serializers.mineral import MineralRelationsSerializer
 from .serializers.mineral import BaseMineralRelationsSerializer
 from .serializers.mineral import MineralCrystallographyRelatedSerializer
 from .serializers.mineral import MineralFormulaRelatedSerializer
 from .serializers.mineral import MineralListSecondarySerializer
-from .queries import LIST_VIEW_QUERY, GET_RELATIONS_QUERY
+from .serializers.mineral import MineralListSerializer
+from .serializers.mineral import MineralRelationsSerializer
+from .serializers.mineral import MineralRetrieveSerializer
 
 
 class MineralSearch(autocomplete.Select2QuerySetView):
@@ -78,7 +76,6 @@ class MineralSearch(autocomplete.Select2QuerySetView):
 
 
 class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
-
     http_method_names = [
         "get",
         "options",
@@ -129,7 +126,6 @@ class StatusViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
 
 class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
-
     http_method_names = [
         "get",
         "options",
@@ -235,10 +231,7 @@ class NickelStrunzViewSet(ListModelMixin, GenericViewSet):
         return self._get_paginated_response(queryset, serializer_class)
 
 
-
-
 class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
-
     http_method_names = [
         "get",
         "options",
@@ -300,7 +293,9 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         """
         if self.paginator is None:
             return None
-        if self.action in ['list',]:
+        if self.action in [
+            "list",
+        ]:
             return self.paginator.paginate_raw_queryset(queryset, self.request, view=self, query=query)
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
 
@@ -360,7 +355,9 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                     _related_objects = pd.DataFrame([dict(zip(_fields, x)) for x in _related_objects])
 
             if len(_related_objects):
-                _formula, _crystal_system = self._get_related_formula(_related_objects), self._get_related_crystal_system(_related_objects)
+                _formula, _crystal_system = self._get_related_formula(
+                    _related_objects
+                ), self._get_related_crystal_system(_related_objects)
 
             _serializer_class = self.get_serializer_class(is_secondary=True)
             _serializer = _serializer_class(_queryset, many=True)
@@ -371,105 +368,162 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             output = []
 
             if len(_data) and len(data):
-                _merge = pd.merge(pd.DataFrame(data), pd.DataFrame(_data), on='id', how='left')
+                _merge = pd.merge(pd.DataFrame(data), pd.DataFrame(_data), on="id", how="left")
 
-                _merge['_statuses'] = _merge.apply(lambda x: [y['status_id'] for y in x['statuses']], axis=1)
-                _merge['has_formula'] = _merge.apply(lambda x: len(np.intersect1d([0.0, 4.0, 4.05], x['_statuses'])) and x['formulas'], axis=1)
-                _merge['has_crystal_system'] = _merge.apply(lambda x: len(np.intersect1d([0.0, 4.04, 4.05], x['_statuses'])) and x['crystal_systems'], axis=1)
+                _merge["_statuses"] = _merge.apply(lambda x: [y["status_id"] for y in x["statuses"]], axis=1)
+                _merge["has_formula"] = _merge.apply(
+                    lambda x: len(np.intersect1d([0.0, 4.0, 4.05], x["_statuses"])) and x["formulas"], axis=1
+                )
+                _merge["has_crystal_system"] = _merge.apply(
+                    lambda x: len(np.intersect1d([0.0, 4.04, 4.05], x["_statuses"])) and x["crystal_systems"], axis=1
+                )
 
-                _drop_columns = ['_statuses', 'has_formula', 'has_crystal_system',]
+                _drop_columns = [
+                    "_statuses",
+                    "has_formula",
+                    "has_crystal_system",
+                    "base_mineral",
+                ]
                 if len(_formula):
-                    _merge = _merge.merge(_formula, left_on='id', right_on='base_mineral', how='left', suffixes=('', '__relation'))
-                    _merge['formulas'] = _merge.apply(lambda x: x['formulas'] if x['has_formula'] else x['formulas__relation'], axis=1)
-                    _merge['formulas'] = _merge['formulas'].apply(lambda x: [] if x is np.nan else x)
-                    _drop_columns += ['formulas__relation', 'base_mineral']
+                    _merge = _merge.merge(
+                        _formula, left_on="id", right_on="base_mineral", how="left", suffixes=("", "__temp")
+                    )
+                    _merge["formulas"] = _merge.apply(
+                        lambda x: x["formulas"] if x["has_formula"] else x["formulas__temp"], axis=1
+                    )
+                    _merge["formulas"] = _merge["formulas"].apply(lambda x: [] if x is np.nan else x)
                 if len(_crystal_system):
-                    _merge = _merge.merge(_crystal_system, left_on='id', right_on='base_mineral', how='left', suffixes=('', '__relation'))
-                    _merge['crystal_systems'] = _merge.apply(lambda x: x['crystal_systems'] if x['has_crystal_system'] else x['crystal_systems__relation'], axis=1)
-                    _merge['crystal_systems'] = _merge['crystal_systems'].apply(lambda x: [] if x is np.nan else x)
-                    _drop_columns += ['crystal_systems__relation', 'base_mineral__relation']
-
-                _merge = _merge.drop(columns=_drop_columns)
-                _merge = _merge.replace({ np.nan: None })
-                output = _merge.to_dict('records')
+                    _merge = _merge.merge(
+                        _crystal_system, left_on="id", right_on="base_mineral", how="left", suffixes=("", "__temp")
+                    )
+                    _merge["crystal_systems"] = _merge.apply(
+                        lambda x: x["crystal_systems"] if x["has_crystal_system"] else x["crystal_systems__temp"],
+                        axis=1,
+                    )
+                    _merge["crystal_systems"] = _merge["crystal_systems"].apply(lambda x: [] if x is np.nan else x)
+                _drop_columns += [x for x in _merge.columns if x.endswith("__temp")]
+                _merge = _merge.drop(columns=_drop_columns, errors="ignore")
+                _merge = _merge.replace({np.nan: None})
+                output = _merge.to_dict("records")
 
             return self.get_paginated_response(output)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
     def _get_related_crystal_system(self, related_objects):
-        _crystal_systems = MineralCrystallography.objects.select_related('crystal_system') \
-            .filter(mineral__in=related_objects['relation']) \
-            .annotate(**{
-                'from': JSONObject(
-                    slug=F('mineral__slug'),
-                    name=F('mineral__name')
-                ),
-            })
+        _crystal_systems = (
+            MineralCrystallography.objects.select_related("crystal_system")
+            .filter(mineral__in=related_objects["relation"])
+            .annotate(
+                **{
+                    "from": JSONObject(slug=F("mineral__slug"), name=F("mineral__name")),
+                }
+            )
+        )
 
         _crystal_systems_data = MineralCrystallographyRelatedSerializer(_crystal_systems, many=True).data
 
         if not len(_crystal_systems_data):
             return []
 
-        _relations = pd.merge(related_objects, pd.DataFrame(_crystal_systems_data), left_on='relation',
-                              right_on='mineral', how='inner')
-        _relations['from_'] = _relations.apply(lambda x: {
-            **x['from_'],
-            'statuses': x['statuses'],
-        }, axis=1)
+        _relations = pd.merge(
+            related_objects, pd.DataFrame(_crystal_systems_data), left_on="relation", right_on="mineral", how="inner"
+        )
+        _relations["from_"] = _relations.apply(
+            lambda x: {
+                **x["from_"],
+                "statuses": x["statuses"],
+            },
+            axis=1,
+        )
 
-        _relations['crystal_systems'] = _relations.apply(lambda x: [{
-            **x['crystal_system'],
-            'from': x['from_'],
-        }], axis=1)
-        _relations = _relations.drop(columns=['from_'])
-        _relations = _relations.sort_values(by=['depth'], ascending=True).drop_duplicates(
-            subset=['base_mineral'], keep='first')
-        _relations.drop(columns=['mineral', 'relation', 'statuses', 'depth', 'crystal_system',], inplace=True)
-        _relations['base_mineral'] = _relations['base_mineral'].astype('str')
+        _relations["crystal_systems"] = _relations.apply(
+            lambda x: [
+                {
+                    **x["crystal_system"],
+                    "from": x["from_"],
+                }
+            ],
+            axis=1,
+        )
+        _relations = _relations.drop(columns=["from_"])
+        _relations = _relations.sort_values(by=["depth"], ascending=True).drop_duplicates(
+            subset=["base_mineral"], keep="first"
+        )
+        _relations.drop(
+            columns=[
+                "mineral",
+                "relation",
+                "statuses",
+                "depth",
+                "crystal_system",
+            ],
+            inplace=True,
+        )
+        _relations["base_mineral"] = _relations["base_mineral"].astype("str")
 
         return _relations
 
     def _get_related_formula(self, related_objects):
-        _formulas = MineralFormula.objects.select_related('source') \
-            .filter(mineral__in=related_objects['relation']) \
-            .annotate(**{
-                'from': JSONObject(
-                    slug=F('mineral__slug'),
-                    name=F('mineral__name')
-                ),
-            })
+        _formulas = (
+            MineralFormula.objects.select_related("source")
+            .filter(mineral__in=related_objects["relation"])
+            .annotate(
+                **{
+                    "from": JSONObject(slug=F("mineral__slug"), name=F("mineral__name")),
+                }
+            )
+        )
         _formulas_data = MineralFormulaRelatedSerializer(_formulas, many=True).data
 
         if not len(_formulas_data):
             return []
 
-        _relations = pd.merge(related_objects, pd.DataFrame(_formulas_data), left_on='relation',
-                              right_on='mineral', how='inner')
-        _relations['from_'] = _relations.apply(lambda x: {
-            **x['from_'],
-            'statuses': x['statuses'],
-        }, axis=1)
+        _relations = pd.merge(
+            related_objects, pd.DataFrame(_formulas_data), left_on="relation", right_on="mineral", how="inner"
+        )
+        _relations["from_"] = _relations.apply(
+            lambda x: {
+                **x["from_"],
+                "statuses": x["statuses"],
+            },
+            axis=1,
+        )
 
-        _relations['formulas'] = _relations.apply(lambda x: {
-            'formula': x['formula'],
-            'from': x['from_'],
-            'note': x['note'],
-            'source': x['source'],
-            'show_on_site': x['show_on_site'],
-            'created_at': x['created_at'],
-        }, axis=1)
-        _relations = _relations.drop(
-            columns=['note', 'source', 'show_on_site', 'created_at', 'from_', 'formula'])
-        _relations = _relations.groupby(['base_mineral', 'relation', 'depth']).agg({
-            'formulas': lambda x: list(x),
-            'statuses': lambda x: list(x)[0] if len(list(x)) else None,
-        }).reset_index()
-        _relations = _relations.sort_values(by=['depth'], ascending=True).drop_duplicates(
-            subset=['base_mineral'], keep='first')
-        _relations.drop(columns=['relation', 'statuses', 'depth', ], inplace=True)
-        _relations['base_mineral'] = _relations['base_mineral'].astype('str')
+        _relations["formulas"] = _relations.apply(
+            lambda x: {
+                "formula": x["formula"],
+                "from": x["from_"],
+                "note": x["note"],
+                "source": x["source"],
+                "show_on_site": x["show_on_site"],
+                "created_at": x["created_at"],
+            },
+            axis=1,
+        )
+        _relations = _relations.drop(columns=["note", "source", "show_on_site", "created_at", "from_", "formula"])
+        _relations = (
+            _relations.groupby(["base_mineral", "relation", "depth"])
+            .agg(
+                {
+                    "formulas": lambda x: list(x),
+                    "statuses": lambda x: list(x)[0] if len(list(x)) else None,
+                }
+            )
+            .reset_index()
+        )
+        _relations = _relations.sort_values(by=["depth"], ascending=True).drop_duplicates(
+            subset=["base_mineral"], keep="first"
+        )
+        _relations.drop(
+            columns=[
+                "relation",
+                "statuses",
+                "depth",
+            ],
+            inplace=True,
+        )
+        _relations["base_mineral"] = _relations["base_mineral"].astype("str")
 
         return _relations
 
@@ -477,11 +531,12 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         queryset = super().filter_queryset(queryset)
 
         if "q" in self.request.query_params:
-
             query = self.request.query_params.get("q", "")
             queryset = queryset.extra(
-                select={"ordering": """ROW_NUMBER() OVER (ORDER BY ts_rank(mineral_log.search_vector,
-                                       (plainto_tsquery('mrdict'::regconfig, %s) || plainto_tsquery('english'::regconfig, %s)), 0) DESC)"""},
+                select={
+                    "ordering": """ROW_NUMBER() OVER (ORDER BY ts_rank(mineral_log.search_vector,
+                                       (plainto_tsquery('mrdict'::regconfig, %s) || plainto_tsquery('english'::regconfig, %s)), 0) DESC)"""
+                },
                 select_params=(query, query),
                 where=[
                     "mineral_log.search_vector @@ (plainto_tsquery('english', %s) || plainto_tsquery('mrdict', %s))",
@@ -513,10 +568,10 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         elif self.action in ["retrieve"]:
             return MineralRetrieveSerializer
         elif self.action in [
-                "grouping_members",
-                "relations",
-                "related_minerals",
-            ]:
+            "grouping_members",
+            "relations",
+            "related_minerals",
+        ]:
             return MineralRelationsSerializer
 
         return super().get_serializer_class()
@@ -532,16 +587,15 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         """
         Returns the raw object without filtering queryset initially.
         """
-        queryset = self.queryset.only('id')
+        queryset = self.queryset.only("id")
 
         # Perform the lookup filtering.
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
 
         assert lookup_url_kwarg in self.kwargs, (
-            'Expected view %s to be called with a URL keyword argument '
+            "Expected view %s to be called with a URL keyword argument "
             'named "%s". Fix your URL conf, or set the `.lookup_field` '
-            'attribute on the view correctly.' %
-            (self.__class__.__name__, lookup_url_kwarg)
+            "attribute on the view correctly." % (self.__class__.__name__, lookup_url_kwarg)
         )
 
         filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
@@ -561,7 +615,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         Returns related objects for a given instance.
         """
         _is_grouping = self._is_grouping(instance)
-        annotate = { "name": F("relation__name"), "slug": F("relation__slug") }
+        annotate = {"name": F("relation__name"), "slug": F("relation__slug")}
 
         if _is_grouping:
             queryset = HierarchyView.objects.all()
@@ -570,7 +624,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             queryset = MineralRelation.objects.all()
             queryset = queryset.filter(status__direct_status=False, status__status__group=group)
 
-        queryset = queryset.filter(mineral=instance).distinct('relation__name')
+        queryset = queryset.filter(mineral=instance).distinct("relation__name")
         queryset = queryset.annotate(**annotate)
         queryset = queryset.order_by("relation__name")
         queryset = queryset.only("relation__name", "relation__slug")
@@ -581,14 +635,14 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         """
         Returns grouping objects for a given instance.
         """
-        _annotate = { "name": F("relation__name"), "slug": F("relation__slug") }
+        _annotate = {"name": F("relation__name"), "slug": F("relation__slug")}
         _filter = {}
 
         if status:
-            _filter.update({ "relation__statuses": status, "relation__direct_relations__direct_status": True })
+            _filter.update({"relation__statuses": status, "relation__direct_relations__direct_status": True})
 
         queryset = HierarchyView.objects.filter(mineral=instance, **_filter)
-        queryset = queryset.distinct('relation__name')
+        queryset = queryset.distinct("relation__name")
         queryset = queryset.annotate(**_annotate)
         queryset = queryset.order_by("relation__name")
         queryset = queryset.only("relation__name", "relation__slug")
@@ -600,14 +654,16 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         if _is_grouping:
             queryset = HierarchyView.objects.all()
-            queryset = queryset.filter(mineral=instance, relation__statuses__group=11).distinct('relation__name')
+            queryset = queryset.filter(mineral=instance, relation__statuses__group=11).distinct("relation__name")
             queryset = queryset.annotate(name=F("relation__name"), slug=F("relation__slug"))
             queryset = queryset.order_by("relation__name")
             queryset = queryset.only("relation__name", "relation__slug")
             serializer_cls = self.get_serializer_class()
         else:
             queryset = Mineral.objects.all()
-            queryset = queryset.filter(Q(statuses__group=11) & Q(ns_family=instance.ns_family) & ~Q(id=instance.id)).distinct()
+            queryset = queryset.filter(
+                Q(statuses__group=11) & Q(ns_family=instance.ns_family) & ~Q(id=instance.id)
+            ).distinct()
             queryset = queryset.order_by("name")
             queryset = queryset.only("name", "slug")
             serializer_cls = BaseMineralRelationsSerializer
@@ -626,7 +682,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         queryset = self._get_grouping_objects(instance, _status)
 
         if _is_grouping:
-            _filter = { "relation__direct_relations__direct_status": True }
+            _filter = {"relation__direct_relations__direct_status": True}
             if _crystal_system:
                 queryset = queryset.filter(relation__crystallography__crystal_system=_crystal_system, **_filter)
             if _discovery_country:
