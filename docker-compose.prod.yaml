@@ -1,0 +1,40 @@
+version: "3.7"
+
+services:
+
+    nginx:
+        container_name: nginx
+        build:
+            context: .
+            dockerfile: ./compose/production/nginx/Dockerfile
+        restart: always
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - ./nginx/prod/:/etc/nginx/
+            - ./nginx/_data/log:/var/log/nginx
+            - ./nginx/dhparam.pem:/etc/nginx/dhparam.pem:ro
+
+            - ./nginx/certbot:/etc/letsencrypt:ro
+        env_file:
+            - ./.envs/.prod/.nginx
+
+    backend:
+        container_name: backend
+        build:
+            context: .
+            dockerfile: ./compose/production/backend/Dockerfile
+        restart: always
+        image: registry.digitalocean.com/mr-project/backend:latest
+        command: /start
+        volumes:
+            - .:/app
+        ports:
+            - 8000:8000
+        env_file:
+            - ./.envs/.prod/.backend
+            - ./.envs/.prod/.db
+            - ./.envs/.prod/.nginx
+            - ./.envs/.prod/.do
+

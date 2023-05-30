@@ -19,6 +19,7 @@ from nested_admin import NestedModelAdmin
 from .forms import MineralRelationFormset
 from .inlines import MineralDirectRelationSuggestionInline
 from .inlines import MineralFormulaInline
+from .inlines import MineralStructureInline
 from .inlines import MineralHistoryInline
 from .inlines import MineralReverseRelationSuggestionInline
 from .inlines import MineralStatusInline
@@ -74,6 +75,7 @@ class FormulaSourceAdmin(admin.ModelAdmin):
     list_display_links = ["id"]
 
     list_filter = ["name"]
+
 
 
 @admin.register(NsClass)
@@ -281,6 +283,7 @@ class MineralAdmin(NestedModelAdmin):
     fields = [
         "id",
         "name",
+        "slug",
         "ima_symbol",
         "seen",
         "note",
@@ -297,6 +300,7 @@ class MineralAdmin(NestedModelAdmin):
 
     readonly_fields = [
         "id",
+        "slug",
         "seen",
         "description_",
         "created_at",
@@ -385,6 +389,7 @@ class MineralAdmin(NestedModelAdmin):
             if obj.suggested_inverse_relations.exists():
                 inlines.append(MineralReverseRelationSuggestionInline)
         inlines.append(MineralFormulaInline)
+        inlines.append(MineralStructureInline)
         inlines.append(MineralHistoryInline)
         return inlines
 
@@ -423,6 +428,7 @@ class MineralAdmin(NestedModelAdmin):
     def add_view(self, request, form_url="", extra_context=None):
         self.readonly_fields = [
             "id",
+            "slug",
             "seen",
             "description_",
             "created_at",

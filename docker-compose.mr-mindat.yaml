@@ -41,7 +41,7 @@ services:
         build:
             context: .
             dockerfile: ./compose/local/backend/Dockerfile
-        command: /start.sh
+        command: /start
         restart: unless-stopped
         links:
             - 'nginx-dev:api.dev.mindat.org'

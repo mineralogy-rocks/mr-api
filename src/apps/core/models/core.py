@@ -88,6 +88,9 @@ class NsFamily(BaseModel):
 
 
 class StatusGroup(BaseModel, Nameable):
+
+    slug = models.CharField(max_length=100, unique=True)
+
     class Meta:
         managed = False
         db_table = "status_group_list"
@@ -108,6 +111,7 @@ class Status(BaseModel):
     group = models.ForeignKey(StatusGroup, models.CASCADE, db_column="status_group_id", to_field="id")
     description_long = models.TextField(blank=True, null=True)
     description_short = models.CharField(max_length=100)
+    slug = models.CharField(max_length=200, unique=True)
 
     class Meta:
         managed = False

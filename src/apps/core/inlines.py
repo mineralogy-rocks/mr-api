@@ -1,6 +1,8 @@
 # -*- coding: UTF-8 -*-
 from django.contrib import admin
-from django.db.models import Q
+from django.forms import Textarea
+from django.db.models import Q, CharField, TextField
+from django.contrib.postgres.fields import ArrayField
 from django.utils.safestring import mark_safe
 from nested_admin import NestedStackedInline
 from nested_admin import NestedTabularInline
@@ -15,6 +17,7 @@ from .forms import MineralStatusFormset
 from .forms import ModelChoiceField
 from .models.core import Status
 from .models.mineral import MineralFormula
+from .models.mineral import MineralStructure
 from .models.mineral import MineralHistory
 from .models.mineral import MineralRelation
 from .models.mineral import MineralRelationSuggestion
@@ -26,7 +29,6 @@ class MineralHistoryInline(NestedStackedInline):
     model = MineralHistory
     form = MineralHistoryForm
 
-    extra = 0
     fields = [
         "discovery_year_min",
         "discovery_year_max",
@@ -47,11 +49,14 @@ class MineralHistoryInline(NestedStackedInline):
         "approval_year",
     ]
 
+    extra = 0
+    classes = ["collapse"]
+
     verbose_name = "Historical data"
     verbose_name_plural = "Historical data"
 
 
-class MineralFormulaInline(NestedTabularInline):
+class MineralFormulaInline(NestedStackedInline):
     model = MineralFormula
     form = MineralFormulaForm
 
@@ -68,11 +73,58 @@ class MineralFormulaInline(NestedTabularInline):
     ]
 
     extra = 0
+    classes = ["collapse"]
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         queryset = queryset.select_related("source")
         return queryset
+
+
+class MineralStructureInline(NestedStackedInline):
+    model = MineralStructure
+    fields = [
+        "structure",
+        "formula",
+        "calculated_formula",
+        "reference",
+        "_links",
+        "note",
+        "created_at",
+    ]
+    readonly_fields = [
+        "structure",
+        "_links",
+        "created_at",
+    ]
+
+    ordering = ["source", "created_at"]
+
+    classes = ["collapse"]
+    extra = 0
+
+    formfield_overrides = {
+        CharField: {'widget': Textarea(attrs={'rows': 1, 'cols': 80})},
+        TextField: {'widget': Textarea(attrs={'rows': 3, 'cols': 80})},
+        ArrayField: {'widget': Textarea(attrs={'rows': 3, 'cols': 80})},
+    }
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.select_related("source")
+        return queryset
+
+    @admin.display(description="Structure definition")
+    def structure(self, instance):
+        return mark_safe(
+            f"<b>a:</b> {instance.a} <b>b:</b> {instance.b} <b>c:</b> {instance.c} <b>alpha:</b> {instance.alpha} \
+              <b>beta:</b> {instance.beta} <b>gamma:</b> {instance.gamma} <b>volume:</b> {instance.volume}"
+        )
+
+    @admin.display(description="Links")
+    def _links(self, instance):
+        _links = instance.links or []
+        return mark_safe("<br>".join(['<a href=' + _link + ' target="_blank" rel="noopener noreferrer">' + _link + '</a>' for _link in _links]))
 
 
 class MineralRelationInline(NestedStackedInline):
@@ -269,6 +321,7 @@ class MineralStatusInline(NestedTabularInline):
     ]
 
     extra = 0
+    classes = ["collapse"]
 
     @admin.display(description="Author")
     def author_(self, instance):

@@ -42,7 +42,7 @@ services:
         build:
             context: .
             dockerfile: ./compose/local/backend/Dockerfile
-        command: /start.sh
+        command: /start
         restart: unless-stopped
         depends_on:
             - database

@@ -11,6 +11,11 @@ from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 from django.utils import timezone
 
+from ...constants import (
+    STATUS_UNCERTAIN_VARIETY,
+    STATUS_UNCERTAIN_SYNONYM,
+    STATUS_POLYTYPE,
+)
 from ...models.core import FormulaSource
 from ...models.core import Status
 from ...models.crystal import CrystalSystem
@@ -20,6 +25,8 @@ from ...models.mineral import MineralCrystallography
 from ...models.mineral import MineralFormula
 from ...models.mineral import MineralHistory
 from ...models.mineral import MineralStatus
+from ...models.mineral import MineralRelation
+from ...helpers import get_or_create_relation
 from ...utils import send_email
 from ...utils import shorten_text
 
@@ -40,6 +47,9 @@ class Command(BaseCommand):
         sync_log = MindatSync.objects.filter(is_successful=True).order_by("-created_at").first()
         formula_mindat = FormulaSource.objects.get(name="mindat.org")
         formula_ima = FormulaSource.objects.get(name="IMA")
+        status_uncertain_variety = Status.objects.get(status_id=STATUS_UNCERTAIN_VARIETY)
+        status_uncertain_synonym = Status.objects.get(status_id=STATUS_UNCERTAIN_SYNONYM)
+        status_polytype = Status.objects.get(status_id=STATUS_POLYTYPE)
 
         if sync_log:
             last_datetime = sync_log.created_at - timedelta(hours=3)
@@ -48,7 +58,7 @@ class Command(BaseCommand):
 
         is_successful = True
         last_datetime = datetime.strftime(last_datetime, "%Y-%m-%d %H:%M:%S")
-        # last_datetime = '2023-01-23 19:56:58'
+        # last_datetime = '2023-02-05 00:00:00'
         print(last_datetime)
 
         try:
@@ -103,8 +113,8 @@ class Command(BaseCommand):
                         name_ = entry["name"].strip()
                         is_updated, is_created = False, False
 
-                        mineral, created_ = Mineral.objects.get_or_create(name=name_)
-                        if created_:
+                        mineral, _created = Mineral.objects.get_or_create(name=name_)
+                        if _created:
                             is_updated, is_created = True, True
                             mineral.mindat_id = entry["id"]
                             mineral.ima_symbol = entry["ima_symbol"] or None
@@ -132,9 +142,46 @@ class Command(BaseCommand):
                         if entry["description"]:
                             entry["description"] = shorten_text(entry["description"], limit=500, html=True)
 
+                        _created = False
+                        if entry["variety_of"]:
+                            try:
+                                relation = Mineral.objects.get(mindat_id=entry["variety_of"])
+                                _created = get_or_create_relation(mineral, relation, status_uncertain_variety, 3)
+                            except Mineral.DoesNotExist:
+                                print("Entry with mindat_id={} not found.".format(entry["variety_of"]))
+                                continue
+                            except Mineral.MultipleObjectsReturned:
+                                print("Multiple entries with mindat_id={} found.".format(entry["variety_of"]))
+                                continue
+
+                        if entry["synonym_of"]:
+                            try:
+                                relation = Mineral.objects.get(mindat_id=entry["synonym_of"])
+                                _created = get_or_create_relation(mineral, relation, status_uncertain_synonym, 2)
+                            except Mineral.DoesNotExist:
+                                print("Entry with mindat_id={} not found.".format(entry["synonym_of"]))
+                                continue
+                            except Mineral.MultipleObjectsReturned:
+                                print("Multiple entries with mindat_id={} found.".format(entry["synonym_of"]))
+                                continue
+
+                        if entry["polytype_of"]:
+                            try:
+                                relation = Mineral.objects.get(mindat_id=entry["polytype_of"])
+                                _created = get_or_create_relation(mineral, relation, status_polytype, 4)
+                            except Mineral.DoesNotExist:
+                                print("Entry with mindat_id={} not found.".format(entry["polytype_of"]))
+                                continue
+                            except Mineral.MultipleObjectsReturned:
+                                print("Multiple entries with mindat_id={} found.".format(entry["polytype_of"]))
+                                continue
+
+                        if _created:
+                            is_updated = True
+
                         formula_note = entry["formula_note"] or None
                         if entry["formula"]:
-                            entry_, created_ = MineralFormula.objects.get_or_create(
+                            _, _created = MineralFormula.objects.get_or_create(
                                 mineral=mineral,
                                 formula=entry["formula"],
                                 source=formula_mindat,
@@ -142,11 +189,11 @@ class Command(BaseCommand):
                                     "note": formula_note,
                                 },
                             )
-                            if created_:
+                            if _created:
                                 is_updated = True
 
                         if entry["ima_formula"]:
-                            entry_, created_ = MineralFormula.objects.get_or_create(
+                            _, _created = MineralFormula.objects.get_or_create(
                                 mineral=mineral,
                                 formula=entry["ima_formula"],
                                 source=formula_ima,
@@ -155,13 +202,13 @@ class Command(BaseCommand):
                                 },
                             )
 
-                            if created_:
+                            if _created:
                                 is_updated = True
 
                         if entry["crystal_system"]:
                             try:
                                 crystal_system = CrystalSystem.objects.get(name=entry["crystal_system"].lower())
-                                entry_, updated_ = MineralCrystallography.objects.update_or_create(
+                                _, updated_ = MineralCrystallography.objects.update_or_create(
                                     mineral=mineral,
                                     defaults={
                                         "crystal_system": crystal_system,
@@ -180,7 +227,7 @@ class Command(BaseCommand):
                                 entry["approval_year"],
                             ]
                         ):
-                            entry_, updated_ = MineralHistory.objects.update_or_create(
+                            _, updated_ = MineralHistory.objects.update_or_create(
                                 mineral=mineral,
                                 defaults={
                                     "discovery_year": entry["discovery_year"] or None,
