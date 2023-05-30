@@ -31,9 +31,10 @@ from .ion import IonPosition
 
 
 class Mineral(Nameable, Creatable, Updatable):
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True, help_text="Slug used for retrieving through website.")
+    slug = models.SlugField(
+        max_length=255, unique=True, null=True, blank=True, help_text="Slug used for retrieving through website."
+    )
 
     note = models.TextField(
         blank=True,
@@ -146,7 +147,6 @@ class Mineral(Nameable, Creatable, Updatable):
 
 
 class MineralStatus(BaseModel, Creatable, Updatable):
-
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="direct_relations")
     status = models.ForeignKey(
         Status,
@@ -197,11 +197,12 @@ class MineralStatus(BaseModel, Creatable, Updatable):
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
-        MineralStatus.objects.filter(mineral=self.mineral, status=self.status, direct_status=(not self.direct_status)).delete()
+        MineralStatus.objects.filter(
+            mineral=self.mineral, status=self.status, direct_status=(not self.direct_status)
+        ).delete()
 
 
 class MineralRelation(BaseModel):
-
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id")
     status = models.ForeignKey(
         MineralStatus,
@@ -278,7 +279,6 @@ class MineralRelation(BaseModel):
 
 
 class MineralRelationSuggestion(BaseModel):
-
     mineral = models.ForeignKey(
         Mineral,
         models.CASCADE,
@@ -315,7 +315,6 @@ class MineralRelationSuggestion(BaseModel):
 
 
 class MineralFormula(BaseModel, Creatable):
-
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="formulas")
     formula = models.CharField(
         max_length=1000,
@@ -346,10 +345,15 @@ class MineralFormula(BaseModel, Creatable):
 
 
 class MineralStructure(BaseModel, Creatable, Updatable):
-
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="structures")
     cod = models.IntegerField(null=True, blank=True, db_column="cod_id", help_text="Open Crystallography Database id")
-    amcsd = models.CharField(max_length=50, null=True, blank=True, db_column="amcsd_id", help_text="American Mineralogist Crystal Structure Database id")
+    amcsd = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        db_column="amcsd_id",
+        help_text="American Mineralogist Crystal Structure Database id",
+    )
 
     source = models.ForeignKey(FormulaSource, models.CASCADE, db_column="source_id", related_name="structures")
 
@@ -370,10 +374,14 @@ class MineralStructure(BaseModel, Creatable, Updatable):
     space_group = models.CharField(max_length=100, null=True, blank=True, help_text="Space group")
 
     formula = models.CharField(max_length=1000, null=True, blank=True, help_text="Formula of the structure.")
-    calculated_formula = models.CharField(max_length=1000, null=True, blank=True, help_text="Calculated formula of the structure.")
+    calculated_formula = models.CharField(
+        max_length=1000, null=True, blank=True, help_text="Calculated formula of the structure."
+    )
 
     reference = models.TextField(null=True, blank=True, help_text="Reference of the structure.")
-    links = ArrayField(models.TextField(null=True, blank=True), null=True, blank=True, help_text="Links to other resources.")
+    links = ArrayField(
+        models.TextField(null=True, blank=True), null=True, blank=True, help_text="Links to other resources."
+    )
     note = models.TextField(null=True, blank=True, help_text="Note of the structure.")
 
     class Meta:
@@ -388,7 +396,6 @@ class MineralStructure(BaseModel, Creatable, Updatable):
 
 
 class MineralImpurity(BaseModel):
-
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id")
     ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id")
     ion_quantity = models.CharField(max_length=30, null=True, blank=True)
@@ -406,7 +413,6 @@ class MineralImpurity(BaseModel):
 
 
 class MineralIonTheoretical(BaseModel):
-
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="ions_theoretical")
     ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id", related_name="minerals_theoretical")
 
@@ -423,7 +429,6 @@ class MineralIonTheoretical(BaseModel):
 
 
 class MineralCrystallography(BaseModel):
-
     mineral = models.OneToOneField(Mineral, models.CASCADE, db_column="mineral_id", related_name="crystallography")
     crystal_system = models.ForeignKey(
         CrystalSystem,
@@ -458,7 +463,6 @@ class MineralCrystallography(BaseModel):
 
 
 class MineralCountry(BaseModel):
-
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id")
     country = models.ForeignKey(Country, models.CASCADE, db_column="country_id", related_name="minerals")
 
@@ -478,7 +482,6 @@ class MineralCountry(BaseModel):
 
 
 class MineralHistory(BaseModel):
-
     mineral = models.OneToOneField(Mineral, models.CASCADE, db_column="mineral_id", related_name="history")
     discovery_year_min = models.IntegerField(blank=True, null=True, help_text="Discovery year min ")
     discovery_year_max = models.IntegerField(
@@ -513,7 +516,6 @@ class MineralHistory(BaseModel):
 
 
 class MineralHierarchy(BaseModel):
-
     mineral = models.ForeignKey(
         Mineral,
         models.CASCADE,
@@ -541,7 +543,6 @@ class MineralHierarchy(BaseModel):
 
 
 class HierarchyView(BaseModel):
-
     mineral = models.ForeignKey(Mineral, models.DO_NOTHING, db_column="mineral_id", related_name="hierarchy")
     relation = models.ForeignKey(Mineral, models.DO_NOTHING, db_column="relation_id", related_name="inverse_hierarchy")
     is_parent = models.BooleanField()
@@ -567,7 +568,6 @@ class HierarchyView(BaseModel):
 
 
 class MineralIonPosition(BaseModel):
-
     mineral = models.ForeignKey(
         Mineral,
         models.CASCADE,
@@ -600,7 +600,6 @@ class MineralIonPosition(BaseModel):
 
 
 class MindatSync(BaseModel, Creatable):
-
     values = models.JSONField(blank=True, null=True)
     is_successful = models.BooleanField(default=True)
 
