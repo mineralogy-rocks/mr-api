@@ -6,7 +6,6 @@ from rest_framework import serializers
 
 from ..models.core import Status
 from ..models.crystal import CrystalSystem
-from ..models.mineral import HierarchyView
 from ..models.mineral import Mineral
 from ..models.mineral import MineralCrystallography
 from ..models.mineral import MineralFormula
