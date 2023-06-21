@@ -6,7 +6,8 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe
-from django.utils.text import Truncator, slugify
+from django.utils.text import Truncator
+from django.utils.text import slugify
 
 
 def formula_to_html(formula):
@@ -74,7 +75,7 @@ def shorten_text(text, limit=100, strip_html=False, html=False):
     return Truncator(text).chars(limit, truncate="...", html=html)
 
 
-def unique_slugify(instance, value, slug_field_name='slug', queryset=None, delimiter='-'):
+def unique_slugify(instance, value, slug_field_name="slug", queryset=None, delimiter="-"):
     """
     From snippet https://djangosnippets.org/snippets/690/
 
@@ -110,18 +111,18 @@ def unique_slugify(instance, value, slug_field_name='slug', queryset=None, delim
     next = 1
     while not slug or queryset.filter(**{slug_field_name: slug}):
         slug = original_slug
-        end = '%s%s' % (delimiter, next)
+        end = "%s%s" % (delimiter, next)
         if slug_len and len(slug) + len(end) > slug_len:
-            slug = slug[:slug_len - len(end)]
+            slug = slug[: slug_len - len(end)]
             slug = _slug_strip(slug, delimiter)
-        slug = '%s%s' % (slug, end)
+        slug = "%s%s" % (slug, end)
         next += 1
 
     setattr(instance, slug_field.attname, slug)
     return instance
 
 
-def _slug_strip(value, delimiter='-'):
+def _slug_strip(value, delimiter="-"):
     """
     From snippet https://djangosnippets.org/snippets/690/
 
@@ -131,18 +132,27 @@ def _slug_strip(value, delimiter='-'):
     If an alternate delimiter is used, it will also replace any instances of
     the default '-' delimiter with the new delimiter.
     """
-    delimiter = delimiter or ''
-    if delimiter == '-' or not delimiter:
-        re_del = '-'
+    delimiter = delimiter or ""
+    if delimiter == "-" or not delimiter:
+        re_del = "-"
     else:
-        re_del = '(?:-|%s)' % re.escape(delimiter)
+        re_del = "(?:-|%s)" % re.escape(delimiter)
     # Remove multiple instances and if an alternate delimiter is provided,
     # replace the default '-' delimiter.
     if delimiter != re_del:
-        value = re.sub('%s+' % re_del, delimiter, value)
+        value = re.sub("%s+" % re_del, delimiter, value)
     # Remove delimiter from the beginning and end of the slug.
     if delimiter:
-        if delimiter != '-':
+        if delimiter != "-":
             re_del = re.escape(delimiter)
-        value = re.sub(r'^%s+|%s+$' % (re_del, re_del), '', value)
+        value = re.sub(r"^%s+|%s+$" % (re_del, re_del), "", value)
     return value
+
+
+def add_label(value, uncertainty=None, label: str = "") -> str:
+    if value:
+        _label = f"{value}"
+        if uncertainty:
+            _label += f"±{uncertainty}"
+        return f"{_label}{label}"
+    return None
