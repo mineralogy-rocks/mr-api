@@ -107,6 +107,9 @@ class Mineral(Nameable, Creatable, Updatable):
     def __str__(self):
         return self.name
 
+    def is_grouping(self):
+        return self.statuses.filter(group=1).exists()
+
     def get_absolute_url(self):
         return reverse("core:mineral-detail", kwargs={"pk": self.id})
 
@@ -137,8 +140,8 @@ class Mineral(Nameable, Creatable, Updatable):
         else:
             return None
 
-    def short_description(self):
-        return shorten_text(self.description, limit=700) if self.description else None
+    def short_description(self, limit=700):
+        return shorten_text(self.description, limit=limit) if self.description else None
 
     def save(self, *args, **kwargs):
         if not self.slug:

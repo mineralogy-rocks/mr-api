@@ -3,19 +3,14 @@ import numpy as np
 import pandas as pd
 from dal import autocomplete
 from django.db import connection
-from django.db.models import Case
-from django.db.models import CharField
+from django.db.models import Avg
 from django.db.models import Count
-from django.db.models import Exists
 from django.db.models import F
-from django.db.models import OuterRef
+from django.db.models import Max
+from django.db.models import Min
 from django.db.models import Q
-from django.db.models import Value
-from django.db.models import When
-from django.db.models.functions import Coalesce
-from django.db.models.functions import Concat
 from django.db.models.functions import JSONObject
-from django.db.models.functions import Right
+from django.db.models.functions import Round
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework import status
@@ -33,6 +28,8 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_api_key.permissions import HasAPIKey
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from .annotations import _annotate__is_grouping
+from .annotations import _annotate__ns_index
 from .filters import MineralFilter
 from .filters import NickelStrunzFilter
 from .filters import StatusFilter
@@ -46,6 +43,7 @@ from .models.mineral import MineralCrystallography
 from .models.mineral import MineralFormula
 from .models.mineral import MineralRelation
 from .models.mineral import MineralStatus
+from .models.mineral import MineralStructure
 from .pagination import CustomCursorPagination
 from .queries import GET_RELATIONS_QUERY
 from .queries import LIST_VIEW_QUERY
@@ -54,12 +52,14 @@ from .serializers.core import NsFamilyListSerializer
 from .serializers.core import NsSubclassListSerializer
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import BaseMineralRelationsSerializer
+from .serializers.mineral import MineralAnalyticalDataSerializer
 from .serializers.mineral import MineralCrystallographyRelatedSerializer
 from .serializers.mineral import MineralFormulaRelatedSerializer
 from .serializers.mineral import MineralListSecondarySerializer
 from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRelationsSerializer
 from .serializers.mineral import MineralRetrieveSerializer
+from .utils import add_label
 
 
 class MineralSearch(autocomplete.Select2QuerySetView):
@@ -259,7 +259,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         "name",
     ]
     ordering = [
-        "-name",
+        "id",
     ]
 
     filter_backends = [
@@ -293,9 +293,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         """
         if self.paginator is None:
             return None
-        if self.action in [
-            "list",
-        ]:
+        if self.action in ["list"]:
             return self.paginator.paginate_raw_queryset(queryset, self.request, view=self, query=query)
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
 
@@ -311,26 +309,8 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         queryset, _queryset = self.get_queryset(), self._get_secondary_queryset()
         queryset = self.filter_queryset(queryset)
 
-        _is_grouping = MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(status__group=1))
-
-        queryset = queryset.annotate(
-            is_grouping=Exists(_is_grouping),
-            ns_index_=Case(
-                When(
-                    ns_class__isnull=False,
-                    then=Concat(
-                        "ns_class__id",
-                        Value("."),
-                        Coalesce(Right("ns_subclass__ns_subclass", 1), Value("0")),
-                        Coalesce(Right("ns_family__ns_family", 1), Value("0")),
-                        Value("."),
-                        Coalesce("ns_mineral", Value("0")),
-                        output_field=CharField(),
-                    ),
-                ),
-                default=None,
-            ),
-        )
+        queryset = _annotate__is_grouping(queryset)
+        queryset = _annotate__ns_index(queryset, key="ns_index_")
 
         queryset = queryset.defer(
             "ns_class",
@@ -573,13 +553,15 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             "related_minerals",
         ]:
             return MineralRelationsSerializer
+        elif self.action in ["analytical_data"]:
+            return MineralAnalyticalDataSerializer
 
         return super().get_serializer_class()
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.seen += 1
-        instance.save()
+        instance.save(update_fields=["seen"])
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
@@ -607,8 +589,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         return obj
 
     def _is_grouping(self, instance):
-        _is_grouping = MineralStatus.objects.filter(mineral=instance, status__group=1).exists()
-        return _is_grouping
+        return MineralStatus.objects.filter(mineral=instance, status__group=1).exists()
 
     def _get_related_objects(self, instance, group):
         """
@@ -709,3 +690,47 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request)
         return Response(serializer_cls(queryset, many=True).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"], url_path="analytical-data")
+    def analytical_data(self, request, *args, **options):
+        instance = self.get_object()
+        queryset = MineralStructure.objects.filter(mineral=instance)
+        serializer_cls = self.get_serializer_class()
+
+        _aggregations = {}
+        _fields = ["a", "b", "c", "alpha", "beta", "gamma", "volume"]
+        for _field in _fields:
+            _aggregations.update(
+                {f"min_{_field}": Min(_field), f"max_{_field}": Max(_field), f"avg_{_field}": Round(Avg(_field), 4)}
+            )
+        _summary_queryset = queryset.aggregate(**_aggregations)
+
+        _summary = {}
+        for _field in ["a", "b", "c", "alpha", "beta", "gamma", "volume"]:
+            _label = "Å"
+            if _field in ["alpha", "beta", "gamma"]:
+                _label = "°"
+            elif _field == "volume":
+                _label = "Å³"
+            _summary[_field] = {
+                "min": add_label(_summary_queryset[f"min_{_field}"], label=_label),
+                "max": add_label(_summary_queryset[f"max_{_field}"], label=_label),
+                "avg": add_label(_summary_queryset[f"avg_{_field}"], label=_label),
+            }
+
+        _count = queryset.count()
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            data = self.get_serializer(page, many=True).data
+            response = self.get_paginated_response(data)
+            response.data["count"] = _count
+            response.data["summary"] = _summary
+            response.data.move_to_end("count", last=False)
+            return response
+
+        data = serializer_cls(queryset, many=True).data
+        data["summary"] = _summary
+        data["count"] = _count
+        data.move_to_end("count", last=False)
+        return Response(data, status=status.HTTP_200_OK)
