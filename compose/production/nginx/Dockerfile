@@ -1,7 +1,7 @@
 # Build stage
 FROM nginx:1.17.10-alpine AS build
 
-# COPY ./nginx/prod/ /etc/nginx/
+COPY ./nginx/prod/ /etc/nginx/
 
 RUN chown -R nginx:nginx /etc/nginx
 
@@ -9,7 +9,7 @@ RUN chown -R nginx:nginx /etc/nginx
 # Production stage
 FROM nginx:1.17.10-alpine
 
-# COPY --from=build /etc/nginx /etc/nginx
+COPY --from=build /etc/nginx /etc/nginx
 
 COPY --chown=nginx:nginx ./compose/production/nginx/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
