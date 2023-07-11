@@ -1,7 +1,7 @@
 asgiref==3.5.2
 astroid==2.12.12
 beautifulsoup4==4.11.1
-black==22.12.0
+black==23.7.0
 boto3==1.26.4
 botocore==1.29.58
 certifi==2022.9.24
