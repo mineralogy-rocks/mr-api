@@ -25,6 +25,5 @@ services:
       AWS_EMAIL: ${AWS_EMAIL}
       DOMAIN: ${DOMAIN}
     volumes:
-      - .services/post-renew.sh:/post-renew.sh
       - ./nginx/certbot:/etc/letsencrypt
-    command: ['renew', '--disable-hook-validation', '--deploy-hook', 'post-renew.sh']
+    command: ['renew', '--disable-hook-validation', '--deploy-hook', '.services/post-renew.sh']
