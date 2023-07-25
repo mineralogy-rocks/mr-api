@@ -5,6 +5,7 @@ from django.db.models import Max
 from django.db.models import Prefetch
 from django.db.models import Q
 from django.db.models import Value
+from django.db.models.expressions import RawSQL
 from rest_framework import serializers
 
 from ..models.core import Status
@@ -14,6 +15,7 @@ from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHierarchy
 from ..models.mineral import MineralHistory
 from ..models.mineral import MineralStructure
+from ..serializers.core import StatusListWithMineralSerializer
 from ..utils import add_label
 from .core import CountryListSerializer
 from .core import FormulaSourceSerializer
@@ -133,6 +135,7 @@ class MineralSmallSerializer(serializers.ModelSerializer):
 
 
 class MineralRetrieveSerializer(serializers.ModelSerializer):
+    statuses = StatusListWithMineralSerializer(many=True)
     history = MineralHistorySerializer()
     formulas = MineralFormulaSerializer(many=True)
     relations = MineralSmallSerializer(many=True)
@@ -145,6 +148,7 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
             "slug",
             "mindat_id",
             "ns_index",
+            "statuses",
             "description",
             "is_grouping",
             "seen",
@@ -167,7 +171,33 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
         ]
 
         prefetch_related = [
-            models.Prefetch("statuses", Status.objects.select_related("group")),
+            models.Prefetch(
+                "statuses",
+                (
+                    Status.objects.select_related("group")
+                    .extra(where=["mineral_status.direct_status=True"])
+                    .annotate(
+                        related_mineral=RawSQL(
+                            """
+                                                SELECT JSONB_BUILD_OBJECT(
+                                                    'slug', ml.slug,
+                                                    'name', ml.name,
+                                                    'mindat_id', ml.mindat_id,
+                                                    'statuses', ARRAY(
+                                                        SELECT sl.status_id FROM mineral_status ms
+                                                        INNER JOIN status_list sl ON ms.status_id = sl.id
+                                                        WHERE ms.mineral_id = ml.id AND ms.direct_status
+                                                    )
+                                                )::json
+                                                FROM mineral_log ml
+                                                INNER JOIN mineral_relation mr ON ml.id = mr.relation_id
+                                                WHERE mr.mineral_status_id = mineral_status.id
+                                                """,
+                            [],
+                        )
+                    )
+                ),
+            ),
             models.Prefetch("formulas", MineralFormula.objects.select_related("source")),
             models.Prefetch(
                 "relations",
@@ -358,7 +388,6 @@ class BaseMineralRelationsSerializer(serializers.Serializer):
     @staticmethod
     def setup_eager_loading(**kwargs):
         queryset, request = kwargs.get("queryset"), kwargs.get("request")
-        print(request)
         select_related = []
         prefetch_related = [
             Prefetch("formulas", MineralFormula.objects.select_related("source").filter(source=1), to_attr="_formulas"),
@@ -380,7 +409,6 @@ class MineralRelationsSerializer(BaseMineralRelationsSerializer):
     @staticmethod
     def setup_eager_loading(**kwargs):
         queryset, request = kwargs.get("queryset"), kwargs.get("request")
-        print(request)
         select_related = []
         prefetch_related = [
             Prefetch(

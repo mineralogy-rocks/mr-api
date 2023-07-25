@@ -22,7 +22,6 @@ class StatusGroupSerializer(serializers.ModelSerializer):
 
 
 class StatusListSerializer(serializers.ModelSerializer):
-
     group = StatusGroupSerializer()
 
     class Meta:
@@ -46,8 +45,15 @@ class StatusListSerializer(serializers.ModelSerializer):
         return queryset
 
 
-class CountryListSerializer(serializers.ModelSerializer):
+class StatusListWithMineralSerializer(StatusListSerializer):
+    mineral = serializers.JSONField(source="related_mineral")
 
+    class Meta:
+        model = Status
+        fields = StatusListSerializer.Meta.fields + ["mineral"]
+
+
+class CountryListSerializer(serializers.ModelSerializer):
     iso_code = serializers.CharField(source="alpha_2")
 
     class Meta:
@@ -95,7 +101,6 @@ class NsFamilyListSerializer(CountsFieldMixin, serializers.ModelSerializer):
 
 
 class NsSubclassListSerializer(CountsFieldMixin, serializers.ModelSerializer):
-
     counts = serializers.SerializerMethodField()
 
     class Meta:
@@ -122,7 +127,6 @@ class NsSubclassListSerializer(CountsFieldMixin, serializers.ModelSerializer):
 
 
 class NsSubclassFamilyListSerializer(NsSubclassListSerializer):
-
     families = NsFamilyListSerializer(many=True)
 
     class Meta:
@@ -131,7 +135,6 @@ class NsSubclassFamilyListSerializer(NsSubclassListSerializer):
 
 
 class NsClassSubclassFamilyListSerializer(CountsFieldMixin, serializers.ModelSerializer):
-
     counts = serializers.SerializerMethodField()
     subclasses = NsSubclassFamilyListSerializer(many=True)
 
