@@ -45,13 +45,6 @@ class StatusListSerializer(serializers.ModelSerializer):
         return queryset
 
 
-class StatusListWithMineralSerializer(StatusListSerializer):
-    mineral = serializers.JSONField(source="related_mineral")
-
-    class Meta:
-        model = Status
-        fields = StatusListSerializer.Meta.fields + ["mineral"]
-
 
 class CountryListSerializer(serializers.ModelSerializer):
     iso_code = serializers.CharField(source="alpha_2")

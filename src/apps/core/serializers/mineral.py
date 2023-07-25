@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 from django.contrib.humanize.templatetags.humanize import naturalday
+from django.db import connection
 from django.db import models
 from django.db.models import Max
 from django.db.models import Prefetch
@@ -15,7 +16,7 @@ from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHierarchy
 from ..models.mineral import MineralHistory
 from ..models.mineral import MineralStructure
-from ..serializers.core import StatusListWithMineralSerializer
+from ..serializers.core import StatusListSerializer
 from ..utils import add_label
 from .core import CountryListSerializer
 from .core import FormulaSourceSerializer
@@ -135,7 +136,7 @@ class MineralSmallSerializer(serializers.ModelSerializer):
 
 
 class MineralRetrieveSerializer(serializers.ModelSerializer):
-    statuses = StatusListWithMineralSerializer(many=True)
+    statuses = StatusListSerializer(many=True)
     history = MineralHistorySerializer()
     formulas = MineralFormulaSerializer(many=True)
     relations = MineralSmallSerializer(many=True)
@@ -172,31 +173,7 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
 
         prefetch_related = [
             models.Prefetch(
-                "statuses",
-                (
-                    Status.objects.select_related("group")
-                    .extra(where=["mineral_status.direct_status=True"])
-                    .annotate(
-                        related_mineral=RawSQL(
-                            """
-                                                SELECT JSONB_BUILD_OBJECT(
-                                                    'slug', ml.slug,
-                                                    'name', ml.name,
-                                                    'mindat_id', ml.mindat_id,
-                                                    'statuses', ARRAY(
-                                                        SELECT sl.status_id FROM mineral_status ms
-                                                        INNER JOIN status_list sl ON ms.status_id = sl.id
-                                                        WHERE ms.mineral_id = ml.id AND ms.direct_status
-                                                    )
-                                                )::json
-                                                FROM mineral_log ml
-                                                INNER JOIN mineral_relation mr ON ml.id = mr.relation_id
-                                                WHERE mr.mineral_status_id = mineral_status.id
-                                                """,
-                            [],
-                        )
-                    )
-                ),
+                "statuses",Status.objects.select_related("group").extra(where=["mineral_status.direct_status=True"])
             ),
             models.Prefetch("formulas", MineralFormula.objects.select_related("source")),
             models.Prefetch(
@@ -214,16 +191,18 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         _relations = data.pop("relations")
+        _ns_relations = []
 
-        _ns_related = (
-            Mineral.objects.filter(Q(statuses__group=11) & Q(ns_family=instance.ns_family) & ~Q(id=instance.id))
-            .prefetch_related("formulas__source")
-            .annotate(status_group=Value(11))
-            .distinct()
-        )
-        _ns_related = _ns_related.order_by("name")
-        _ns_related = _ns_related.only("name", "slug", "description")
-        _ns_relations = MineralSmallSerializer(_ns_related, many=True, context=self.context).data
+        if instance.ns_family:
+            _ns_related = (
+                Mineral.objects.filter(Q(statuses__group=11) & Q(ns_family=instance.ns_family) & ~Q(id=instance.id))
+                .prefetch_related("formulas__source")
+                .annotate(status_group=Value(11))
+                .distinct()
+            )
+            _ns_related = _ns_related.order_by("name")
+            _ns_related = _ns_related.only("name", "slug", "description")
+            _ns_relations = MineralSmallSerializer(_ns_related, many=True, context=self.context).data
         _relations = _relations + _ns_relations
         _relations = sorted(_relations, key=lambda x: x["status_group"])
 

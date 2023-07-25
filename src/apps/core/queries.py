@@ -165,7 +165,7 @@ LIST_VIEW_QUERY = """
 """
 
 
-GET_RELATIONS_QUERY = """
+GET_INHERITANCE_CHAIN_LIST_QUERY = """
               SELECT
                     temp.id AS base_mineral,
                     temp.relation_id AS relation,
@@ -198,4 +198,41 @@ GET_RELATIONS_QUERY = """
                     )
                     SELECT cte.* FROM cte
                 ) temp;
+"""
+
+
+GET_INHERITANCE_CHAIN_RETRIEVE_QUERY = """
+              SELECT
+                    ml.mindat_id,
+                    ml.id,
+                    ARRAY(
+                        SELECT DISTINCT sl.status_id
+                        FROM mineral_status ms
+                        INNER JOIN status_list sl ON ms.status_id = sl.id
+                        WHERE ms.mineral_id = temp.relation_id AND ms.direct_status
+                    ) AS statuses,
+                    temp.depth
+                FROM (
+                    WITH RECURSIVE cte(id, mineral_id, relation_id, DEPTH) AS (
+                        SELECT
+                            mr.mineral_id,
+                            mr.mineral_id,
+                            mr.relation_id,
+                            0
+                        FROM mineral_relation mr
+                        INNER JOIN mineral_status ms ON mr.mineral_status_id = ms.id AND ms.direct_status
+                        WHERE ms.status_id <> 1 AND mr.mineral_id IN %s
+                        UNION
+                        SELECT
+                            cte.id,
+                            mr.mineral_id,
+                            mr.relation_id,
+                            DEPTH + 1
+                        FROM mineral_relation mr
+                        INNER JOIN cte ON mr.mineral_id = cte.relation_id
+                        INNER JOIN mineral_status ms ON mr.mineral_status_id = ms.id AND ms.direct_status
+                    )
+                    SELECT cte.* FROM cte
+                ) temp
+                INNER JOIN mineral_log ml ON temp.relation_id = ml.id;
 """
