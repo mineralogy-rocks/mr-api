@@ -45,7 +45,7 @@ from .models.mineral import MineralRelation
 from .models.mineral import MineralStatus
 from .models.mineral import MineralStructure
 from .pagination import CustomCursorPagination
-from .queries import GET_INHERITANCE_CHAIN_LIST_QUERY, GET_INHERITANCE_CHAIN_RETRIEVE_QUERY
+from .queries import GET_INHERITANCE_CHAIN_LIST_QUERY
 from .queries import LIST_VIEW_QUERY
 from .serializers.core import NsClassSubclassFamilyListSerializer
 from .serializers.core import NsFamilyListSerializer
@@ -560,7 +560,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        inheritance_chain = []
+        # inheritance_chain = []
 
         # instance.seen += 1
         # instance.save(update_fields=["seen"])
@@ -568,15 +568,15 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         serializer = self.get_serializer(instance)
         data = serializer.data
 
-        # calculate inheritance chain only for synonyms [2], varieties [3], and polytypes [4]
-        if any([status for status in data['statuses'] if status['group']['id'] in [2, 3, 4]]):
-            with connection.cursor() as cursor:
-                cursor.execute(GET_INHERITANCE_CHAIN_RETRIEVE_QUERY, [(instance.id,)])
-                _inheritance_chain = cursor.fetchall()
-                fields = [x[0] for x in cursor.description]
-                inheritance_chain = [dict(zip(fields, x)) for x in _inheritance_chain]
+        # # calculate inheritance chain only for synonyms [2], varieties [3], and polytypes [4]
+        # if any([status for status in data['statuses'] if status['group']['id'] in [2, 3, 4]]):
+        #     with connection.cursor() as cursor:
+        #         cursor.execute(GET_INHERITANCE_CHAIN_RETRIEVE_QUERY, [(instance.id,)])
+        #         _inheritance_chain = cursor.fetchall()
+        #         fields = [x[0] for x in cursor.description]
+        #         inheritance_chain = [dict(zip(fields, x)) for x in _inheritance_chain]
 
-        data["inheritance_chain"] = inheritance_chain
+        # data["inheritance_chain"] = inheritance_chain
         return Response(data)
 
     def _get_raw_object(self):
