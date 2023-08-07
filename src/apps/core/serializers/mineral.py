@@ -159,6 +159,7 @@ class MineralSmallSerializer(serializers.ModelSerializer):
 
 class MineralRetrieveSerializer(serializers.ModelSerializer):
     statuses = StatusListSerializer(many=True)
+    crystallography = MineralCrystallographySerializer()
     history = MineralHistorySerializer()
     formulas = MineralFormulaSerializer(many=True)
     relations = MineralSmallSerializer(many=True)
@@ -172,6 +173,7 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
             "mindat_id",
             "ns_index",
             "statuses",
+            "crystallography",
             "description",
             "is_grouping",
             "seen",
@@ -188,6 +190,9 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
 
         select_related = [
             "history",
+            "crystallography__crystal_system",
+            "crystallography__crystal_class",
+            "crystallography__space_group",
             "ns_class",
             "ns_subclass",
             "ns_family",
@@ -241,22 +246,22 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
 
         _flat_ids = [x["id"] for x in inheritance_chain]
         _inherited_formulas_data = MineralFormula.objects.filter(mineral__in=_flat_ids).select_related("source")
-        _inherited_crystal_systems_data = (
+        _inherited_crystalography_data = (
             MineralCrystallography.objects.filter(mineral__in=_flat_ids)
             .select_related("crystal_system", "crystal_class", "space_group")
             .only("id", "mineral", "crystal_system", "crystal_class", "space_group")
         )
         _inherited_formulas = MineralFormulaSerializer(_inherited_formulas_data, many=True, context=self.context).data
-        _inherited_crystal_systems_data = MineralCrystallographySerializer(
-            _inherited_crystal_systems_data, many=True, context=self.context
+        _inherited_crystalography_data = MineralCrystallographySerializer(
+            _inherited_crystalography_data, many=True, context=self.context
         ).data
 
         for _chain in inheritance_chain:
             _chain["formulas"] = [x for x in _inherited_formulas if x["mineral"] == _chain["id"]]
-            _crystal_system = [x for x in _inherited_crystal_systems_data if x["mineral"] == _chain["id"]]
-            _chain["crystal_system"] = None
-            if _crystal_system:
-                _chain["crystal_system"] = _crystal_system[0]
+            _crystallography = [x for x in _inherited_crystalography_data if x["mineral"] == _chain["id"]]
+            _chain["crystallography"] = None
+            if _crystallography:
+                _chain["crystallography"] = _crystallography[0]
 
         data["inheritance_chain"] = inheritance_chain
         return data
