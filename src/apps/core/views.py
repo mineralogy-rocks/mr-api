@@ -51,7 +51,7 @@ from .serializers.core import NsClassSubclassFamilyListSerializer
 from .serializers.core import NsFamilyListSerializer
 from .serializers.core import NsSubclassListSerializer
 from .serializers.core import StatusListSerializer
-from .serializers.mineral import BaseMineralRelationsSerializer
+from .serializers.mineral import BaseMineralRelationsSerializer, RetrieveSerializer
 from .serializers.mineral import GroupingRetrieveSerializer
 from .serializers.mineral import MineralAnalyticalDataSerializer
 from .serializers.mineral import MineralCrystallographyRelatedSerializer
@@ -540,14 +540,17 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         return queryset
 
-    def get_serializer_class(self, is_secondary=False):
+    def get_serializer_class(self, is_secondary=False, is_grouping=False):
         if is_secondary:
             return MineralListSecondarySerializer
 
         if self.action in ["list"]:
             return MineralListSerializer
         elif self.action in ["retrieve"]:
-            return MineralRetrieveSerializer
+            return RetrieveSerializer
+            # if is_grouping:
+            #     return GroupingRetrieveSerializer
+            # return MineralRetrieveSerializer
         elif self.action in [
             "grouping_members",
             "relations",
@@ -559,17 +562,38 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         return super().get_serializer_class()
 
+
     def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
         # instance.seen += 1
         # instance.save(update_fields=["seen"])
-        if instance.is_grouping:
-            serializer = GroupingRetrieveSerializer(instance)
-        else:
-            serializer = self.get_serializer(instance)
+
+        queryset = self.queryset.all()
+
+        # Perform the lookup filtering.
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+
+        assert lookup_url_kwarg in self.kwargs, (
+            'Expected view %s to be called with a URL keyword argument '
+            'named "%s". Fix your URL conf, or set the `.lookup_field` '
+            'attribute on the view correctly.' %
+            (self.__class__.__name__, lookup_url_kwarg)
+        )
+
+        filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
+        _instance = get_object_or_404(queryset, **filter_kwargs)
+
+        # May raise a permission denied
+        self.check_object_permissions(self.request, _instance)
+
+        _is_grouping = _instance.is_grouping()
+        serializer_cls = self.get_serializer_class(is_grouping=_is_grouping)
+        queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request, is_grouping=_is_grouping)
+        instance = queryset.get(id=_instance.id)
+        serializer = serializer_cls(instance, context={"is_grouping": _is_grouping, "request": request})
 
         data = serializer.data
         return Response(data)
+
 
     def _get_raw_object(self):
         """

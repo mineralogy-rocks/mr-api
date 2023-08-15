@@ -108,7 +108,7 @@ class Mineral(Nameable, Creatable, Updatable):
         return self.name
 
     def is_grouping(self):
-        return self.statuses.filter(group=1).exists()
+        return self.statuses.filter(group=1, minerals__direct_status=True).exists()
 
     def get_absolute_url(self):
         return reverse("core:mineral-detail", kwargs={"pk": self.id})

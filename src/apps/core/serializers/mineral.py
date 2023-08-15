@@ -162,11 +162,70 @@ class MineralSmallSerializer(serializers.ModelSerializer):
         return instance.short_description(100)
 
 
+
+class RetrieveSerializer(serializers.Serializer):
+    '''
+    Outputs mineral or grouping data depending on the context
+    '''
+
+    def to_representation(self, instance):
+        is_grouping = self.context.get("is_grouping", False)
+        if is_grouping:
+            data = GroupingRetrieveSerializer(instance, context=self.context).data
+        else:
+            data = MineralRetrieveSerializer(instance, context=self.context).data
+        data["is_grouping"] = is_grouping
+        return data
+
+
+    @staticmethod
+    def setup_eager_loading(**kwargs):
+        queryset, is_grouping = kwargs.get("queryset"), kwargs.get("is_grouping")
+
+        select_related = [
+            "history",
+        ]
+        prefetch_related = [
+            models.Prefetch(
+                "statuses", Status.objects.select_related("group").extra(where=["mineral_status.direct_status=True"])
+            ),
+            models.Prefetch("formulas", MineralFormula.objects.select_related("source")),
+        ]
+
+        if is_grouping:
+            pass
+        else:
+            select_related += [
+                "crystallography__crystal_system",
+                "crystallography__crystal_class",
+                "crystallography__space_group",
+                "ns_class",
+                "ns_subclass",
+                "ns_family",
+            ]
+
+            prefetch_related += [
+                models.Prefetch(
+                    "relations",
+                    Mineral.objects.prefetch_related("direct_relations", "formulas__source")
+                    .filter(statuses__group__in=[2, 3], direct_relations__direct_status=True)
+                    .annotate(status_group=Max("statuses__group"))
+                    .distinct(),
+                ),
+            ]
+
+        queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
+        return queryset
+
+
+
 class GroupingRetrieveSerializer(serializers.ModelSerializer):
+    history = MineralHistorySerializer()
     statuses = StatusListSerializer(many=True)
     crystallography = serializers.SerializerMethodField()
-    history = MineralHistorySerializer()
+    crystal_systems = serializers.SerializerMethodField()
     formulas = MineralFormulaSerializer(many=True)
+
     structures = serializers.SerializerMethodField()
     elements = serializers.SerializerMethodField()
 
@@ -179,8 +238,8 @@ class GroupingRetrieveSerializer(serializers.ModelSerializer):
             "mindat_id",
             "statuses",
             "crystallography",
+            "crystal_systems",
             "description",
-            "is_grouping",
             "seen",
             "history",
             "formulas",
@@ -190,23 +249,9 @@ class GroupingRetrieveSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
-    @staticmethod
-    def setup_eager_loading(**kwargs):
-        queryset = kwargs.get("queryset")
-
-        select_related = [
-            "history",
-        ]
-
-        prefetch_related = [
-            models.Prefetch(
-                "statuses", Status.objects.select_related("group").extra(where=["mineral_status.direct_status=True"])
-            ),
-            models.Prefetch("formulas", MineralFormula.objects.select_related("source")),
-        ]
-
-        queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
-        return queryset
+    def get_crystal_systems(self, instance):
+        _members = self._get_members(instance)
+        return None
 
     def _get_members(self, instance):
         if not hasattr(self, "_members"):
@@ -273,6 +318,7 @@ class GroupingRetrieveSerializer(serializers.ModelSerializer):
         return elements
 
 
+
 class MineralRetrieveSerializer(serializers.ModelSerializer):
     statuses = StatusListSerializer(many=True)
     crystallography = MineralCrystallographySerializer()
@@ -291,7 +337,6 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
             "statuses",
             "crystallography",
             "description",
-            "is_grouping",
             "seen",
             "history",
             "formulas",
@@ -299,37 +344,6 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-
-    @staticmethod
-    def setup_eager_loading(**kwargs):
-        queryset = kwargs.get("queryset")
-
-        select_related = [
-            "history",
-            "crystallography__crystal_system",
-            "crystallography__crystal_class",
-            "crystallography__space_group",
-            "ns_class",
-            "ns_subclass",
-            "ns_family",
-        ]
-
-        prefetch_related = [
-            models.Prefetch(
-                "statuses", Status.objects.select_related("group").extra(where=["mineral_status.direct_status=True"])
-            ),
-            models.Prefetch("formulas", MineralFormula.objects.select_related("source")),
-            models.Prefetch(
-                "relations",
-                Mineral.objects.prefetch_related("direct_relations", "formulas__source")
-                .filter(statuses__group__in=[2, 3], direct_relations__direct_status=True)
-                .annotate(status_group=Max("statuses__group"))
-                .distinct(),
-            ),
-        ]
-
-        queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
-        return queryset
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -382,23 +396,24 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
                 _chain["crystallography"] = _crystallography[0]
 
         data["inheritance_chain"] = inheritance_chain
-        data["structures"], data["elements"] = self._get_analytics(instance, _horizontal_relations)
+        data["structures"], data["elements"] = self._get_stats(instance, _horizontal_relations)
         return data
 
-    def _get_analytics(self, instance, relations):
-        _structures = MineralStructure.objects.filter(mineral__in=[instance.id, *relations])
+    def _get_stats(self, instance, relations):
+        _horizontal_structures_ids = list(MineralStructure.objects.filter(mineral__in=[instance.id, *relations]).only('id').values_list('id', flat=True))
         structures = None
         elements = None
-        if _structures:
+
+        if _horizontal_structures_ids:
             _aggregations = {}
             _fields = ["a", "b", "c", "alpha", "beta", "gamma", "volume"]
             for _field in _fields:
                 _aggregations.update(
                     {f"min_{_field}": Min(_field), f"max_{_field}": Max(_field), f"avg_{_field}": Round(Avg(_field), 4)}
                 )
-            _summary_queryset = _structures.aggregate(**_aggregations)
+            _summary_queryset = MineralStructure.objects.filter(id__in=_horizontal_structures_ids).aggregate(**_aggregations)
             structures = {
-                "count": _structures.count(),
+                "count": len(_horizontal_structures_ids),
             }
             for _field in ["a", "b", "c", "alpha", "beta", "gamma", "volume"]:
                 structures[_field] = {
@@ -406,13 +421,13 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
                     "max": _summary_queryset[f"max_{_field}"],
                     "avg": _summary_queryset[f"avg_{_field}"],
                 }
-            _structures = (
-                _structures.annotate(element=RawSQL("UNNEST(regexp_matches(formula, '[A-Z][a-z]?', 'g'))", []))
+            _elements = (
+                MineralStructure.objects.filter(id__in=_horizontal_structures_ids).annotate(element=RawSQL("UNNEST(regexp_matches(formula, '[A-Z][a-z]?', 'g'))", []))
                 .values("element")
                 .annotate(count=Count("id", distinct=True))
                 .order_by("element")
             )
-            elements = _structures.values("element", "count")
+            elements = _elements.values("element", "count")
         return structures, elements
 
 
