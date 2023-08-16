@@ -51,15 +51,14 @@ from .serializers.core import NsClassSubclassFamilyListSerializer
 from .serializers.core import NsFamilyListSerializer
 from .serializers.core import NsSubclassListSerializer
 from .serializers.core import StatusListSerializer
-from .serializers.mineral import BaseMineralRelationsSerializer, RetrieveSerializer
-from .serializers.mineral import GroupingRetrieveSerializer
+from .serializers.mineral import BaseMineralRelationsSerializer
 from .serializers.mineral import MineralAnalyticalDataSerializer
 from .serializers.mineral import MineralCrystallographyRelatedSerializer
 from .serializers.mineral import MineralFormulaRelatedSerializer
 from .serializers.mineral import MineralListSecondarySerializer
 from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRelationsSerializer
-from .serializers.mineral import MineralRetrieveSerializer
+from .serializers.mineral import RetrieveSerializer
 from .utils import add_label
 
 
@@ -548,9 +547,6 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             return MineralListSerializer
         elif self.action in ["retrieve"]:
             return RetrieveSerializer
-            # if is_grouping:
-            #     return GroupingRetrieveSerializer
-            # return MineralRetrieveSerializer
         elif self.action in [
             "grouping_members",
             "relations",
@@ -562,7 +558,6 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         return super().get_serializer_class()
 
-
     def retrieve(self, request, *args, **kwargs):
         # instance.seen += 1
         # instance.save(update_fields=["seen"])
@@ -573,10 +568,9 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
 
         assert lookup_url_kwarg in self.kwargs, (
-            'Expected view %s to be called with a URL keyword argument '
+            "Expected view %s to be called with a URL keyword argument "
             'named "%s". Fix your URL conf, or set the `.lookup_field` '
-            'attribute on the view correctly.' %
-            (self.__class__.__name__, lookup_url_kwarg)
+            "attribute on the view correctly." % (self.__class__.__name__, lookup_url_kwarg)
         )
 
         filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
@@ -593,7 +587,6 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         data = serializer.data
         return Response(data)
-
 
     def _get_raw_object(self):
         """
