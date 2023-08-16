@@ -2,14 +2,8 @@
 from django.contrib.humanize.templatetags.humanize import naturalday
 from django.db import connection
 from django.db import models
-from django.db.models import Avg
-from django.db.models import Count
-from django.db.models import F
 from django.db.models import Max
-from django.db.models import Min
 from django.db.models import Prefetch
-from django.db.models.expressions import RawSQL
-from django.db.models.functions import Round
 from rest_framework import serializers
 
 from ..models.core import Status
@@ -27,6 +21,8 @@ from .core import CountryListSerializer
 from .core import FormulaSourceSerializer
 from .crystal import CrystalClassSerializer
 from .crystal import CrystalSystemSerializer
+from ..mixins.serializers import SummarySerializerMixin
+
 from .crystal import SpaceGroupSerializer
 
 
@@ -191,7 +187,15 @@ class RetrieveSerializer(serializers.Serializer):
         ]
 
         if is_grouping:
-            pass
+            prefetch_related += [
+                models.Prefetch(
+                    "relations",
+                    Mineral.objects.prefetch_related("direct_relations")
+                    .filter(statuses__group=2, direct_relations__direct_status=True)
+                    .distinct(),
+                    to_attr="synonyms",
+                ),
+            ]
         else:
             select_related += [
                 "crystallography__crystal_system",
@@ -216,14 +220,11 @@ class RetrieveSerializer(serializers.Serializer):
         return queryset
 
 
-class GroupingRetrieveSerializer(serializers.ModelSerializer):
+class GroupingRetrieveSerializer(SummarySerializerMixin, serializers.ModelSerializer):
     history = MineralHistorySerializer()
     statuses = StatusListSerializer(many=True)
     crystallography = serializers.SerializerMethodField()
     formulas = MineralFormulaSerializer(many=True)
-
-    structures = serializers.SerializerMethodField()
-    elements = serializers.SerializerMethodField()
 
     class Meta:
         model = Mineral
@@ -231,6 +232,8 @@ class GroupingRetrieveSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "slug",
+
+            "description",
             "mindat_id",
             "statuses",
             "crystallography",
@@ -238,8 +241,7 @@ class GroupingRetrieveSerializer(serializers.ModelSerializer):
             "seen",
             "history",
             "formulas",
-            "structures",
-            "elements",
+
             "created_at",
             "updated_at",
         ]
@@ -249,7 +251,7 @@ class GroupingRetrieveSerializer(serializers.ModelSerializer):
             _members = HierarchyView.objects.filter(
                 mineral=instance,
                 is_parent=True,
-                relation__statuses__group=11,
+                relation__statuses__group__in=[3, 4, 11],
                 relation__direct_relations__direct_status=True,
             )
             # force to evaluate query
@@ -258,105 +260,52 @@ class GroupingRetrieveSerializer(serializers.ModelSerializer):
 
     def get_crystallography(self, instance):
         _members = self._get_members(instance)
-
         _crystal_systems = (
-            MineralCrystallography.objects.filter(mineral__in=_members)
-            .values("crystal_system")
-            .annotate(count=Count("crystal_system"))
-            .order_by("-count")
+            MineralCrystallography.objects.raw(
+            """
+                SELECT csl.id, csl.name, COUNT(csl.id) AS count,
+                        JSON_AGG(
+                            JSONB_BUILD_OBJECT(
+                                'slug', ml.slug,
+                                'name', ml.name,
+                                'statuses', ARRAY(
+                                    SELECT sl.status_id
+                                    FROM mineral_status ms
+                                    INNER JOIN status_list sl ON ms.status_id = sl.id
+                                    WHERE ms.mineral_id = ml.id AND ms.direct_status
+                                )
+                            )
+                            ORDER BY ml.name
+                        ) AS minerals
+                FROM mineral_crystallography mc
+                INNER JOIN mineral_log ml ON mc.mineral_id = ml.id
+                INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
+                WHERE mc.mineral_id IN %s
+                GROUP BY csl.id
+                ORDER BY count DESC
+            """, [(*_members,)])
         )
-        _crystal_systems = _crystal_systems.annotate(id=F("crystal_system__id"), name=F("crystal_system__name"))
-
-        return _crystal_systems.values("id", "name", "count")
+        data = []
+        for x in _crystal_systems:
+            data.append({
+                "id": x.id,
+                "name": x.name,
+                "count": x.count,
+                "minerals": x.minerals
+            })
+        return data
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        _relations = data.pop("relations")
-        _horizontal_relations = [x["id"] for x in _relations if x["status_group"] == 2]
+        _members = self._get_members(instance)
+        _horizontal_relations = instance.synonyms
 
-        data["structures"], data["elements"] = self._get_stats(instance, _horizontal_relations)
-
+        data["structures"], data["elements"] = self._get_stats(instance, _horizontal_relations + _members)
         return data
 
-    def _get_stats(self, instance, relations):
-        _horizontal_structures_ids = list(
-            MineralStructure.objects.filter(mineral__in=[instance.id, *relations])
-            .only("id")
-            .values_list("id", flat=True)
-        )
-        structures = None
-        elements = None
-
-        if _horizontal_structures_ids:
-            _aggregations = {}
-            _fields = ["a", "b", "c", "alpha", "beta", "gamma", "volume"]
-            for _field in _fields:
-                _aggregations.update(
-                    {f"min_{_field}": Min(_field), f"max_{_field}": Max(_field), f"avg_{_field}": Round(Avg(_field), 4)}
-                )
-            _summary_queryset = MineralStructure.objects.filter(id__in=_horizontal_structures_ids).aggregate(
-                **_aggregations
-            )
-            structures = {
-                "count": len(_horizontal_structures_ids),
-            }
-            for _field in ["a", "b", "c", "alpha", "beta", "gamma", "volume"]:
-                structures[_field] = {
-                    "min": _summary_queryset[f"min_{_field}"],
-                    "max": _summary_queryset[f"max_{_field}"],
-                    "avg": _summary_queryset[f"avg_{_field}"],
-                }
-            _elements = (
-                MineralStructure.objects.filter(id__in=_horizontal_structures_ids)
-                .annotate(element=RawSQL("UNNEST(regexp_matches(formula, '[A-Z][a-z]?', 'g'))", []))
-                .values("element")
-                .annotate(count=Count("id", distinct=True))
-                .order_by("element")
-            )
-            elements = _elements.values("element", "count")
-        return structures, elements
-
-    def get_structures(self, instance):
-        _members = self._get_members(instance)
-
-        _structures = MineralStructure.objects.filter(mineral__in=_members)
-        structures = None
-        if _structures:
-            _aggregations = {}
-            _fields = ["a", "b", "c", "alpha", "beta", "gamma", "volume"]
-            for _field in _fields:
-                _aggregations.update(
-                    {f"min_{_field}": Min(_field), f"max_{_field}": Max(_field), f"avg_{_field}": Round(Avg(_field), 4)}
-                )
-            _summary_queryset = _structures.aggregate(**_aggregations)
-            structures = {
-                "count": _structures.count(),
-            }
-            for _field in ["a", "b", "c", "alpha", "beta", "gamma", "volume"]:
-                structures[_field] = {
-                    "min": _summary_queryset[f"min_{_field}"],
-                    "max": _summary_queryset[f"max_{_field}"],
-                    "avg": _summary_queryset[f"avg_{_field}"],
-                }
-        return structures
-
-    def get_elements(self, instance):
-        _members = self._get_members(instance)
-
-        _structures = MineralStructure.objects.filter(mineral__in=_members)
-        elements = None
-        if _structures:
-            _structures = (
-                _structures.annotate(element=RawSQL("UNNEST(regexp_matches(formula, 'REE|[A-Z][a-z]?', 'g'))", []))
-                .values("element")
-                .annotate(count=Count("id", distinct=True))
-                .order_by("element")
-            )
-            elements = _structures.values("element", "count")
-        return elements
 
 
-class MineralRetrieveSerializer(serializers.ModelSerializer):
+class MineralRetrieveSerializer(SummarySerializerMixin, serializers.ModelSerializer):
     statuses = StatusListSerializer(many=True)
     crystallography = MineralCrystallographySerializer()
     history = MineralHistorySerializer()
@@ -436,43 +385,6 @@ class MineralRetrieveSerializer(serializers.ModelSerializer):
         data["structures"], data["elements"] = self._get_stats(instance, _horizontal_relations)
         return data
 
-    def _get_stats(self, instance, relations):
-        _horizontal_structures_ids = list(
-            MineralStructure.objects.filter(mineral__in=[instance.id, *relations])
-            .only("id")
-            .values_list("id", flat=True)
-        )
-        structures = None
-        elements = None
-
-        if _horizontal_structures_ids:
-            _aggregations = {}
-            _fields = ["a", "b", "c", "alpha", "beta", "gamma", "volume"]
-            for _field in _fields:
-                _aggregations.update(
-                    {f"min_{_field}": Min(_field), f"max_{_field}": Max(_field), f"avg_{_field}": Round(Avg(_field), 4)}
-                )
-            _summary_queryset = MineralStructure.objects.filter(id__in=_horizontal_structures_ids).aggregate(
-                **_aggregations
-            )
-            structures = {
-                "count": len(_horizontal_structures_ids),
-            }
-            for _field in ["a", "b", "c", "alpha", "beta", "gamma", "volume"]:
-                structures[_field] = {
-                    "min": _summary_queryset[f"min_{_field}"],
-                    "max": _summary_queryset[f"max_{_field}"],
-                    "avg": _summary_queryset[f"avg_{_field}"],
-                }
-            _elements = (
-                MineralStructure.objects.filter(id__in=_horizontal_structures_ids)
-                .annotate(element=RawSQL("UNNEST(regexp_matches(formula, '[A-Z][a-z]?', 'g'))", []))
-                .values("element")
-                .annotate(count=Count("id", distinct=True))
-                .order_by("element")
-            )
-            elements = _elements.values("element", "count")
-        return structures, elements
 
 
 class MineralListSerializer(serializers.ModelSerializer):
