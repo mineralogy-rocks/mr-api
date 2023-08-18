@@ -312,6 +312,7 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
     def get_history(self, instance):
         output = []
         _members = self._get_members(instance)
+        # _data = MineralHistory.objects.filter(mineral__in=_members).annotate()
         _data = MineralHistory.objects.filter(mineral__in=_members).aggregate(
             discovery_year=ArrayAgg(
                 "discovery_year", filter=Q(discovery_year__isnull=False), ordering=["discovery_year"]
@@ -325,7 +326,7 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
         for key, value in _data.items():
             for _value in value:
                 if _value:
-                    output.append({"year": _value, "key": key, "count": len([x for x in value if x == _value])})
+                    output.append({"year": _value, "key": key, "count": 1 }) # "count": len([x for x in value if x == _value])
                     value.remove(_value)
         return output
 
