@@ -52,9 +52,9 @@ from .serializers.core import NsFamilyListSerializer
 from .serializers.core import NsSubclassListSerializer
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import BaseMineralRelationsSerializer
+from .serializers.mineral import CrystallographyRelatedSerializer
+from .serializers.mineral import FormulaRelatedSerializer
 from .serializers.mineral import MineralAnalyticalDataSerializer
-from .serializers.mineral import MineralCrystallographyRelatedSerializer
-from .serializers.mineral import MineralFormulaRelatedSerializer
 from .serializers.mineral import MineralListSecondarySerializer
 from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRelationsSerializer
@@ -401,7 +401,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
             )
         )
 
-        _crystal_systems_data = MineralCrystallographyRelatedSerializer(_crystal_systems, many=True).data
+        _crystal_systems_data = CrystallographyRelatedSerializer(_crystal_systems, many=True).data
 
         if not len(_crystal_systems_data):
             return []
@@ -454,7 +454,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                 }
             )
         )
-        _formulas_data = MineralFormulaRelatedSerializer(_formulas, many=True).data
+        _formulas_data = FormulaRelatedSerializer(_formulas, many=True).data
 
         if not len(_formulas_data):
             return []

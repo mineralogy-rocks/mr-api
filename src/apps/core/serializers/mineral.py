@@ -1,9 +1,16 @@
 # -*- coding: UTF-8 -*-
 from django.contrib.humanize.templatetags.humanize import naturalday
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import connection
 from django.db import models
+from django.db.models import Avg
+from django.db.models import Count
 from django.db.models import Max
+from django.db.models import Min
 from django.db.models import Prefetch
+from django.db.models import Q
+from django.db.models.expressions import RawSQL
+from django.db.models.functions import Round
 from rest_framework import serializers
 
 from ..models.core import Status
@@ -21,8 +28,6 @@ from .core import CountryListSerializer
 from .core import FormulaSourceSerializer
 from .crystal import CrystalClassSerializer
 from .crystal import CrystalSystemSerializer
-from ..mixins.serializers import SummarySerializerMixin
-
 from .crystal import SpaceGroupSerializer
 
 
@@ -71,8 +76,7 @@ class HierarchyChildrenHyperlinkSerializer(serializers.ModelSerializer):
         ]
 
 
-class MineralFormulaSerializer(serializers.ModelSerializer):
-    mineral = serializers.PrimaryKeyRelatedField(read_only=True)
+class FormulaSerializer(serializers.ModelSerializer):
     formula = serializers.CharField(source="formula_escape")
     source = FormulaSourceSerializer()
     created_at = serializers.SerializerMethodField()
@@ -81,7 +85,6 @@ class MineralFormulaSerializer(serializers.ModelSerializer):
         model = MineralFormula
         fields = [
             "id",
-            "mineral",
             "formula",
             "note",
             "source",
@@ -93,20 +96,27 @@ class MineralFormulaSerializer(serializers.ModelSerializer):
         return naturalday(instance.created_at)
 
 
-class MineralFormulaRelatedSerializer(MineralFormulaSerializer):
+class InheritedFormulaSerializer(FormulaSerializer):
     mineral = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = MineralFormula
+        fields = FormulaSerializer.Meta.fields + [
+            "mineral",
+        ]
+
+
+class FormulaRelatedSerializer(InheritedFormulaSerializer):
     from_ = serializers.JSONField(source="from")
 
     class Meta:
         model = MineralFormula
-        fields = MineralFormulaSerializer.Meta.fields + [
-            "mineral",
+        fields = InheritedFormulaSerializer.Meta.fields + [
             "from_",
         ]
 
 
-class MineralCrystallographySerializer(serializers.ModelSerializer):
-    mineral = serializers.PrimaryKeyRelatedField(read_only=True)
+class CrystallographySerializer(serializers.ModelSerializer):
     crystal_system = CrystalSystemSerializer()
     crystal_class = CrystalClassSerializer()
     space_group = SpaceGroupSerializer()
@@ -115,14 +125,23 @@ class MineralCrystallographySerializer(serializers.ModelSerializer):
         model = MineralCrystallography
         fields = [
             "id",
-            "mineral",
             "crystal_system",
             "crystal_class",
             "space_group",
         ]
 
 
-class MineralCrystallographyRelatedSerializer(serializers.ModelSerializer):
+class InheritedCrystallographySerializer(CrystallographySerializer):
+    mineral = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = MineralCrystallography
+        fields = CrystallographySerializer.Meta.fields + [
+            "mineral",
+        ]
+
+
+class CrystallographyRelatedSerializer(serializers.ModelSerializer):
     mineral = serializers.PrimaryKeyRelatedField(read_only=True)
     crystal_system = CrystalSystemSerializer()
     from_ = serializers.JSONField(source="from")
@@ -138,7 +157,7 @@ class MineralCrystallographyRelatedSerializer(serializers.ModelSerializer):
 
 class MineralSmallSerializer(serializers.ModelSerializer):
     status_group = serializers.IntegerField()
-    formulas = MineralFormulaSerializer(many=True)
+    formulas = FormulaSerializer(many=True)
     description = serializers.SerializerMethodField()
     url = serializers.HyperlinkedIdentityField(lookup_field="slug", view_name="core:mineral-detail")
 
@@ -176,9 +195,7 @@ class RetrieveSerializer(serializers.Serializer):
     def setup_eager_loading(**kwargs):
         queryset, is_grouping = kwargs.get("queryset"), kwargs.get("is_grouping")
 
-        select_related = [
-            "history",
-        ]
+        select_related = []
         prefetch_related = [
             models.Prefetch(
                 "statuses", Status.objects.select_related("group").extra(where=["mineral_status.direct_status=True"])
@@ -220,11 +237,11 @@ class RetrieveSerializer(serializers.Serializer):
         return queryset
 
 
-class GroupingRetrieveSerializer(SummarySerializerMixin, serializers.ModelSerializer):
+class CommonRetrieveSerializer(serializers.ModelSerializer):
     history = MineralHistorySerializer()
     statuses = StatusListSerializer(many=True)
     crystallography = serializers.SerializerMethodField()
-    formulas = MineralFormulaSerializer(many=True)
+    formulas = FormulaSerializer(many=True)
 
     class Meta:
         model = Mineral
@@ -232,7 +249,6 @@ class GroupingRetrieveSerializer(SummarySerializerMixin, serializers.ModelSerial
             "id",
             "name",
             "slug",
-
             "description",
             "mindat_id",
             "statuses",
@@ -241,10 +257,81 @@ class GroupingRetrieveSerializer(SummarySerializerMixin, serializers.ModelSerial
             "seen",
             "history",
             "formulas",
-
             "created_at",
             "updated_at",
         ]
+
+    def _get_stats(self, instance, relations):
+        _structures_ids = list(
+            MineralStructure.objects.filter(mineral__in=[instance.id, *relations])
+            .only("id")
+            .values_list("id", flat=True)
+        )
+        structures = None
+        elements = None
+
+        if _structures_ids:
+            _aggregations = {}
+            _fields = ["a", "b", "c", "alpha", "beta", "gamma", "volume"]
+            for _field in _fields:
+                _aggregations.update(
+                    {f"min_{_field}": Min(_field), f"max_{_field}": Max(_field), f"avg_{_field}": Round(Avg(_field), 4)}
+                )
+            _summary_queryset = MineralStructure.objects.filter(id__in=_structures_ids).aggregate(**_aggregations)
+            structures = {
+                "count": len(_structures_ids),
+            }
+            for _field in ["a", "b", "c", "alpha", "beta", "gamma", "volume"]:
+                structures[_field] = {
+                    "min": _summary_queryset[f"min_{_field}"],
+                    "max": _summary_queryset[f"max_{_field}"],
+                    "avg": _summary_queryset[f"avg_{_field}"],
+                }
+            _elements = (
+                MineralStructure.objects.filter(id__in=_structures_ids)
+                .annotate(element=RawSQL("UNNEST(regexp_matches(formula, 'REE|[A-Z][a-z]?', 'g'))", []))
+                .values("element")
+                .annotate(count=Count("id", distinct=True))
+                .order_by("-count", "element")
+            )
+            elements = _elements.values("element", "count")
+        return structures, elements
+
+
+class GroupingRetrieveSerializer(CommonRetrieveSerializer):
+    history = serializers.SerializerMethodField()
+    crystallography = serializers.SerializerMethodField()
+    members = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Mineral
+        fields = CommonRetrieveSerializer.Meta.fields + [
+            "members",
+        ]
+
+    def get_history(self, instance):
+        output = []
+        _members = self._get_members(instance)
+        _data = MineralHistory.objects.filter(mineral__in=_members).aggregate(
+            discovery_year=ArrayAgg(
+                "discovery_year", filter=Q(discovery_year__isnull=False), ordering=["discovery_year"]
+            ),
+            publication_year=ArrayAgg(
+                "publication_year", filter=Q(publication_year__isnull=False), ordering=["publication_year"]
+            ),
+            approval_year=ArrayAgg("approval_year", filter=Q(approval_year__isnull=False), ordering=["approval_year"]),
+            ima_year=ArrayAgg("ima_year", filter=Q(ima_year__isnull=False), ordering=["ima_year"]),
+        )
+        for key, value in _data.items():
+            for _value in value:
+                if _value:
+                    output.append({"year": _value, "key": key, "count": len([x for x in value if x == _value])})
+                    value.remove(_value)
+        return output
+
+    def get_members(self, instance):
+        _members = self._get_members(instance)
+        return _members
 
     def _get_members(self, instance):
         if not hasattr(self, "_members"):
@@ -260,12 +347,12 @@ class GroupingRetrieveSerializer(SummarySerializerMixin, serializers.ModelSerial
 
     def get_crystallography(self, instance):
         _members = self._get_members(instance)
-        _crystal_systems = (
-            MineralCrystallography.objects.raw(
+        _crystal_systems = MineralCrystallography.objects.raw(
             """
                 SELECT csl.id, csl.name, COUNT(csl.id) AS count,
                         JSON_AGG(
                             JSONB_BUILD_OBJECT(
+                                'id', ml.id,
                                 'slug', ml.slug,
                                 'name', ml.name,
                                 'statuses', ARRAY(
@@ -283,16 +370,12 @@ class GroupingRetrieveSerializer(SummarySerializerMixin, serializers.ModelSerial
                 WHERE mc.mineral_id IN %s
                 GROUP BY csl.id
                 ORDER BY count DESC
-            """, [(*_members,)])
+            """,
+            [(*_members,)],
         )
         data = []
         for x in _crystal_systems:
-            data.append({
-                "id": x.id,
-                "name": x.name,
-                "count": x.count,
-                "minerals": x.minerals
-            })
+            data.append({"id": x.id, "name": x.name, "count": x.count, "minerals": x.minerals})
         return data
 
     def to_representation(self, instance):
@@ -304,31 +387,15 @@ class GroupingRetrieveSerializer(SummarySerializerMixin, serializers.ModelSerial
         return data
 
 
-
-class MineralRetrieveSerializer(SummarySerializerMixin, serializers.ModelSerializer):
-    statuses = StatusListSerializer(many=True)
-    crystallography = MineralCrystallographySerializer()
-    history = MineralHistorySerializer()
-    formulas = MineralFormulaSerializer(many=True)
+class MineralRetrieveSerializer(CommonRetrieveSerializer):
+    crystallography = CrystallographySerializer()
     relations = MineralSmallSerializer(many=True)
 
     class Meta:
         model = Mineral
-        fields = [
-            "id",
-            "name",
-            "slug",
-            "mindat_id",
+        fields = CommonRetrieveSerializer.Meta.fields + [
             "ns_index",
-            "statuses",
-            "crystallography",
-            "description",
-            "seen",
-            "history",
-            "formulas",
             "relations",
-            "created_at",
-            "updated_at",
         ]
 
     def to_representation(self, instance):
@@ -369,8 +436,8 @@ class MineralRetrieveSerializer(SummarySerializerMixin, serializers.ModelSeriali
             .select_related("crystal_system", "crystal_class", "space_group")
             .only("id", "mineral", "crystal_system", "crystal_class", "space_group")
         )
-        _inherited_formulas = MineralFormulaSerializer(_inherited_formulas_data, many=True, context=self.context).data
-        _inherited_crystalography_data = MineralCrystallographySerializer(
+        _inherited_formulas = InheritedFormulaSerializer(_inherited_formulas_data, many=True, context=self.context).data
+        _inherited_crystalography_data = InheritedCrystallographySerializer(
             _inherited_crystalography_data, many=True, context=self.context
         ).data
 
@@ -384,7 +451,6 @@ class MineralRetrieveSerializer(SummarySerializerMixin, serializers.ModelSeriali
         data["inheritance_chain"] = inheritance_chain
         data["structures"], data["elements"] = self._get_stats(instance, _horizontal_relations)
         return data
-
 
 
 class MineralListSerializer(serializers.ModelSerializer):
@@ -504,7 +570,7 @@ class MineralListSecondarySerializer(serializers.ModelSerializer):
     main serializer of the list view
     """
 
-    formulas = MineralFormulaSerializer(many=True)
+    formulas = FormulaSerializer(many=True)
 
     class Meta:
         model = Mineral

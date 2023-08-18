@@ -1,14 +1,15 @@
-from django.db.models import Count, Max, Min, Avg
-from django.db.models.functions import Round
+from django.db.models import Avg
+from django.db.models import Count
+from django.db.models import Max
+from django.db.models import Min
 from django.db.models.expressions import RawSQL
-
+from django.db.models.functions import Round
 from rest_framework import serializers
 
 from ..models.mineral import MineralStructure
 
 
-class SummarySerializerMixin(serializers.Serializer):
-
+class MineralSerializerMixin(serializers.Serializer):
     def _get_stats(self, instance, relations):
         _structures_ids = list(
             MineralStructure.objects.filter(mineral__in=[instance.id, *relations])
@@ -25,9 +26,7 @@ class SummarySerializerMixin(serializers.Serializer):
                 _aggregations.update(
                     {f"min_{_field}": Min(_field), f"max_{_field}": Max(_field), f"avg_{_field}": Round(Avg(_field), 4)}
                 )
-            _summary_queryset = MineralStructure.objects.filter(id__in=_structures_ids).aggregate(
-                **_aggregations
-            )
+            _summary_queryset = MineralStructure.objects.filter(id__in=_structures_ids).aggregate(**_aggregations)
             structures = {
                 "count": len(_structures_ids),
             }
