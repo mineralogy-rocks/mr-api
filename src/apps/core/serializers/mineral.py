@@ -17,7 +17,7 @@ from ..models.mineral import Mineral
 from ..models.mineral import MineralCrystallography
 from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHierarchy
-from ..models.mineral import MineralHistory
+from ..models.mineral import MineralHistory, MineralRelation, MineralStatus, Mineral
 from ..models.mineral import MineralStructure
 from ..queries import GET_INHERITANCE_CHAIN_RETRIEVE_QUERY
 from ..serializers.core import StatusListSerializer
@@ -237,7 +237,7 @@ class RetrieveSerializer(serializers.Serializer):
 
 class CommonRetrieveSerializer(serializers.ModelSerializer):
     statuses = StatusListSerializer(many=True)
-    crystallography = serializers.SerializerMethodField()
+    # crystallography = serializers.SerializerMethodField()
     formulas = FormulaSerializer(many=True)
 
     class Meta:
@@ -295,9 +295,9 @@ class CommonRetrieveSerializer(serializers.ModelSerializer):
 
 
 class GroupMemberSerializer(serializers.ModelSerializer):
-    status_group = serializers.IntegerField()
     history = MineralHistorySerializer()
     # formulas = FormulaSerializer(many=True)
+    statuses = serializers.JSONField(source="_statuses")
     crystal_system = CrystalSystemSerializer(source="crystallography.crystal_system")
     description = serializers.SerializerMethodField()
     url = serializers.HyperlinkedIdentityField(lookup_field="slug", view_name="core:mineral-detail")
@@ -309,10 +309,10 @@ class GroupMemberSerializer(serializers.ModelSerializer):
             "name",
             "slug",
             # "formulas",
+            "statuses",
             "crystal_system",
             "history",
             "description",
-            "status_group",
             "url",
         ]
 
@@ -321,8 +321,6 @@ class GroupMemberSerializer(serializers.ModelSerializer):
 
 
 class GroupingRetrieveSerializer(CommonRetrieveSerializer):
-    # history = serializers.SerializerMethodField()
-    # crystallography = serializers.SerializerMethodField()
     members = serializers.SerializerMethodField()
 
     class Meta:
@@ -331,27 +329,6 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
             "members",
         ]
 
-    # def get_history(self, instance):
-    #     output = []
-    #     _members = self._get_members(instance)
-    #     # _data = MineralHistory.objects.filter(mineral__in=_members).annotate()
-    #     _data = MineralHistory.objects.filter(mineral__in=_members).aggregate(
-    #         discovery_year=ArrayAgg(
-    #             "discovery_year", filter=Q(discovery_year__isnull=False), ordering=["discovery_year"]
-    #         ),
-    #         publication_year=ArrayAgg(
-    #             "publication_year", filter=Q(publication_year__isnull=False), ordering=["publication_year"]
-    #         ),
-    #         approval_year=ArrayAgg("approval_year", filter=Q(approval_year__isnull=False), ordering=["approval_year"]),
-    #         ima_year=ArrayAgg("ima_year", filter=Q(ima_year__isnull=False), ordering=["ima_year"]),
-    #     )
-    #     for key, value in _data.items():
-    #         for _value in value:
-    #             if _value:
-    #                 output.append({"year": _value, "key": key, "count": 1 }) # "count": len([x for x in value if x == _value])
-    #                 value.remove(_value)
-    #     return output
-
     def get_members(self, instance):
         _members = self._get_members(instance)
         _select_related = [
@@ -359,7 +336,6 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
             "crystallography__crystal_system",
         ]
         _prefetch_related = [
-            "statuses",
             # "formulas__source",
         ]
         _only = [
@@ -373,7 +349,13 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
 
         _minerals = (
             Mineral.objects.filter(id__in=_members)
-            .annotate(status_group=Max("statuses__group"))
+            .annotate(_statuses=RawSQL("""
+                                       ARRAY(
+                                            SELECT DISTINCT sl.status_id FROM mineral_status
+                                            INNER JOIN status_list sl ON mineral_status.status_id = sl.id
+                                            WHERE mineral_status.mineral_id = mineral_log.id AND mineral_status.direct_status
+                                        )
+                                       """, []))
             .select_related(*_select_related)
             .prefetch_related(*_prefetch_related)
             .only(*_only)
@@ -394,61 +376,17 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
             self._members = list(_members.values_list("relation", flat=True))
         return self._members
 
-    # def get_crystallography(self, instance):
-    #     _members = self._get_members(instance)
-    #     _crystal_systems = MineralCrystallography.objects.raw(
-    #         """
-    #             SELECT csl.id, csl.name, COUNT(csl.id) AS count,
-    #                     JSON_AGG(
-    #                         JSONB_BUILD_OBJECT(
-    #                             'id', ml.id,
-    #                             'slug', ml.slug,
-    #                             'name', ml.name,
-    #                             'statuses', ARRAY(
-    #                                 SELECT sl.status_id
-    #                                 FROM mineral_status ms
-    #                                 INNER JOIN status_list sl ON ms.status_id = sl.id
-    #                                 WHERE ms.mineral_id = ml.id AND ms.direct_status
-    #                             )
-    #                         )
-    #                         ORDER BY ml.name
-    #                     ) AS minerals
-    #             FROM mineral_crystallography mc
-    #             INNER JOIN mineral_log ml ON mc.mineral_id = ml.id
-    #             INNER JOIN crystal_system_list csl ON mc.crystal_system_id = csl.id
-    #             WHERE mc.mineral_id IN %s
-    #             GROUP BY csl.id
-    #             ORDER BY count DESC
-    #         """,
-    #         [(*_members,)],
-    #     )
-    #     data = []
-    #     for x in _crystal_systems:
-    #         data.append({"id": x.id, "name": x.name, "count": x.count, "minerals": x.minerals})
-    #     return data
-
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        # members = data["members"]
-        # history = []
-        # for member in members:
-        #     _history = member.pop("history")
-        #     if _history:
-        #         for _key, _value in _history.items():
-        #             if _key in ["discovery_year", "publication_year", "approval_year", "ima_year"]:
-        #                 history.append({"year": _value, "key": _key, "count": 1})
-
-        # if _history:
-        #     history.append(_history)
 
         _members = self._get_members(instance)
         _members_synonyms = []
-        # _members_synonyms = list(
-        #     MineralRelation.objects.filter(relation__in=_members, status__direct_status=True, status__status__group=2).values_list("mineral", flat=True)
-        # )
+        _statuses = MineralStatus.objects.filter(mineral__in=_members, direct_status=False, status__group=2)
+        _members_synonyms = list(
+            MineralRelation.objects.filter(status__in=_statuses.values('id')).values_list("relation", flat=True)
+        )
         _horizontal_relations = instance.synonyms
 
-        # data["history"] = history
         data["structures"], data["elements"] = self._get_stats(
             instance, _horizontal_relations + _members + _members_synonyms
         )
@@ -463,6 +401,7 @@ class MineralRetrieveSerializer(CommonRetrieveSerializer):
     class Meta:
         model = Mineral
         fields = CommonRetrieveSerializer.Meta.fields + [
+            'crystallography',
             "ns_index",
             "history",
             "relations",
