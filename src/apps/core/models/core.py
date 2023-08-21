@@ -6,7 +6,6 @@ from .base import Nameable
 
 
 class NsClass(models.Model):
-
     id = models.SmallIntegerField(primary_key=True)
     description = models.TextField()
 
@@ -25,7 +24,6 @@ class NsClass(models.Model):
 
 
 class NsSubclass(BaseModel):
-
     ns_class = models.ForeignKey(
         NsClass,
         models.CASCADE,
@@ -53,7 +51,6 @@ class NsSubclass(BaseModel):
 
 
 class NsFamily(BaseModel):
-
     ns_class = models.ForeignKey(
         NsClass,
         models.CASCADE,
@@ -88,7 +85,6 @@ class NsFamily(BaseModel):
 
 
 class StatusGroup(BaseModel, Nameable):
-
     slug = models.CharField(max_length=100, unique=True)
 
     class Meta:
@@ -106,7 +102,6 @@ class StatusGroup(BaseModel, Nameable):
 
 
 class Status(BaseModel):
-
     status_id = models.FloatField(null=False)
     group = models.ForeignKey(StatusGroup, models.CASCADE, db_column="status_group_id", to_field="id")
     description_long = models.TextField(blank=True, null=True)
@@ -131,8 +126,35 @@ class Status(BaseModel):
         return "{} - {}".format(self.status_id, self.description_short)
 
 
-class RelationType(BaseModel, Nameable):
+class IMAStatus(BaseModel, Nameable):
+    key = models.CharField(max_length=100, null=False, unique=True)
 
+    class Meta:
+        managed = False
+        db_table = "ima_status_list"
+        ordering = [
+            "key",
+        ]
+
+        verbose_name = "IMA Status"
+        verbose_name_plural = "IMA Statuses"
+
+
+class IMANote(BaseModel, Nameable):
+    key = models.CharField(max_length=100, null=False, unique=True)
+
+    class Meta:
+        managed = False
+        db_table = "ima_note_list"
+        ordering = [
+            "key",
+        ]
+
+        verbose_name = "IMA Note"
+        verbose_name_plural = "IMA Notes"
+
+
+class RelationType(BaseModel, Nameable):
     note = models.TextField(blank=True, null=True)
 
     class Meta:
@@ -147,7 +169,6 @@ class RelationType(BaseModel, Nameable):
 
 
 class Country(BaseModel, Nameable):
-
     alpha_2 = models.CharField(max_length=10, null=True)
     alpha_3 = models.CharField(max_length=10, null=True)
     country_code = models.IntegerField(null=True)
@@ -167,7 +188,6 @@ class Country(BaseModel, Nameable):
 
 
 class FormulaSource(BaseModel, Nameable):
-
     url = models.URLField()
 
     class Meta:

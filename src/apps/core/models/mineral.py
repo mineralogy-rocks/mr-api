@@ -19,6 +19,8 @@ from .base import Nameable
 from .base import Updatable
 from .core import Country
 from .core import FormulaSource
+from .core import IMANote
+from .core import IMAStatus
 from .core import NsClass
 from .core import NsFamily
 from .core import NsSubclass
@@ -203,6 +205,36 @@ class MineralStatus(BaseModel, Creatable, Updatable):
         MineralStatus.objects.filter(
             mineral=self.mineral, status=self.status, direct_status=(not self.direct_status)
         ).delete()
+
+
+class MineralIMAStatus(BaseModel, Creatable):
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="ima_statuses")
+    status = models.ForeignKey(IMAStatus, models.CASCADE, db_column="ima_status_id", related_name="minerals")
+
+    class Meta:
+        managed = False
+        db_table = "mineral_ima_status"
+
+        verbose_name = "IMA Status"
+        verbose_name_plural = "IMA Statuses"
+
+    def __str__(self):
+        return self.mineral.name + " " + self.status.key
+
+
+class MineralIMANote(BaseModel, Creatable):
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="ima_notes")
+    note = models.ForeignKey(IMANote, models.CASCADE, db_column="ima_note_id", related_name="minerals")
+
+    class Meta:
+        managed = False
+        db_table = "mineral_ima_note"
+
+        verbose_name = "IMA Note"
+        verbose_name_plural = "IMA Notes"
+
+    def __str__(self):
+        return self.mineral.name + " " + self.note.key
 
 
 class MineralRelation(BaseModel):
