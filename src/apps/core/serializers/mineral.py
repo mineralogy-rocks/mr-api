@@ -17,7 +17,8 @@ from ..models.mineral import Mineral
 from ..models.mineral import MineralCrystallography
 from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHierarchy
-from ..models.mineral import MineralHistory, MineralRelation, MineralStatus, Mineral
+from ..models.mineral import MineralHistory
+from ..models.mineral import MineralRelation
 from ..models.mineral import MineralStructure
 from ..queries import GET_INHERITANCE_CHAIN_RETRIEVE_QUERY
 from ..serializers.core import StatusListSerializer
@@ -349,13 +350,18 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
 
         _minerals = (
             Mineral.objects.filter(id__in=_members)
-            .annotate(_statuses=RawSQL("""
+            .annotate(
+                _statuses=RawSQL(
+                    """
                                        ARRAY(
                                             SELECT DISTINCT sl.status_id FROM mineral_status
                                             INNER JOIN status_list sl ON mineral_status.status_id = sl.id
                                             WHERE mineral_status.mineral_id = mineral_log.id AND mineral_status.direct_status
                                         )
-                                       """, []))
+                                       """,
+                    [],
+                )
+            )
             .select_related(*_select_related)
             .prefetch_related(*_prefetch_related)
             .only(*_only)
@@ -380,10 +386,10 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
         data = super().to_representation(instance)
 
         _members = self._get_members(instance)
-        _members_synonyms = []
-        _statuses = MineralStatus.objects.filter(mineral__in=_members, direct_status=False, status__group=2)
         _members_synonyms = list(
-            MineralRelation.objects.filter(status__in=_statuses.values('id')).values_list("relation", flat=True)
+            MineralRelation.objects.filter(
+                status__mineral__in=_members, status__direct_status=False, status__status__group=2
+            ).values_list("relation", flat=True)
         )
         _horizontal_relations = instance.synonyms
 
@@ -401,7 +407,7 @@ class MineralRetrieveSerializer(CommonRetrieveSerializer):
     class Meta:
         model = Mineral
         fields = CommonRetrieveSerializer.Meta.fields + [
-            'crystallography',
+            "crystallography",
             "ns_index",
             "history",
             "relations",
