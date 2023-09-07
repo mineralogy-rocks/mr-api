@@ -238,3 +238,75 @@ GET_INHERITANCE_CHAIN_RETRIEVE_QUERY = """
             ) temp
             INNER JOIN mineral_log ml ON temp.relation_id = ml.id;
 """
+
+
+GET_DATA_CONTEXTS_QUERY = """
+    WITH mineralContext AS (
+        SELECT mc.context_id, jsonb_strip_nulls(mc.DATA) AS data
+        FROM mineral_context mc
+        WHERE mc.mineral_id IN %s
+    )
+    SELECT jsonb_build_object(
+                'physicalContext',
+                jsonb_build_object(
+                    'hardness', jsonb_build_object(
+                        'min', MIN((data ->> 'hardnessMin')::numeric),
+                        'max', MAX((data ->> 'hardnessMax')::numeric)
+                    ),
+                    'color', string_agg(DISTINCT (data ->> 'color')::TEXT, '; '),
+                    'streak', string_agg(DISTINCT (data ->> 'streak')::TEXT, '; '),
+                    'luminescence', string_agg(DISTINCT (data ->> 'luminescence')::TEXT, '; '),
+                    'transparency', (
+                        SELECT jsonb_agg(jsonb_build_object('value', value, 'key', key))
+                        FROM (
+                            SELECT count(*) AS value, jsonb_array_elements_text(mc.DATA -> 'transparency') AS key
+                            FROM mineralContext mc
+                            WHERE mc.context_id = 1
+                            GROUP BY key
+                            ORDER by value DESC
+                        ) subquery
+                    ),
+                    'tenacity', (
+                        SELECT jsonb_agg(jsonb_build_object('value', value, 'key', key))
+                        FROM (
+                            SELECT count(*) AS value, jsonb_array_elements_text(mc.DATA -> 'tenacity') AS key
+                            FROM mineralContext mc
+                            WHERE mc.context_id = 1
+                            GROUP BY key
+                            ORDER by value DESC
+                        ) subquery
+                    ),
+                    'lustre', (
+                        SELECT jsonb_agg(jsonb_build_object('value', value, 'key', key))
+                        FROM (
+                            SELECT count(*) AS value, jsonb_array_elements_text(mc.DATA -> 'lustre') AS key
+                            FROM mineralContext mc
+                            WHERE mc.context_id = 1
+                            GROUP BY key
+                            ORDER by value DESC
+                        ) subquery
+                    ),
+                    'fracture', (
+                        SELECT jsonb_agg(jsonb_build_object('value', value, 'key', key))
+                        FROM (
+                            SELECT count(*) AS value, jsonb_array_elements_text(mc.DATA -> 'fracture') AS key
+                            FROM mineralContext mc
+                            WHERE mc.context_id = 1
+                            GROUP BY key
+                            ORDER by value DESC
+                        ) subquery
+                    ),
+                    'cleavage', (
+                        SELECT jsonb_agg(jsonb_build_object('value', value, 'key', key))
+                        FROM (
+                            SELECT count(*) AS value, jsonb_array_elements_text(mc.DATA -> 'cleavage') AS key
+                            FROM mineralContext mc
+                            WHERE mc.context_id = 1
+                            GROUP BY key
+                            ORDER by value DESC
+                        ) subquery
+                    )
+                )
+            )::json AS contexts
+    FROM mineralContext;
+"""

@@ -3,6 +3,7 @@ from django.db.models import Prefetch
 from rest_framework import serializers
 
 from ..models.core import Country
+from ..models.core import DataContext
 from ..models.core import FormulaSource
 from ..models.core import NsClass
 from ..models.core import NsFamily
@@ -43,7 +44,6 @@ class StatusListSerializer(serializers.ModelSerializer):
 
         queryset = queryset.select_related(*select_related)
         return queryset
-
 
 
 class CountryListSerializer(serializers.ModelSerializer):
@@ -166,4 +166,13 @@ class FormulaSourceSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "url",
+        ]
+
+
+class DataContextSerilizer(serializers.ModelSerializer):
+    class Meta:
+        model = DataContext
+        fields = [
+            "id",
+            "name",
         ]

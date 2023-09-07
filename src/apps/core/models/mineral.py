@@ -18,6 +18,7 @@ from .base import Creatable
 from .base import Nameable
 from .base import Updatable
 from .core import Country
+from .core import DataContext
 from .core import FormulaSource
 from .core import IMANote
 from .core import IMAStatus
@@ -235,6 +236,19 @@ class MineralIMANote(BaseModel, Creatable):
 
     def __str__(self):
         return self.mineral.name + " " + self.note.key
+
+
+class MineralContext(BaseModel, Creatable):
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="contexts")
+    context = models.ForeignKey(DataContext, models.CASCADE, db_column="context_id", related_name="minerals")
+    data = models.JSONField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "mineral_context"
+
+        verbose_name = "Data Context"
+        verbose_name_plural = "Data Contexts"
 
 
 class MineralRelation(BaseModel):

@@ -199,3 +199,15 @@ class FormulaSource(BaseModel, Nameable):
 
     def __str__(self):
         return self.name
+
+
+class DataContext(BaseModel, Nameable):
+    class Meta:
+        managed = False
+        db_table = "data_context_list"
+
+        verbose_name = "Data Context"
+        verbose_name_plural = "Data Contexts"
+
+    def __str__(self):
+        return self.name

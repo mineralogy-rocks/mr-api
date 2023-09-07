@@ -14,16 +14,20 @@ from rest_framework import serializers
 from ..models.core import Status
 from ..models.mineral import HierarchyView
 from ..models.mineral import Mineral
+from ..models.mineral import MineralContext
 from ..models.mineral import MineralCrystallography
 from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHierarchy
 from ..models.mineral import MineralHistory
 from ..models.mineral import MineralRelation
 from ..models.mineral import MineralStructure
+from ..queries import GET_DATA_CONTEXTS_QUERY
 from ..queries import GET_INHERITANCE_CHAIN_RETRIEVE_QUERY
 from ..serializers.core import StatusListSerializer
 from ..utils import add_label
+from ..utils import process_text
 from .core import CountryListSerializer
+from .core import DataContextSerilizer
 from .core import FormulaSourceSerializer
 from .crystal import CrystalClassSerializer
 from .crystal import CrystalSystemSerializer
@@ -230,10 +234,23 @@ class RetrieveSerializer(serializers.Serializer):
                     .annotate(status_group=Max("statuses__group"))
                     .distinct(),
                 ),
+                "contexts__context",
             ]
 
         queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
         return queryset
+
+
+class MineralContextSerializer(serializers.ModelSerializer):
+    type = DataContextSerilizer(source="context")
+    data = serializers.JSONField()
+
+    class Meta:
+        model = MineralContext
+        fields = [
+            "type",
+            "data",
+        ]
 
 
 class CommonRetrieveSerializer(serializers.ModelSerializer):
@@ -391,11 +408,25 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
                 status__mineral__in=_members, status__direct_status=False, status__status__group=2
             ).values_list("relation", flat=True)
         )
-        _horizontal_relations = instance.synonyms
+        _horizontal_relations = [_synonym.id for _synonym in instance.synonyms]
 
         data["structures"], data["elements"] = self._get_stats(
             instance, _horizontal_relations + _members + _members_synonyms
         )
+        contexts = {}
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                GET_DATA_CONTEXTS_QUERY, [tuple([instance.id] + _horizontal_relations + _members + _members_synonyms)]
+            )
+            _contexts = cursor.fetchall()
+            _contexts = [x for y in _contexts for x in y]
+
+        color = _contexts[0]["physicalContext"]["color"]
+        color = process_text(color.split("; "))
+        _contexts[0]["physicalContext"]["color"] = color
+
+        data["contexts"] = _contexts[0]
         return data
 
 
@@ -403,6 +434,7 @@ class MineralRetrieveSerializer(CommonRetrieveSerializer):
     crystallography = CrystallographySerializer()
     history = MineralHistorySerializer()
     relations = MineralSmallSerializer(many=True)
+    contexts = MineralContextSerializer(many=True)
 
     class Meta:
         model = Mineral
@@ -411,6 +443,7 @@ class MineralRetrieveSerializer(CommonRetrieveSerializer):
             "ns_index",
             "history",
             "relations",
+            "contexts",
         ]
 
     def to_representation(self, instance):
