@@ -25,7 +25,6 @@ from ..queries import GET_DATA_CONTEXTS_QUERY
 from ..queries import GET_INHERITANCE_CHAIN_RETRIEVE_QUERY
 from ..serializers.core import StatusListSerializer
 from ..utils import add_label
-from ..utils import process_text
 from .core import CountryListSerializer
 from .core import DataContextSerilizer
 from .core import FormulaSourceSerializer
@@ -413,18 +412,14 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
         data["structures"], data["elements"] = self._get_stats(
             instance, _horizontal_relations + _members + _members_synonyms
         )
-        contexts = {}
 
+        _contexts = []
         with connection.cursor() as cursor:
             cursor.execute(
                 GET_DATA_CONTEXTS_QUERY, [tuple([instance.id] + _horizontal_relations + _members + _members_synonyms)]
             )
             _contexts = cursor.fetchall()
             _contexts = [x for y in _contexts for x in y]
-
-        color = _contexts[0]["physicalContext"]["color"]
-        color = process_text(color.split("; "))
-        _contexts[0]["physicalContext"]["color"] = color
 
         data["contexts"] = _contexts[0]
         return data
