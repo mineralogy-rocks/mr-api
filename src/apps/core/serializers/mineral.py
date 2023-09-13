@@ -252,9 +252,7 @@ class MineralContextSerializer(serializers.ModelSerializer):
         ]
 
 
-
 class InheritedMineralContextSerializer(MineralContextSerializer):
-
     mineral = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
@@ -262,7 +260,6 @@ class InheritedMineralContextSerializer(MineralContextSerializer):
         fields = MineralContextSerializer.Meta.fields + [
             "mineral",
         ]
-
 
 
 class CommonRetrieveSerializer(serializers.ModelSerializer):
@@ -490,7 +487,7 @@ class MineralRetrieveSerializer(CommonRetrieveSerializer):
         _inherited_formulas = InheritedFormulaSerializer(
             MineralFormula.objects.filter(mineral__in=_flat_ids).select_related("source"),
             many=True,
-            context=self.context
+            context=self.context,
         ).data
 
         # GET CRYSTALLOGRAPHY
@@ -499,33 +496,25 @@ class MineralRetrieveSerializer(CommonRetrieveSerializer):
             .select_related("crystal_system", "crystal_class", "space_group")
             .only("id", "mineral", "crystal_system", "crystal_class", "space_group"),
             many=True,
-            context=self.context
+            context=self.context,
         ).data
 
         # GET CONTEXTS
         _inherited_contexts = InheritedMineralContextSerializer(
             MineralContext.objects.filter(mineral__in=_flat_ids + [instance.id]).select_related("context"),
             many=True,
-            context=self.context
+            context=self.context,
         ).data
 
         for _context in _inherited_contexts:
             if str(_context["mineral"]) == data["id"]:
                 # the primary mineral in the response
-                _context.update({
-                    "name": data["name"],
-                    "slug": data["slug"],
-                    "statuses": [_status["status_id"] for _status in data["statuses"]],
-                })
+                _context.update(self._construct_mineral_node(data))
             else:
                 # search corresponing item in inheritance chain
                 for _chain in inheritance_chain:
                     if _context["mineral"] == _chain["id"]:
-                        _context.update({
-                            "name": _chain["name"],
-                            "slug": _chain["slug"],
-                            "statuses": _chain["statuses"]
-                        })
+                        _context.update(self._construct_mineral_node(_chain))
 
         for _chain in inheritance_chain:
             _chain["formulas"] = [x for x in _inherited_formulas if x["mineral"] == _chain["id"]]
@@ -538,6 +527,20 @@ class MineralRetrieveSerializer(CommonRetrieveSerializer):
         data["structures"], data["elements"] = self._get_stats(instance, _horizontal_relations)
         data["contexts"] = _inherited_contexts
         return data
+
+    @staticmethod
+    def _construct_mineral_node(instance: dict):
+        statuses = instance["statuses"]
+        if isinstance(statuses[0], dict):
+            statuses = [_status["status_id"] for _status in statuses]
+        return {
+            "mineral": {
+                "id": instance["id"],
+                "name": instance["name"],
+                "slug": instance["slug"],
+                "statuses": statuses,
+            }
+        }
 
 
 class MineralListSerializer(serializers.ModelSerializer):
