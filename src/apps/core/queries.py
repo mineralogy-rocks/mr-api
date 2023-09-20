@@ -247,7 +247,8 @@ GET_DATA_CONTEXTS_QUERY = """
         WHERE mc.mineral_id IN %s
     )
     SELECT jsonb_build_object(
-                'physicalContext',
+                'type', (SELECT jsonb_build_object('id', dcl.id, 'name', dcl.name) FROM data_context_list dcl WHERE dcl.id = 1),
+                'data',
                 jsonb_build_object(
                     'hardness', jsonb_build_object(
                         'min', MIN((data ->> 'hardnessMin')::numeric),

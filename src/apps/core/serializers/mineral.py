@@ -48,11 +48,11 @@ class MineralHistorySerializer(serializers.ModelSerializer):
         ]
 
 
-class HierarchyParentsHyperlinkSerializer(serializers.ModelSerializer):
-    id = serializers.PrimaryKeyRelatedField(source="parent", read_only=True)
+class HierarchyChildrenHyperlinkSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(source="mineral", read_only=True)
 
-    name = serializers.StringRelatedField(source="parent")
-    url = serializers.HyperlinkedRelatedField(source="parent", read_only=True, view_name="core:mineral-detail")
+    name = serializers.StringRelatedField(source="mineral")
+    url = serializers.HyperlinkedRelatedField(source="mineral", read_only=True, view_name="core:mineral-detail")
 
     class Meta:
         model = MineralHierarchy
@@ -63,11 +63,11 @@ class HierarchyParentsHyperlinkSerializer(serializers.ModelSerializer):
         ]
 
 
-class HierarchyChildrenHyperlinkSerializer(serializers.ModelSerializer):
-    id = serializers.PrimaryKeyRelatedField(source="mineral", read_only=True)
+class HierarchyParentsHyperlinkSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(source="parent", read_only=True)
 
-    name = serializers.StringRelatedField(source="mineral")
-    url = serializers.HyperlinkedRelatedField(source="mineral", read_only=True, view_name="core:mineral-detail")
+    name = serializers.StringRelatedField(source="parent")
+    url = serializers.HyperlinkedRelatedField(source="parent", read_only=True, view_name="core:mineral-detail")
 
     class Meta:
         model = MineralHierarchy
@@ -379,12 +379,12 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
             .annotate(
                 _statuses=RawSQL(
                     """
-                                       ARRAY(
-                                            SELECT DISTINCT sl.status_id FROM mineral_status
-                                            INNER JOIN status_list sl ON mineral_status.status_id = sl.id
-                                            WHERE mineral_status.mineral_id = mineral_log.id AND mineral_status.direct_status
-                                        )
-                                       """,
+                       ARRAY(
+                            SELECT DISTINCT sl.status_id FROM mineral_status
+                            INNER JOIN status_list sl ON mineral_status.status_id = sl.id
+                            WHERE mineral_status.mineral_id = mineral_log.id AND mineral_status.direct_status
+                        )
+                       """,
                     [],
                 )
             )
@@ -431,7 +431,7 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
             _contexts = cursor.fetchall()
             _contexts = [x for y in _contexts for x in y]
 
-        data["contexts"] = _contexts[0]
+        data["contexts"] = _contexts
         return data
 
 
