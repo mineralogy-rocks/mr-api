@@ -251,8 +251,8 @@ GET_DATA_CONTEXTS_QUERY = """
                 'data',
                 jsonb_build_object(
                     'hardness', jsonb_build_object(
-                        'min', MIN((data ->> 'hardnessMin')::numeric),
-                        'max', MAX((data ->> 'hardnessMax')::numeric)
+                        'min', array_remove(array_agg(data -> 'hardnessMin'), NULL),
+                        'max', array_remove(array_agg(data -> 'hardnessMax'), NULL)
                     ),
                     'colorNote', string_agg(DISTINCT (data ->> 'colorNote')::TEXT, '; '),
                     'color', (
