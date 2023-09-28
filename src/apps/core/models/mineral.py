@@ -89,6 +89,8 @@ class Mineral(Nameable, Creatable, Updatable):
             "status",
         ),
     )
+    ima_statuses = models.ManyToManyField(IMAStatus, through="MineralIMAStatus")
+    ima_notes = models.ManyToManyField(IMANote, through="MineralIMANote")
     impurities = models.ManyToManyField(Ion, through="MineralImpurity", related_name="impurities")
     ion_positions = models.ManyToManyField(IonPosition, through="MineralIonPosition")
 
@@ -209,7 +211,7 @@ class MineralStatus(BaseModel, Creatable, Updatable):
 
 
 class MineralIMAStatus(BaseModel, Creatable):
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="ima_statuses")
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id")
     status = models.ForeignKey(IMAStatus, models.CASCADE, db_column="ima_status_id", related_name="minerals")
 
     class Meta:
@@ -224,7 +226,7 @@ class MineralIMAStatus(BaseModel, Creatable):
 
 
 class MineralIMANote(BaseModel, Creatable):
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="ima_notes")
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id")
     note = models.ForeignKey(IMANote, models.CASCADE, db_column="ima_note_id", related_name="minerals")
 
     class Meta:

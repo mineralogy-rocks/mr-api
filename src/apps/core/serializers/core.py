@@ -5,12 +5,15 @@ from rest_framework import serializers
 from ..models.core import Country
 from ..models.core import DataContext
 from ..models.core import FormulaSource
+from ..models.core import IMANote
+from ..models.core import IMAStatus
 from ..models.core import NsClass
 from ..models.core import NsFamily
 from ..models.core import NsSubclass
 from ..models.core import RelationType
 from ..models.core import Status
 from ..models.core import StatusGroup
+from .base import BaseSerializer
 
 
 class StatusGroupSerializer(serializers.ModelSerializer):
@@ -175,4 +178,24 @@ class DataContextSerilizer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+        ]
+
+
+class IMANoteSerializer(BaseSerializer, serializers.ModelSerializer):
+    key = serializers.CharField()
+
+    class Meta:
+        model = IMANote
+        fields = BaseSerializer.Meta.fields + [
+            "key",
+        ]
+
+
+class IMAStatusSerializer(BaseSerializer, serializers.ModelSerializer):
+    key = serializers.CharField()
+
+    class Meta:
+        model = IMAStatus
+        fields = BaseSerializer.Meta.fields + [
+            "key",
         ]

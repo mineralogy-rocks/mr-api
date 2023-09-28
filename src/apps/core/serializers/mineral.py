@@ -28,6 +28,8 @@ from ..utils import add_label
 from .core import CountryListSerializer
 from .core import DataContextSerilizer
 from .core import FormulaSourceSerializer
+from .core import IMANoteSerializer
+from .core import IMAStatusSerializer
 from .crystal import CrystalClassSerializer
 from .crystal import CrystalSystemSerializer
 from .crystal import SpaceGroupSerializer
@@ -661,12 +663,16 @@ class MineralListSecondarySerializer(serializers.ModelSerializer):
     """
 
     formulas = FormulaSerializer(many=True)
+    ima_statuses = IMAStatusSerializer(many=True)
+    ima_notes = IMANoteSerializer(many=True)
 
     class Meta:
         model = Mineral
         fields = [
             "id",
             "formulas",
+            "ima_statuses",
+            "ima_notes",
         ]
 
     @staticmethod
@@ -677,6 +683,8 @@ class MineralListSecondarySerializer(serializers.ModelSerializer):
 
         prefetch_related = [
             models.Prefetch("formulas", MineralFormula.objects.select_related("source")),
+            "ima_statuses",
+            "ima_notes",
         ]
 
         queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
