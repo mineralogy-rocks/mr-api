@@ -100,7 +100,6 @@ class Mineral(Nameable, Creatable, Updatable):
     )
 
     class Meta:
-        managed = False
         db_table = "mineral_log"
         ordering = [
             "name",
@@ -193,7 +192,6 @@ class MineralStatus(BaseModel, Creatable, Updatable):
     )
 
     class Meta:
-        managed = False
         db_table = "mineral_status"
         unique_together = (("mineral", "status"),)
 
@@ -215,7 +213,6 @@ class MineralIMAStatus(BaseModel, Creatable):
     status = models.ForeignKey(IMAStatus, models.CASCADE, db_column="ima_status_id", related_name="minerals")
 
     class Meta:
-        managed = False
         db_table = "mineral_ima_status"
 
         verbose_name = "IMA Status"
@@ -230,7 +227,6 @@ class MineralIMANote(BaseModel, Creatable):
     note = models.ForeignKey(IMANote, models.CASCADE, db_column="ima_note_id", related_name="minerals")
 
     class Meta:
-        managed = False
         db_table = "mineral_ima_note"
 
         verbose_name = "IMA Note"
@@ -246,7 +242,6 @@ class MineralContext(BaseModel, Creatable):
     data = models.JSONField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = "mineral_context"
 
         verbose_name = "Data Context"
@@ -275,7 +270,6 @@ class MineralRelation(BaseModel):
     )
 
     class Meta:
-        managed = False
         db_table = "mineral_relation"
         unique_together = (
             "mineral",
@@ -350,7 +344,6 @@ class MineralRelationSuggestion(BaseModel):
     is_processed = models.BooleanField(null=False, default=False, help_text="Is the suggestion processed?")
 
     class Meta:
-        managed = False
         db_table = "mineral_relation_suggestion"
         unique_together = (
             "mineral",
@@ -381,7 +374,6 @@ class MineralFormula(BaseModel, Creatable):
     )
 
     class Meta:
-        managed = False
         db_table = "mineral_formula"
 
         verbose_name = "Ideal Formula"
@@ -436,7 +428,6 @@ class MineralStructure(BaseModel, Creatable, Updatable):
     note = models.TextField(null=True, blank=True, help_text="Note of the structure.")
 
     class Meta:
-        managed = False
         db_table = "mineral_structure"
 
         verbose_name = "Analytical Measurement"
@@ -453,7 +444,6 @@ class MineralImpurity(BaseModel):
     rich_poor = models.BooleanField(null=True, blank=True)
 
     class Meta:
-        managed = False
         db_table = "mineral_impurity"
 
         verbose_name = "Impurity"
@@ -468,7 +458,6 @@ class MineralIonTheoretical(BaseModel):
     ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id", related_name="minerals_theoretical")
 
     class Meta:
-        managed = False
         db_table = "mineral_ion_theoretical"
         unique_together = (("mineral", "ion"),)
 
@@ -503,7 +492,6 @@ class MineralCrystallography(BaseModel):
     z = models.IntegerField(blank=True, null=True, default=None)
 
     class Meta:
-        managed = False
         db_table = "mineral_crystallography"
 
         verbose_name = "Crystallography"
@@ -520,7 +508,6 @@ class MineralCountry(BaseModel):
     note = models.TextField(db_column="note", blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = "mineral_country"
         unique_together = (("mineral", "country"),)
 
@@ -560,7 +547,6 @@ class MineralHistory(BaseModel):
     first_known_use = models.TextField(blank=True, null=True, help_text="First known use notation")
 
     class Meta:
-        managed = False
         db_table = "mineral_history"
         verbose_name = "Discovery Context"
         verbose_name_plural = "Discovery contexts"
@@ -582,7 +568,6 @@ class MineralHierarchy(BaseModel):
     )
 
     class Meta:
-        managed = False
         db_table = "mineral_hierarchy"
         unique_together = (("mineral", "parent"),)
 
@@ -599,7 +584,6 @@ class HierarchyView(BaseModel):
     is_parent = models.BooleanField()
 
     class Meta:
-        managed = False
         db_table = "mineral_hierarchy_view"
         ordering = [
             "id",
@@ -637,7 +621,6 @@ class MineralIonPosition(BaseModel):
     quantity = models.TextField(blank=True, null=True, db_column="ion_quantity")
 
     class Meta:
-        managed = False
         db_table = "mineral_ion_position"
         ordering = [
             "mineral",
@@ -655,7 +638,6 @@ class MindatSync(BaseModel, Creatable):
     is_successful = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
         db_table = "mindat_sync_log"
 
         verbose_name = "Mindat Sync History"

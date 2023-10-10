@@ -10,7 +10,6 @@ class NsClass(models.Model):
     description = models.TextField()
 
     class Meta:
-        managed = False
         db_table = "ns_class"
         ordering = [
             "id",
@@ -35,7 +34,6 @@ class NsSubclass(BaseModel):
     description = models.TextField()
 
     class Meta:
-        managed = False
         db_table = "ns_subclass"
         unique_together = (("ns_class", "ns_subclass"),)
         ordering = [
@@ -69,7 +67,6 @@ class NsFamily(BaseModel):
     description = models.TextField()
 
     class Meta:
-        managed = False
         db_table = "ns_family"
         unique_together = (("ns_class", "ns_subclass", "ns_family"),)
         ordering = [
@@ -88,7 +85,6 @@ class StatusGroup(BaseModel, Nameable):
     slug = models.CharField(max_length=100, unique=True)
 
     class Meta:
-        managed = False
         db_table = "status_group_list"
         ordering = [
             "name",
@@ -109,7 +105,6 @@ class Status(BaseModel):
     slug = models.CharField(max_length=200, unique=True)
 
     class Meta:
-        managed = False
         db_table = "status_list"
         ordering = [
             "status_id",
@@ -130,7 +125,6 @@ class IMAStatus(BaseModel, Nameable):
     key = models.CharField(max_length=100, null=False, unique=True)
 
     class Meta:
-        managed = False
         db_table = "ima_status_list"
         ordering = [
             "key",
@@ -144,7 +138,6 @@ class IMANote(BaseModel, Nameable):
     key = models.CharField(max_length=100, null=False, unique=True)
 
     class Meta:
-        managed = False
         db_table = "ima_note_list"
         ordering = [
             "key",
@@ -158,7 +151,6 @@ class RelationType(BaseModel, Nameable):
     note = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = "relation_type_list"
 
         verbose_name = "Relation Type"
@@ -177,7 +169,6 @@ class Country(BaseModel, Nameable):
     intermediate_region = models.CharField(max_length=100, null=True)
 
     class Meta:
-        managed = False
         db_table = "country_list"
 
         verbose_name = "Country"
@@ -191,7 +182,6 @@ class FormulaSource(BaseModel, Nameable):
     url = models.URLField()
 
     class Meta:
-        managed = False
         db_table = "formula_source_list"
 
         verbose_name = "Formula Source"
@@ -203,7 +193,6 @@ class FormulaSource(BaseModel, Nameable):
 
 class DataContext(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "data_context_list"
 
         verbose_name = "Data Context"

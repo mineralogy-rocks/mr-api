@@ -1,4 +1,4 @@
-FROM --platform=linux/arm64 postgres:15.3
+FROM postgres:15.3
 
 COPY ./db/maintenance /usr/local/bin/maintenance
 RUN chmod +x /usr/local/bin/maintenance/*

@@ -9,7 +9,6 @@ from .element import Element
 
 class IonClass(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "ion_class_list"
 
         verbose_name = "Ion Class"
@@ -21,7 +20,6 @@ class IonClass(BaseModel, Nameable):
 
 class IonSubclass(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "ion_subclass_list"
 
         verbose_name = "Ion Subclass"
@@ -33,7 +31,6 @@ class IonSubclass(BaseModel, Nameable):
 
 class IonGroup(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "ion_group_list"
 
         verbose_name = "Ion Group"
@@ -45,7 +42,6 @@ class IonGroup(BaseModel, Nameable):
 
 class IonSubgroup(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "ion_subgroup_list"
 
         verbose_name = "Ion Subgroup"
@@ -57,7 +53,6 @@ class IonSubgroup(BaseModel, Nameable):
 
 class IonType(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "ion_type_list"
 
         verbose_name = "Ion Type"
@@ -72,7 +67,6 @@ class IonPosition(BaseModel, Nameable):
     ions = models.ManyToManyField("core.Ion", through="core.MineralIonPosition")
 
     class Meta:
-        managed = False
         db_table = "ion_position_list"
         ordering = [
             "name",
@@ -152,7 +146,6 @@ class Ion(BaseModel, Nameable):
     ion_positions = models.ManyToManyField(IonPosition, through="core.MineralIonPosition")
 
     class Meta:
-        managed = False
         db_table = "ion_log"
         unique_together = (("ion_type_id", "formula"),)
 
@@ -184,7 +177,6 @@ class IonElement(BaseModel):
     )
 
     class Meta:
-        managed = False
         db_table = "ion_element"
         unique_together = (("ion", "element"),)
 
@@ -201,7 +193,6 @@ class IonSubunit(BaseModel):
     subunit = models.ForeignKey(Ion, models.CASCADE, db_column="subunit_id", to_field="id", related_name="ions")
 
     class Meta:
-        managed = False
         db_table = "ion_subunit"
         unique_together = (("ion", "subunit"),)
 

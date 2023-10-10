@@ -7,7 +7,6 @@ from .base import Nameable
 
 class CrystalSystem(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "crystal_system_list"
         ordering = [
             "name",
@@ -32,7 +31,6 @@ class CrystalClass(BaseModel, Nameable):
     )
 
     class Meta:
-        managed = False
         db_table = "crystal_class_list"
         ordering = [
             "crystal_system",
@@ -57,7 +55,6 @@ class SpaceGroup(BaseModel, Nameable):
     )
 
     class Meta:
-        managed = False
         db_table = "space_group_list"
         ordering = [
             "name",
