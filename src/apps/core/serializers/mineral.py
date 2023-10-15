@@ -12,7 +12,6 @@ from django.db.models.functions import Round
 from rest_framework import serializers
 
 from ..models.core import Status
-from ..models.mineral import HierarchyView
 from ..models.mineral import Mineral
 from ..models.mineral import MineralContext
 from ..models.mineral import MineralCrystallography
@@ -303,6 +302,13 @@ class CommonRetrieveSerializer(serializers.ModelSerializer):
                     {f"min_{_field}": Min(_field), f"max_{_field}": Max(_field), f"avg_{_field}": Round(Avg(_field), 4)}
                 )
             _summary_queryset = MineralStructure.objects.filter(id__in=_structures_ids).aggregate(**_aggregations)
+            _grouped = (
+                MineralStructure.objects.filter(id__in=_structures_ids)
+                .values("mineral__crystallography__crystal_system")
+                .annotate(**_aggregations)
+            )
+            print(_grouped)
+
             structures = {
                 "count": len(_structures_ids),
             }
@@ -398,17 +404,9 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
         return data
 
     def _get_members(self, instance):
-        if not hasattr(self, "_members"):
-            _members = HierarchyView.objects.filter(
-                mineral=instance,
-                is_parent=True,
-                # comment out, and calculate stats for ANY member
-                # relation__statuses__group__in=[3, 4, 11],
-                relation__direct_relations__direct_status=True,
-            )
-            # force to evaluate query
-            self._members = list(_members.values_list("relation", flat=True))
-        return self._members
+        if not hasattr(instance, "_members"):
+            instance._members = instance.members
+        return instance._members
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

@@ -111,6 +111,20 @@ class Mineral(Nameable, Creatable, Updatable):
     def __str__(self):
         return self.name
 
+    @property
+    def members(self):
+        _members = getattr(self, "_members", None)
+        if not _members:
+            _members = HierarchyView.objects.filter(
+                mineral=self,
+                is_parent=True,
+                # comment out, and calculate stats for ANY member
+                # relation__statuses__group__in=[3, 4, 11],
+                relation__direct_relations__direct_status=True,
+            )
+            return list(_members.values_list("relation", flat=True))
+        return _members
+
     def is_grouping(self):
         return self.statuses.filter(group=1, minerals__direct_status=True).exists()
 

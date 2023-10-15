@@ -283,7 +283,7 @@ GET_DATA_CONTEXTS_QUERY = """
                                 ORDER BY count DESC
                             ) _inner
                     ),
-                    'streakNote', string_agg(DISTINCT (data ->> 'colorNote')::TEXT, '; '),
+                    'streakNote', string_agg(DISTINCT (data ->> 'streakNote')::TEXT, '; '),
                     'streak', (
                         SELECT jsonb_agg(
                                         jsonb_build_object(
