@@ -180,9 +180,9 @@ class MineralSmallSerializer(serializers.ModelSerializer):
         return instance.short_description(100)
 
 
-class RetrieveSerializer(serializers.Serializer):
+class RetrieveController(serializers.Serializer):
     """
-    Outputs mineral or grouping data depending on the context
+    Controller, which redirects the request to the appropriate serializer - grouping or mineral
     """
 
     def to_representation(self, instance):
@@ -263,9 +263,41 @@ class InheritedMineralContextSerializer(MineralContextSerializer):
         ]
 
 
-class CommonRetrieveSerializer(serializers.ModelSerializer):
+class StructureAggregateSerializer(serializers.ModelSerializer):
+
+    crystal_system = CrystalSystemSerializer()
+    min_a = serializers.CharField()
+
+    class Meta:
+        model = MineralCrystallography
+        fields = [
+            'crystal_system',
+            "min_a",
+            # "max_a",
+            # "avg_a",
+            # "min_b",
+            # "max_b",
+            # "avg_b",
+            # "min_c",
+            # "max_c",
+            # "avg_c",
+            # "min_alpha",
+            # "max_alpha",
+            # "avg_alpha",
+            # "min_beta",
+            # "max_beta",
+            # "avg_beta",
+            # "min_gamma",
+            # "max_gamma",
+            # "avg_gamma",
+            # "min_volume",
+            # "max_volume",
+            # "avg_volume",
+        ]
+
+
+class BaseRetrieveSerializer(serializers.ModelSerializer):
     statuses = StatusListSerializer(many=True)
-    # crystallography = serializers.SerializerMethodField()
     formulas = FormulaSerializer(many=True)
 
     class Meta:
@@ -277,7 +309,6 @@ class CommonRetrieveSerializer(serializers.ModelSerializer):
             "description",
             "mindat_id",
             "statuses",
-            # "crystallography",
             "description",
             "seen",
             "formulas",
@@ -285,9 +316,10 @@ class CommonRetrieveSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
-    def _get_stats(self, instance, relations):
+    @staticmethod
+    def _get_structures(ids: list = []):
         _structures_ids = list(
-            MineralStructure.objects.filter(mineral__in=[instance.id, *relations])
+            MineralStructure.objects.filter(mineral__in=ids)
             .only("id")
             .values_list("id", flat=True)
         )
@@ -295,29 +327,29 @@ class CommonRetrieveSerializer(serializers.ModelSerializer):
         elements = None
 
         if _structures_ids:
-            _aggregations = {}
-            _fields = ["a", "b", "c", "alpha", "beta", "gamma", "volume"]
-            for _field in _fields:
-                _aggregations.update(
-                    {f"min_{_field}": Min(_field), f"max_{_field}": Max(_field), f"avg_{_field}": Round(Avg(_field), 4)}
-                )
-            _summary_queryset = MineralStructure.objects.filter(id__in=_structures_ids).aggregate(**_aggregations)
-            _grouped = (
-                MineralStructure.objects.filter(id__in=_structures_ids)
-                .values("mineral__crystallography__crystal_system")
-                .annotate(**_aggregations)
+            # _aggregations = {}
+            # _fields = ["a", "b", "c", "alpha", "beta", "gamma", "volume"]
+            # for _field in _fields:
+            #     _aggregations.update(
+            #         {f"min_{_field}": Min(_field), f"max_{_field}": Max(_field), f"avg_{_field}": Round(Avg(_field), 4)}
+            #     )
+            # _summary_queryset = MineralStructure.objects.filter(id__in=_structures_ids).aggregate(**_aggregations)
+            # _summary_queryset = MineralStructure.aggregate_structures(_structures_ids)
+            _summary_queryset = (
+                MineralCrystallography.aggregate_structures(_structures_ids)
             )
-            print(_grouped)
+            print(_summary_queryset.values('crystal_system'))
 
             structures = {
                 "count": len(_structures_ids),
+                "structures": StructureAggregateSerializer(_summary_queryset, many=True).data,
             }
-            for _field in ["a", "b", "c", "alpha", "beta", "gamma", "volume"]:
-                structures[_field] = {
-                    "min": _summary_queryset[f"min_{_field}"],
-                    "max": _summary_queryset[f"max_{_field}"],
-                    "avg": _summary_queryset[f"avg_{_field}"],
-                }
+            # for _field in ["a", "b", "c", "alpha", "beta", "gamma", "volume"]:
+            #     structures[_field] = {
+            #         "min": _summary_queryset[f"min_{_field}"],
+            #         "max": _summary_queryset[f"max_{_field}"],
+            #         "avg": _summary_queryset[f"avg_{_field}"],
+            #     }
             _elements = (
                 MineralStructure.objects.filter(id__in=_structures_ids)
                 .annotate(element=RawSQL("UNNEST(regexp_matches(formula, 'REE|[A-Z][a-z]?', 'g'))", []))
@@ -355,12 +387,12 @@ class GroupMemberSerializer(serializers.ModelSerializer):
         return instance.short_description(100)
 
 
-class GroupingRetrieveSerializer(CommonRetrieveSerializer):
+class GroupingRetrieveSerializer(BaseRetrieveSerializer):
     members = serializers.SerializerMethodField()
 
     class Meta:
         model = Mineral
-        fields = CommonRetrieveSerializer.Meta.fields + [
+        fields = BaseRetrieveSerializer.Meta.fields + [
             "members",
         ]
 
@@ -404,9 +436,9 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
         return data
 
     def _get_members(self, instance):
-        if not hasattr(instance, "_members"):
-            instance._members = instance.members
-        return instance._members
+        if not hasattr(self, "_members"):
+            self._members = instance.members
+        return self._members
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -419,8 +451,8 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
         )
         _horizontal_relations = [_synonym.id for _synonym in instance.synonyms]
 
-        data["structures"], data["elements"] = self._get_stats(
-            instance, _horizontal_relations + _members + _members_synonyms
+        data["structures"], data["elements"] = self._get_structures(
+            [instance.id, *(_horizontal_relations + _members + _members_synonyms)]
         )
 
         _contexts = []
@@ -435,14 +467,14 @@ class GroupingRetrieveSerializer(CommonRetrieveSerializer):
         return data
 
 
-class MineralRetrieveSerializer(CommonRetrieveSerializer):
+class MineralRetrieveSerializer(BaseRetrieveSerializer):
     crystallography = CrystallographySerializer()
     history = MineralHistorySerializer()
     relations = MineralSmallSerializer(many=True)
 
     class Meta:
         model = Mineral
-        fields = CommonRetrieveSerializer.Meta.fields + [
+        fields = BaseRetrieveSerializer.Meta.fields + [
             "crystallography",
             "ns_index",
             "history",
@@ -524,7 +556,9 @@ class MineralRetrieveSerializer(CommonRetrieveSerializer):
                 _chain["crystallography"] = _crystallography[0]
 
         data["inheritance_chain"] = inheritance_chain
-        data["structures"], data["elements"] = self._get_stats(instance, _horizontal_relations)
+        data["structures"], data["elements"] = self._get_structures(
+            [instance.id, *(_horizontal_relations)]
+        )
         data["contexts"] = _inherited_contexts
         return data
 

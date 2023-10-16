@@ -58,7 +58,7 @@ from .serializers.mineral import MineralAnalyticalDataSerializer
 from .serializers.mineral import MineralListSecondarySerializer
 from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRelationsSerializer
-from .serializers.mineral import RetrieveSerializer
+from .serializers.mineral import RetrieveController
 from .utils import add_label
 
 
@@ -546,7 +546,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         if self.action in ["list"]:
             return MineralListSerializer
         elif self.action in ["retrieve"]:
-            return RetrieveSerializer
+            return RetrieveController
         elif self.action in [
             "grouping_members",
             "relations",
@@ -611,14 +611,11 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         return obj
 
-    def _is_grouping(self, instance):
-        return MineralStatus.objects.filter(mineral=instance, status__group=1).exists()
-
     def _get_related_objects(self, instance, group):
         """
         Returns related objects for a given instance.
         """
-        _is_grouping = self._is_grouping(instance)
+        _is_grouping = instance.is_grouping()
         annotate = {"name": F("relation__name"), "slug": F("relation__slug")}
 
         if _is_grouping:
@@ -654,7 +651,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         return queryset
 
     def _get_approved_objects(self, instance):
-        _is_grouping = self._is_grouping(instance)
+        _is_grouping = instance.is_grouping()
 
         if _is_grouping:
             queryset = HierarchyView.objects.all()
@@ -677,7 +674,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     @action(detail=True, methods=["get"], url_path="grouping-members")
     def grouping_members(self, request, *args, **kwargs):
         instance = self._get_raw_object()
-        _is_grouping = self._is_grouping(instance)
+        _is_grouping = instance.is_grouping()
 
         _status = request.query_params.get("status", None)
         _crystal_system = request.query_params.get("crystal_system", None)

@@ -28,6 +28,7 @@ class CrystalClass(BaseModel, Nameable):
         db_column="crystal_system_id",
         to_field="id",
         related_name="classes",
+        default=None,
     )
 
     class Meta:

@@ -95,6 +95,7 @@ class Ion(BaseModel, Nameable):
         db_column="ion_type_id",
         to_field="id",
         related_name="ions",
+        default=None,
     )
     variety_of = models.ForeignKey(
         "self",
@@ -103,6 +104,7 @@ class Ion(BaseModel, Nameable):
         to_field="id",
         null=True,
         blank=True,
+        default=None,
     )
     ion_class = models.ForeignKey(
         IonClass,
@@ -112,6 +114,7 @@ class Ion(BaseModel, Nameable):
         related_name="ions",
         blank=True,
         null=True,
+        default=None,
     )
     ion_subclass = models.ForeignKey(
         IonSubclass,
@@ -121,6 +124,7 @@ class Ion(BaseModel, Nameable):
         related_name="ions",
         blank=True,
         null=True,
+        default=None,
     )
     ion_group = models.ForeignKey(
         IonGroup,
@@ -130,6 +134,7 @@ class Ion(BaseModel, Nameable):
         related_name="ions",
         blank=True,
         null=True,
+        default=None,
     )
     ion_subgroup = models.ForeignKey(
         IonSubgroup,
@@ -139,6 +144,7 @@ class Ion(BaseModel, Nameable):
         related_name="ions",
         blank=True,
         null=True,
+        default=None,
     )
 
     elements = models.ManyToManyField(Element, through="IonElement")
@@ -147,7 +153,7 @@ class Ion(BaseModel, Nameable):
 
     class Meta:
         db_table = "ion_log"
-        unique_together = (("ion_type_id", "formula"),)
+        unique_together = (("ion_type", "formula"),)
 
         verbose_name = "Ion"
         verbose_name_plural = "Ions"
@@ -167,13 +173,14 @@ class Ion(BaseModel, Nameable):
 
 class IonElement(BaseModel):
 
-    ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id", to_field="id")
+    ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id", to_field="id", default=None)
     element = models.ForeignKey(
         Element,
         models.CASCADE,
         db_column="element_id",
         to_field="id",
         related_name="ions",
+        default=None,
     )
 
     class Meta:
@@ -189,8 +196,8 @@ class IonElement(BaseModel):
 
 class IonSubunit(BaseModel):
 
-    ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id", to_field="id")
-    subunit = models.ForeignKey(Ion, models.CASCADE, db_column="subunit_id", to_field="id", related_name="ions")
+    ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id", to_field="id", default=None)
+    subunit = models.ForeignKey(Ion, models.CASCADE, db_column="subunit_id", to_field="id", related_name="ions", default=None)
 
     class Meta:
         db_table = "ion_subunit"

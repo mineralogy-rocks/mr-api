@@ -105,6 +105,7 @@ class Element(BaseModel):
         db_column="goldschmidt_class_id",
         to_field="id",
         related_name="elements",
+        default=None,
     )
     phase_state = models.ForeignKey(
         PhaseState,
@@ -112,6 +113,7 @@ class Element(BaseModel):
         db_column="phase_state_id",
         to_field="id",
         related_name="elements",
+        default=None,
     )
     bonding_type = models.ForeignKey(
         BondingType,
@@ -119,6 +121,7 @@ class Element(BaseModel):
         db_column="bonding_type_id",
         to_field="id",
         related_name="elements",
+        default=None,
     )
     chemical_group = models.ForeignKey(
         ChemicalGroup,
@@ -126,6 +129,7 @@ class Element(BaseModel):
         db_column="chemical_group_id",
         to_field="id",
         related_name="elements",
+        default=None,
     )
 
     class Meta:
