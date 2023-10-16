@@ -2,13 +2,10 @@
 from django.contrib.humanize.templatetags.humanize import naturalday
 from django.db import connection
 from django.db import models
-from django.db.models import Avg
 from django.db.models import Count
 from django.db.models import Max
-from django.db.models import Min
 from django.db.models import Prefetch
 from django.db.models.expressions import RawSQL
-from django.db.models.functions import Round
 from rest_framework import serializers
 
 from ..models.core import Status
@@ -264,35 +261,14 @@ class InheritedMineralContextSerializer(MineralContextSerializer):
 
 
 class StructureAggregateSerializer(serializers.ModelSerializer):
-
-    crystal_system = CrystalSystemSerializer()
+    crystal_system = serializers.IntegerField()
     min_a = serializers.CharField()
 
     class Meta:
-        model = MineralCrystallography
+        model = MineralStructure
         fields = [
-            'crystal_system',
+            "crystal_system",
             "min_a",
-            # "max_a",
-            # "avg_a",
-            # "min_b",
-            # "max_b",
-            # "avg_b",
-            # "min_c",
-            # "max_c",
-            # "avg_c",
-            # "min_alpha",
-            # "max_alpha",
-            # "avg_alpha",
-            # "min_beta",
-            # "max_beta",
-            # "avg_beta",
-            # "min_gamma",
-            # "max_gamma",
-            # "avg_gamma",
-            # "min_volume",
-            # "max_volume",
-            # "avg_volume",
         ]
 
 
@@ -318,31 +294,46 @@ class BaseRetrieveSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def _get_structures(ids: list = []):
-        _structures_ids = list(
-            MineralStructure.objects.filter(mineral__in=ids)
-            .only("id")
-            .values_list("id", flat=True)
-        )
+        _structures_ids = list(MineralStructure.objects.filter(mineral__in=ids).only("id").values_list("id", flat=True))
         structures = None
         elements = None
 
         if _structures_ids:
-            # _aggregations = {}
-            # _fields = ["a", "b", "c", "alpha", "beta", "gamma", "volume"]
-            # for _field in _fields:
-            #     _aggregations.update(
-            #         {f"min_{_field}": Min(_field), f"max_{_field}": Max(_field), f"avg_{_field}": Round(Avg(_field), 4)}
-            #     )
-            # _summary_queryset = MineralStructure.objects.filter(id__in=_structures_ids).aggregate(**_aggregations)
-            # _summary_queryset = MineralStructure.aggregate_structures(_structures_ids)
-            _summary_queryset = (
-                MineralCrystallography.aggregate_structures(_structures_ids)
-            )
-            print(_summary_queryset.values('crystal_system'))
+            _summary_queryset = MineralStructure.aggregate_by_system(ids)
+
+            for _system in _summary_queryset:
+                _system["min"] = {
+                    "a": _system.pop("min_a"),
+                    "b": _system.pop("min_b"),
+                    "c": _system.pop("min_c"),
+                    "alpha": _system.pop("min_alpha"),
+                    "beta": _system.pop("min_beta"),
+                    "gamma": _system.pop("min_gamma"),
+                    "volume": _system.pop("min_volume"),
+                }
+                _system["max"] = {
+                    "a": _system.pop("max_a"),
+                    "b": _system.pop("max_b"),
+                    "c": _system.pop("max_c"),
+                    "alpha": _system.pop("max_alpha"),
+                    "beta": _system.pop("max_beta"),
+                    "gamma": _system.pop("max_gamma"),
+                    "volume": _system.pop("max_volume"),
+                }
+                _system["avg"] = {
+                    "a": _system.pop("avg_a"),
+                    "b": _system.pop("avg_b"),
+                    "c": _system.pop("avg_c"),
+                    "alpha": _system.pop("avg_alpha"),
+                    "beta": _system.pop("avg_beta"),
+                    "gamma": _system.pop("avg_gamma"),
+                    "volume": _system.pop("avg_volume"),
+                }
 
             structures = {
                 "count": len(_structures_ids),
-                "structures": StructureAggregateSerializer(_summary_queryset, many=True).data,
+                # "structures": _summary_queryset.values()
+                "structures": _summary_queryset,
             }
             # for _field in ["a", "b", "c", "alpha", "beta", "gamma", "volume"]:
             #     structures[_field] = {
@@ -363,7 +354,6 @@ class BaseRetrieveSerializer(serializers.ModelSerializer):
 
 class GroupMemberSerializer(serializers.ModelSerializer):
     history = MineralHistorySerializer()
-    # formulas = FormulaSerializer(many=True)
     statuses = serializers.JSONField(source="_statuses")
     crystal_system = CrystalSystemSerializer(source="crystallography.crystal_system")
     description = serializers.SerializerMethodField()
@@ -375,7 +365,6 @@ class GroupMemberSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "slug",
-            # "formulas",
             "statuses",
             "crystal_system",
             "history",
@@ -556,9 +545,7 @@ class MineralRetrieveSerializer(BaseRetrieveSerializer):
                 _chain["crystallography"] = _crystallography[0]
 
         data["inheritance_chain"] = inheritance_chain
-        data["structures"], data["elements"] = self._get_structures(
-            [instance.id, *(_horizontal_relations)]
-        )
+        data["structures"], data["elements"] = self._get_structures([instance.id, *(_horizontal_relations)])
         data["contexts"] = _inherited_contexts
         return data
 

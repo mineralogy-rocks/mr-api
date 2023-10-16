@@ -7,13 +7,14 @@ from django.contrib import admin
 from django.contrib.postgres.fields import ArrayField
 from django.db import connection
 from django.db import models
-from django.db.models import Q, F
-from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.db.models import Avg
+from django.db.models import F
 from django.db.models import Max
 from django.db.models import Min
+from django.db.models import Q
 from django.db.models.functions import Round
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 from ..utils import shorten_text
 from ..utils import unique_slugify
@@ -453,37 +454,60 @@ class MineralStructure(BaseModel, Creatable, Updatable):
         return mark_safe(self.formula) or self.note
 
     @classmethod
-    def aggregate_structures(cls, ids):
+    def aggregate_by_system(cls, ids):
         _aggregations = {
-            'min_a': Min('a'),
-            'max_a': Max('a'),
-            'avg_a': Round(Avg('a'), 4),
-            'min_b': Min('b'),
-            'max_b': Max('b'),
-            'avg_b': Round(Avg('b'), 4),
-            'min_c': Min('c'),
-            'max_c': Max('c'),
-            'avg_c': Round(Avg('c'), 4),
-            'min_alpha': Min('alpha'),
-            'max_alpha': Max('alpha'),
-            'avg_alpha': Round(Avg('alpha'), 4),
-            'min_beta': Min('beta'),
-            'max_beta': Max('beta'),
-            'avg_beta': Round(Avg('beta'), 4),
-            'min_gamma': Min('gamma'),
-            'max_gamma': Max('gamma'),
-            'avg_gamma': Round(Avg('gamma'), 4),
-            'min_volume': Min('volume'),
-            'max_volume': Max('volume'),
-            'avg_volume': Round(Avg('volume'), 4),
+            "min_a": Min("a"),
+            "max_a": Max("a"),
+            "avg_a": Round(Avg("a"), 4),
+            "min_b": Min("b"),
+            "max_b": Max("b"),
+            "avg_b": Round(Avg("b"), 4),
+            "min_c": Min("c"),
+            "max_c": Max("c"),
+            "avg_c": Round(Avg("c"), 4),
+            "min_alpha": Min("alpha"),
+            "max_alpha": Max("alpha"),
+            "avg_alpha": Round(Avg("alpha"), 4),
+            "min_beta": Min("beta"),
+            "max_beta": Max("beta"),
+            "avg_beta": Round(Avg("beta"), 4),
+            "min_gamma": Min("gamma"),
+            "max_gamma": Max("gamma"),
+            "avg_gamma": Round(Avg("gamma"), 4),
+            "min_volume": Min("volume"),
+            "max_volume": Max("volume"),
+            "avg_volume": Round(Avg("volume"), 4),
         }
         queryset = (
-            cls.objects.filter(id__in=ids)
-            .select_related('mineral__crystallography')
-            .values("mineral__crystallography__crystal_system")
+            cls.objects.values("mineral__crystallography__crystal_system")
+            .filter(mineral__in=ids)
             .annotate(**_aggregations)
+            .annotate(crystal_system=F("mineral__crystallography__crystal_system"))
         )
-        return queryset
+        return queryset.values(
+            "crystal_system",
+            "min_a",
+            "max_a",
+            "avg_a",
+            "min_b",
+            "max_b",
+            "avg_b",
+            "min_c",
+            "max_c",
+            "avg_c",
+            "min_alpha",
+            "max_alpha",
+            "avg_alpha",
+            "min_beta",
+            "max_beta",
+            "avg_beta",
+            "min_gamma",
+            "max_gamma",
+            "avg_gamma",
+            "min_volume",
+            "max_volume",
+            "avg_volume",
+        )
 
 
 class MineralImpurity(BaseModel):
@@ -518,14 +542,22 @@ class MineralIonTheoretical(BaseModel):
 
 
 class MineralCrystallography(BaseModel):
-    mineral = models.OneToOneField(Mineral, models.CASCADE, db_column="mineral_id", related_name="crystallography")
+    mineral = models.OneToOneField(
+        Mineral, models.SET_NULL, db_column="mineral_id", related_name="crystallography", null=True
+    )
     crystal_system = models.ForeignKey(
         CrystalSystem,
         models.CASCADE,
         db_column="crystal_system_id",
         related_name="minerals",
+        null=True,
         default=None,
     )
+    # crystal_system = models.PositiveSmallIntegerField(
+    #     choices=CRYSTAL_SYSTEM_CHOICES,
+    #     null=True,
+    #     default=None,
+    # )
     crystal_class = models.ForeignKey(
         CrystalClass,
         models.CASCADE,
@@ -548,40 +580,7 @@ class MineralCrystallography(BaseModel):
         verbose_name_plural = "Crystallographies"
 
     def __str__(self):
-        return self.crystal_system.name
-
-    @classmethod
-    def aggregate_structures(cls, ids):
-        _lookup = 'mineral__structures__'
-        _aggregations = {
-            'min_a': Min(_lookup + 'a'),
-            'max_a': Max(_lookup + 'a'),
-            'avg_a': Round(Avg(_lookup + 'a'), 4),
-            'min_b': Min(_lookup + 'b'),
-            'max_b': Max(_lookup + 'b'),
-            'avg_b': Round(Avg(_lookup + 'b'), 4),
-            'min_c': Min(_lookup + 'c'),
-            'max_c': Max(_lookup + 'c'),
-            'avg_c': Round(Avg(_lookup + 'c'), 4),
-            'min_alpha': Min(_lookup + 'alpha'),
-            'max_alpha': Max(_lookup + 'alpha'),
-            'avg_alpha': Round(Avg(_lookup + 'alpha'), 4),
-            'min_beta': Min(_lookup + 'beta'),
-            'max_beta': Max(_lookup + 'beta'),
-            'avg_beta': Round(Avg(_lookup + 'beta'), 4),
-            'min_gamma': Min(_lookup + 'gamma'),
-            'max_gamma': Max(_lookup + 'gamma'),
-            'avg_gamma': Round(Avg(_lookup + 'gamma'), 4),
-            'min_volume': Min(_lookup + 'volume'),
-            'max_volume': Max(_lookup + 'volume'),
-            'avg_volume': Round(Avg(_lookup + 'volume'), 4),
-        }
-        queryset = (
-            cls.objects.filter(mineral__structures__in=ids)
-            .values("crystal_system__id")
-            .annotate(**_aggregations)
-        )
-        return queryset
+        return str(self.crystal_system)
 
 
 class MineralCountry(BaseModel):

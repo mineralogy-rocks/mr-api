@@ -5,7 +5,9 @@ from .base import BaseModel
 from .base import Nameable
 
 
-class CrystalSystem(BaseModel, Nameable):
+class CrystalSystem(BaseModel):
+    name = models.CharField(max_length=30, null=False, unique=True)
+
     class Meta:
         db_table = "crystal_system_list"
         ordering = [
@@ -20,7 +22,6 @@ class CrystalSystem(BaseModel, Nameable):
 
 
 class CrystalClass(BaseModel, Nameable):
-
     h_m_symbol = models.CharField(max_length=50, blank=True, null=True)
     crystal_system = models.ForeignKey(
         CrystalSystem,
@@ -28,6 +29,7 @@ class CrystalClass(BaseModel, Nameable):
         db_column="crystal_system_id",
         to_field="id",
         related_name="classes",
+        null=True,
         default=None,
     )
 
@@ -46,7 +48,6 @@ class CrystalClass(BaseModel, Nameable):
 
 
 class SpaceGroup(BaseModel, Nameable):
-
     crystal_class = models.ForeignKey(
         CrystalClass,
         models.CASCADE,
