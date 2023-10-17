@@ -2,7 +2,6 @@
 from django.contrib.humanize.templatetags.humanize import naturalday
 from django.db import connection
 from django.db import models
-from django.db.models import Count
 from django.db.models import Max
 from django.db.models import Prefetch
 from django.db.models.expressions import RawSQL
@@ -260,18 +259,6 @@ class InheritedMineralContextSerializer(MineralContextSerializer):
         ]
 
 
-class StructureAggregateSerializer(serializers.ModelSerializer):
-    crystal_system = serializers.IntegerField()
-    min_a = serializers.CharField()
-
-    class Meta:
-        model = MineralStructure
-        fields = [
-            "crystal_system",
-            "min_a",
-        ]
-
-
 class BaseRetrieveSerializer(serializers.ModelSerializer):
     statuses = StatusListSerializer(many=True)
     formulas = FormulaSerializer(many=True)
@@ -293,62 +280,9 @@ class BaseRetrieveSerializer(serializers.ModelSerializer):
         ]
 
     @staticmethod
-    def _get_structures(ids: list = []):
-        _structures_ids = list(MineralStructure.objects.filter(mineral__in=ids).only("id").values_list("id", flat=True))
-        structures = None
-        elements = None
-
-        if _structures_ids:
-            _summary_queryset = MineralStructure.aggregate_by_system(ids)
-
-            for _system in _summary_queryset:
-                _system["min"] = {
-                    "a": _system.pop("min_a"),
-                    "b": _system.pop("min_b"),
-                    "c": _system.pop("min_c"),
-                    "alpha": _system.pop("min_alpha"),
-                    "beta": _system.pop("min_beta"),
-                    "gamma": _system.pop("min_gamma"),
-                    "volume": _system.pop("min_volume"),
-                }
-                _system["max"] = {
-                    "a": _system.pop("max_a"),
-                    "b": _system.pop("max_b"),
-                    "c": _system.pop("max_c"),
-                    "alpha": _system.pop("max_alpha"),
-                    "beta": _system.pop("max_beta"),
-                    "gamma": _system.pop("max_gamma"),
-                    "volume": _system.pop("max_volume"),
-                }
-                _system["avg"] = {
-                    "a": _system.pop("avg_a"),
-                    "b": _system.pop("avg_b"),
-                    "c": _system.pop("avg_c"),
-                    "alpha": _system.pop("avg_alpha"),
-                    "beta": _system.pop("avg_beta"),
-                    "gamma": _system.pop("avg_gamma"),
-                    "volume": _system.pop("avg_volume"),
-                }
-
-            structures = {
-                "count": len(_structures_ids),
-                # "structures": _summary_queryset.values()
-                "structures": _summary_queryset,
-            }
-            # for _field in ["a", "b", "c", "alpha", "beta", "gamma", "volume"]:
-            #     structures[_field] = {
-            #         "min": _summary_queryset[f"min_{_field}"],
-            #         "max": _summary_queryset[f"max_{_field}"],
-            #         "avg": _summary_queryset[f"avg_{_field}"],
-            #     }
-            _elements = (
-                MineralStructure.objects.filter(id__in=_structures_ids)
-                .annotate(element=RawSQL("UNNEST(regexp_matches(formula, 'REE|[A-Z][a-z]?', 'g'))", []))
-                .values("element")
-                .annotate(count=Count("id", distinct=True))
-                .order_by("-count", "element")
-            )
-            elements = _elements.values("element", "count")
+    def _get_structure_aggregates(ids: list = []):
+        structures = MineralStructure.aggregate_by_system(ids)
+        elements = MineralStructure.aggregate_by_element(ids)
         return structures, elements
 
 
@@ -440,7 +374,7 @@ class GroupingRetrieveSerializer(BaseRetrieveSerializer):
         )
         _horizontal_relations = [_synonym.id for _synonym in instance.synonyms]
 
-        data["structures"], data["elements"] = self._get_structures(
+        data["structures"], data["elements"] = self._get_structure_aggregates(
             [instance.id, *(_horizontal_relations + _members + _members_synonyms)]
         )
 
@@ -545,7 +479,7 @@ class MineralRetrieveSerializer(BaseRetrieveSerializer):
                 _chain["crystallography"] = _crystallography[0]
 
         data["inheritance_chain"] = inheritance_chain
-        data["structures"], data["elements"] = self._get_structures([instance.id, *(_horizontal_relations)])
+        data["structures"], data["elements"] = self._get_structure_aggregates([instance.id, *_horizontal_relations])
         data["contexts"] = _inherited_contexts
         return data
 

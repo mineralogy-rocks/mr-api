@@ -8,10 +8,13 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import connection
 from django.db import models
 from django.db.models import Avg
+from django.db.models import Count
 from django.db.models import F
 from django.db.models import Max
 from django.db.models import Min
 from django.db.models import Q
+from django.db.models.expressions import RawSQL
+from django.db.models.functions import JSONObject
 from django.db.models.functions import Round
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -453,61 +456,55 @@ class MineralStructure(BaseModel, Creatable, Updatable):
     def __str__(self):
         return mark_safe(self.formula) or self.note
 
-    @classmethod
-    def aggregate_by_system(cls, ids):
-        _aggregations = {
-            "min_a": Min("a"),
-            "max_a": Max("a"),
-            "avg_a": Round(Avg("a"), 4),
-            "min_b": Min("b"),
-            "max_b": Max("b"),
-            "avg_b": Round(Avg("b"), 4),
-            "min_c": Min("c"),
-            "max_c": Max("c"),
-            "avg_c": Round(Avg("c"), 4),
-            "min_alpha": Min("alpha"),
-            "max_alpha": Max("alpha"),
-            "avg_alpha": Round(Avg("alpha"), 4),
-            "min_beta": Min("beta"),
-            "max_beta": Max("beta"),
-            "avg_beta": Round(Avg("beta"), 4),
-            "min_gamma": Min("gamma"),
-            "max_gamma": Max("gamma"),
-            "avg_gamma": Round(Avg("gamma"), 4),
-            "min_volume": Min("volume"),
-            "max_volume": Max("volume"),
-            "avg_volume": Round(Avg("volume"), 4),
-        }
+    @staticmethod
+    def aggregate_by_system(ids):
         queryset = (
-            cls.objects.values("mineral__crystallography__crystal_system")
+            MineralStructure.objects.values("mineral__crystallography__crystal_system")
             .filter(mineral__in=ids)
-            .annotate(**_aggregations)
-            .annotate(crystal_system=F("mineral__crystallography__crystal_system"))
+            .annotate(
+                crystal_system=F("mineral__crystallography__crystal_system"),
+                count=Count("id"),
+                min=JSONObject(
+                    a=Min("a"),
+                    b=Min("b"),
+                    c=Min("c"),
+                    alpha=Min("alpha"),
+                    beta=Min("beta"),
+                    gamma=Min("gamma"),
+                    volume=Min("volume"),
+                ),
+                max=JSONObject(
+                    a=Max("a"),
+                    b=Max("b"),
+                    c=Max("c"),
+                    alpha=Max("alpha"),
+                    beta=Max("beta"),
+                    gamma=Max("gamma"),
+                    volume=Max("volume"),
+                ),
+                avg=JSONObject(
+                    a=Round(Avg("a"), 4),
+                    b=Round(Avg("b"), 4),
+                    c=Round(Avg("c"), 4),
+                    alpha=Round(Avg("alpha"), 4),
+                    beta=Round(Avg("beta"), 4),
+                    gamma=Round(Avg("gamma"), 4),
+                    volume=Round(Avg("volume"), 4),
+                ),
+            )
         )
-        return queryset.values(
-            "crystal_system",
-            "min_a",
-            "max_a",
-            "avg_a",
-            "min_b",
-            "max_b",
-            "avg_b",
-            "min_c",
-            "max_c",
-            "avg_c",
-            "min_alpha",
-            "max_alpha",
-            "avg_alpha",
-            "min_beta",
-            "max_beta",
-            "avg_beta",
-            "min_gamma",
-            "max_gamma",
-            "avg_gamma",
-            "min_volume",
-            "max_volume",
-            "avg_volume",
+        return queryset.values("crystal_system", "count", "min", "max", "avg")
+
+    @staticmethod
+    def aggregate_by_element(ids):
+        queryset = (
+            MineralStructure.objects.filter(mineral__in=ids)
+            .annotate(element=RawSQL("UNNEST(regexp_matches(formula, 'REE|[A-Z][a-z]?', 'g'))", []))
+            .values("element")
+            .annotate(count=Count("id", distinct=True))
+            .order_by("-count", "element")
         )
+        return queryset.values("element", "count")
 
 
 class MineralImpurity(BaseModel):
