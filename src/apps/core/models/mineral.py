@@ -121,14 +121,19 @@ class Mineral(Nameable, Creatable, Updatable):
 
     @property
     def members(self):
-        _members = HierarchyView.objects.filter(
+        queryset = HierarchyView.objects.filter(
             mineral=self,
             is_parent=True,
             # comment out, and calculate stats for ANY member
             # relation__statuses__group__in=[3, 4, 11],
             relation__direct_relations__direct_status=True,
         )
-        return list(_members.values_list("relation", flat=True))
+        return list(queryset.values_list("relation", flat=True))
+
+    # @property
+    # def synonyms(self):
+    #     queryset = self.direct_relations.filter(status__group=2, direct_status=True)
+    #     return list (queryset.values_list('mineral', flat=True))
 
     # TODO: make it a @property once we migrate the LIST query to use other field for is_grouping
     def is_grouping(self):
@@ -220,6 +225,14 @@ class MineralStatus(BaseModel, Creatable, Updatable):
 
     def __str__(self):
         return self.mineral.name + " " + self.status.description_short
+
+    @classmethod
+    def get_synonyms(cls, ids):
+        queryset = (
+            cls.objects
+            .filter(mineral__in=ids, direct_status=False, status__group=2)
+        )
+        return list(queryset.values_list("mineral_status__relation", flat=True))
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
@@ -456,10 +469,10 @@ class MineralStructure(BaseModel, Creatable, Updatable):
     def __str__(self):
         return mark_safe(self.formula) or self.note
 
-    @staticmethod
-    def aggregate_by_system(ids):
+    @classmethod
+    def aggregate_by_system(cls, ids):
         queryset = (
-            MineralStructure.objects.values("mineral__crystallography__crystal_system")
+            cls.objects.values("mineral__crystallography__crystal_system")
             .filter(mineral__in=ids)
             .annotate(
                 crystal_system=F("mineral__crystallography__crystal_system"),
@@ -495,10 +508,10 @@ class MineralStructure(BaseModel, Creatable, Updatable):
         )
         return queryset.values("crystal_system", "count", "min", "max", "avg")
 
-    @staticmethod
-    def aggregate_by_element(ids):
+    @classmethod
+    def aggregate_by_element(cls, ids):
         queryset = (
-            MineralStructure.objects.filter(mineral__in=ids)
+            cls.objects.filter(mineral__in=ids)
             .annotate(element=RawSQL("UNNEST(regexp_matches(formula, 'REE|[A-Z][a-z]?', 'g'))", []))
             .values("element")
             .annotate(count=Count("id", distinct=True))

@@ -15,6 +15,7 @@ from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHierarchy
 from ..models.mineral import MineralHistory
 from ..models.mineral import MineralRelation
+from ..models.mineral import MineralStatus
 from ..models.mineral import MineralStructure
 from ..queries import GET_DATA_CONTEXTS_QUERY
 from ..queries import GET_INHERITANCE_CHAIN_RETRIEVE_QUERY
@@ -321,6 +322,7 @@ class GroupingRetrieveSerializer(BaseRetrieveSerializer):
 
     def get_members(self, instance):
         _members = self._get_members(instance)
+        # _members = instance.members
         _select_related = [
             "history",
             "crystallography__crystal_system",
@@ -365,23 +367,17 @@ class GroupingRetrieveSerializer(BaseRetrieveSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-
         _members = self._get_members(instance)
-        _members_synonyms = list(
-            MineralRelation.objects.filter(
-                status__mineral__in=_members, status__direct_status=False, status__status__group=2
-            ).values_list("relation", flat=True)
-        )
+        _members_synonyms = MineralStatus.get_synonyms(_members)
         _horizontal_relations = [_synonym.id for _synonym in instance.synonyms]
+        _relations = [instance.id, *(_horizontal_relations + _members + _members_synonyms)]
 
-        data["structures"], data["elements"] = self._get_structure_aggregates(
-            [instance.id, *(_horizontal_relations + _members + _members_synonyms)]
-        )
+        data["structures"], data["elements"] = self._get_structure_aggregates(_relations)
 
         _contexts = []
         with connection.cursor() as cursor:
             cursor.execute(
-                GET_DATA_CONTEXTS_QUERY, [tuple([instance.id] + _horizontal_relations + _members + _members_synonyms)]
+                GET_DATA_CONTEXTS_QUERY, [tuple(_relations)]
             )
             _contexts = cursor.fetchall()
             _contexts = [x for y in _contexts for x in y]
