@@ -44,7 +44,7 @@ LIST_VIEW_QUERY = """
             LEFT JOIN mineral_relation mr on ms.id = mr.mineral_status_id
             WHERE ms.mineral_id = main_table.id and ms.direct_status
         ) AS _statuses,
-        CASE WHEN main_table.is_grouping THEN (
+        CASE WHEN main_table._is_grouping THEN (
                 SELECT COALESCE(json_agg(_temp), '[]'::json) FROM (
                     SELECT csl.id, csl.name, COUNT(csl.id) AS count
                     FROM mineral_crystallography mc
@@ -67,7 +67,7 @@ LIST_VIEW_QUERY = """
                 ) _temp
             )
         END AS crystal_systems,
-        CASE WHEN main_table.is_grouping THEN (
+        CASE WHEN main_table._is_grouping THEN (
                 SELECT COALESCE(json_agg(_temp), '[]'::json) FROM (
                     SELECT cl.id, cl.name, COUNT(cl.id) AS count
                     FROM mineral_country mc
@@ -93,7 +93,7 @@ LIST_VIEW_QUERY = """
                 ) _temp
             )
         END AS _discovery_countries,
-        CASE WHEN main_table.is_grouping THEN (
+        CASE WHEN main_table._is_grouping THEN (
                 SELECT COALESCE(json_agg(_temp), '[]'::json) FROM (
                         SELECT (ROW_NUMBER() OVER (ORDER BY (SELECT 1))) AS id,
                                 _inner.count, _inner.is_parent, _inner.group

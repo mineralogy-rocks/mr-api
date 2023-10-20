@@ -35,7 +35,8 @@ def _annotate__ns_index(queryset, key="ns_index"):
     return queryset
 
 
-def _annotate__is_grouping(queryset, key="is_grouping"):
+def _annotate__is_grouping(queryset, key="_is_grouping"):
+    """Here we are using `_is_grouping` so that the cached property `is_grouping` can be used in the model."""
     _annotation = {key: Exists(MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(status__group=1)))}
     queryset = queryset.annotate(**_annotation)
     return queryset

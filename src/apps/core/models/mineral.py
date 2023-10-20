@@ -17,6 +17,7 @@ from django.db.models.expressions import RawSQL
 from django.db.models.functions import JSONObject
 from django.db.models.functions import Round
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
 from ..utils import shorten_text
@@ -119,7 +120,7 @@ class Mineral(Nameable, Creatable, Updatable):
     def __str__(self):
         return self.name
 
-    @property
+    @cached_property
     def members(self):
         queryset = HierarchyView.objects.filter(
             mineral=self,
@@ -130,12 +131,7 @@ class Mineral(Nameable, Creatable, Updatable):
         )
         return list(queryset.values_list("relation", flat=True))
 
-    # @property
-    # def synonyms(self):
-    #     queryset = self.direct_relations.filter(status__group=2, direct_status=True)
-    #     return list (queryset.values_list('mineral', flat=True))
-
-    # TODO: make it a @property once we migrate the LIST query to use other field for is_grouping
+    @cached_property
     def is_grouping(self):
         return self.statuses.filter(group=1, minerals__direct_status=True).exists()
 
@@ -228,10 +224,7 @@ class MineralStatus(BaseModel, Creatable, Updatable):
 
     @classmethod
     def get_synonyms(cls, ids):
-        queryset = (
-            cls.objects
-            .filter(mineral__in=ids, direct_status=False, status__group=2)
-        )
+        queryset = cls.objects.filter(mineral__in=ids, direct_status=False, status__group=2)
         return list(queryset.values_list("mineral_status__relation", flat=True))
 
     def delete(self, *args, **kwargs):

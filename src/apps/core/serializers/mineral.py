@@ -14,7 +14,6 @@ from ..models.mineral import MineralCrystallography
 from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHierarchy
 from ..models.mineral import MineralHistory
-from ..models.mineral import MineralRelation
 from ..models.mineral import MineralStatus
 from ..models.mineral import MineralStructure
 from ..queries import GET_DATA_CONTEXTS_QUERY
@@ -183,12 +182,10 @@ class RetrieveController(serializers.Serializer):
     """
 
     def to_representation(self, instance):
-        is_grouping = self.context.get("is_grouping", False)
-        if is_grouping:
+        if instance.is_grouping:
             data = GroupingRetrieveSerializer(instance, context=self.context).data
         else:
             data = MineralRetrieveSerializer(instance, context=self.context).data
-        data["is_grouping"] = is_grouping
         return data
 
     @staticmethod
@@ -227,9 +224,18 @@ class RetrieveController(serializers.Serializer):
                 models.Prefetch(
                     "relations",
                     Mineral.objects.prefetch_related("direct_relations", "formulas__source")
-                    .filter(statuses__group__in=[2, 3], direct_relations__direct_status=True)
+                    .filter(statuses__group=3, direct_relations__direct_status=True)
                     .annotate(status_group=Max("statuses__group"))
                     .distinct(),
+                    to_attr="varieties",
+                ),
+                models.Prefetch(
+                    "relations",
+                    Mineral.objects.prefetch_related("direct_relations", "formulas__source")
+                    .filter(statuses__group=2, direct_relations__direct_status=True)
+                    .annotate(status_group=Max("statuses__group"))
+                    .distinct(),
+                    to_attr="synonyms",
                 ),
                 # "contexts__context",
             ]
@@ -321,8 +327,7 @@ class GroupingRetrieveSerializer(BaseRetrieveSerializer):
         ]
 
     def get_members(self, instance):
-        _members = self._get_members(instance)
-        # _members = instance.members
+        _members = instance.members
         _select_related = [
             "history",
             "crystallography__crystal_system",
@@ -360,14 +365,9 @@ class GroupingRetrieveSerializer(BaseRetrieveSerializer):
         data = GroupMemberSerializer(_minerals, many=True, context=self.context).data
         return data
 
-    def _get_members(self, instance):
-        if not hasattr(self, "_members"):
-            self._members = instance.members
-        return self._members
-
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        _members = self._get_members(instance)
+        _members = instance.members
         _members_synonyms = MineralStatus.get_synonyms(_members)
         _horizontal_relations = [_synonym.id for _synonym in instance.synonyms]
         _relations = [instance.id, *(_horizontal_relations + _members + _members_synonyms)]
@@ -376,9 +376,7 @@ class GroupingRetrieveSerializer(BaseRetrieveSerializer):
 
         _contexts = []
         with connection.cursor() as cursor:
-            cursor.execute(
-                GET_DATA_CONTEXTS_QUERY, [tuple(_relations)]
-            )
+            cursor.execute(GET_DATA_CONTEXTS_QUERY, [tuple(_relations)])
             _contexts = cursor.fetchall()
             _contexts = [x for y in _contexts for x in y]
 
@@ -403,7 +401,8 @@ class MineralRetrieveSerializer(BaseRetrieveSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         _relations = data.pop("relations")
-        _horizontal_relations = [x["id"] for x in _relations if x["status_group"] == 2]
+        # _horizontal_relations = [x["id"] for x in _relations if x["status_group"] == 2]
+        _horizontal_relations = [_synonym.id for _synonym in instance.synonyms]
 
         # _ns_relations = []
 
@@ -503,7 +502,7 @@ class MineralListSerializer(serializers.ModelSerializer):
 
     ns_index = serializers.CharField(source="ns_index_")
     description = serializers.CharField(source="short_description")
-    is_grouping = serializers.BooleanField()
+    is_grouping = serializers.BooleanField(source="_is_grouping")
     seen = serializers.IntegerField()
     updated_at = serializers.SerializerMethodField()
 

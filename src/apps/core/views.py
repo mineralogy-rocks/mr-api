@@ -42,7 +42,6 @@ from .models.mineral import Mineral
 from .models.mineral import MineralCrystallography
 from .models.mineral import MineralFormula
 from .models.mineral import MineralRelation
-from .models.mineral import MineralStatus
 from .models.mineral import MineralStructure
 from .pagination import CustomCursorPagination
 from .queries import GET_INHERITANCE_CHAIN_LIST_QUERY
@@ -324,7 +323,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         if page is not None:
             _queryset = _queryset.filter(id__in=[x.id for x in page])
 
-            base_ids = [str(x.id) for x in page if not x.is_grouping]
+            base_ids = [str(x.id) for x in page if not x._is_grouping]
             _related_objects, _formula, _crystal_system = [], [], []
 
             if len(base_ids):
@@ -539,7 +538,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         return queryset
 
-    def get_serializer_class(self, is_secondary=False, is_grouping=False):
+    def get_serializer_class(self, is_secondary=False):
         if is_secondary:
             return MineralListSecondarySerializer
 
@@ -579,11 +578,11 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         # May raise a permission denied
         self.check_object_permissions(self.request, _instance)
 
-        _is_grouping = _instance.is_grouping()
-        serializer_cls = self.get_serializer_class(is_grouping=_is_grouping)
+        _is_grouping = _instance.is_grouping
+        serializer_cls = self.get_serializer_class()
         queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request, is_grouping=_is_grouping)
         instance = queryset.get(id=_instance.id)
-        serializer = serializer_cls(instance, context={"is_grouping": _is_grouping, "request": request})
+        serializer = serializer_cls(instance, context={"request": request})
 
         data = serializer.data
         return Response(data)
@@ -615,10 +614,9 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         """
         Returns related objects for a given instance.
         """
-        _is_grouping = instance.is_grouping()
         annotate = {"name": F("relation__name"), "slug": F("relation__slug")}
 
-        if _is_grouping:
+        if instance.is_grouping:
             queryset = HierarchyView.objects.all()
             queryset = queryset.filter(relation__statuses__group=group, relation__direct_relations__direct_status=True)
         else:
@@ -651,9 +649,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         return queryset
 
     def _get_approved_objects(self, instance):
-        _is_grouping = instance.is_grouping()
-
-        if _is_grouping:
+        if instance.is_grouping:
             queryset = HierarchyView.objects.all()
             queryset = queryset.filter(mineral=instance, relation__statuses__group=11).distinct("relation__name")
             queryset = queryset.annotate(name=F("relation__name"), slug=F("relation__slug"))
@@ -674,15 +670,13 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     @action(detail=True, methods=["get"], url_path="grouping-members")
     def grouping_members(self, request, *args, **kwargs):
         instance = self._get_raw_object()
-        _is_grouping = instance.is_grouping()
-
         _status = request.query_params.get("status", None)
         _crystal_system = request.query_params.get("crystal_system", None)
         _discovery_country = request.query_params.get("discovery_country", None)
 
         queryset = self._get_grouping_objects(instance, _status)
 
-        if _is_grouping:
+        if instance.is_grouping:
             _filter = {"relation__direct_relations__direct_status": True}
             if _crystal_system:
                 queryset = queryset.filter(relation__crystallography__crystal_system=_crystal_system, **_filter)
