@@ -6,6 +6,7 @@ from django.db.models import OuterRef
 from django.db.models import Q
 from django.db.models import Value
 from django.db.models import When
+from django.db.models.expressions import RawSQL
 from django.db.models.functions import Coalesce
 from django.db.models.functions import Concat
 from django.db.models.functions import Right
@@ -40,3 +41,19 @@ def _annotate__is_grouping(queryset, key="_is_grouping"):
     _annotation = {key: Exists(MineralStatus.objects.filter(Q(mineral=OuterRef("id")) & Q(status__group=1)))}
     queryset = queryset.annotate(**_annotation)
     return queryset
+
+
+def _annotate__statuses_array(queryset, key="_statuses"):
+    _annotation = {
+        key: RawSQL(
+            """
+                       ARRAY(
+                            SELECT DISTINCT sl.status_id FROM mineral_status
+                            INNER JOIN status_list sl ON mineral_status.status_id = sl.id
+                            WHERE mineral_status.mineral_id = mineral_log.id AND mineral_status.direct_status
+                        )
+                       """,
+            [],
+        )
+    }
+    return queryset.annotate(**_annotation)
