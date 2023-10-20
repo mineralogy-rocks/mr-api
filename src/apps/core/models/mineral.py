@@ -135,6 +135,18 @@ class Mineral(Nameable, Creatable, Updatable):
     def is_grouping(self):
         return self.statuses.filter(group=1, minerals__direct_status=True).exists()
 
+    @property
+    def synonyms(self):
+        return list(
+            self.relations
+            .annotate(status_group=Max("statuses__group"))
+            .filter(status_group=2)
+            .extra(where=["mineral_status.direct_status = TRUE"])
+            .distinct()
+            .order_by()
+            .values_list("id", flat=True)
+        )
+
     def get_absolute_url(self):
         return reverse("core:mineral-detail", kwargs={"pk": self.id})
 
