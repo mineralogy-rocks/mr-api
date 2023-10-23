@@ -217,6 +217,7 @@ class InheritedMineralContextSerializer(MineralContextSerializer):
 
 
 class BaseRetrieveSerializer(serializers.ModelSerializer):
+    is_grouping = serializers.BooleanField()
     statuses = StatusListSerializer(many=True)
     formulas = FormulaSerializer(many=True)
 
@@ -229,6 +230,7 @@ class BaseRetrieveSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "slug",
+            "is_grouping",
             "description",
             "mindat_id",
             "statuses",
