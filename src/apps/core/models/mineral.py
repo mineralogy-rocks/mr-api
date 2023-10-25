@@ -138,8 +138,7 @@ class Mineral(Nameable, Creatable, Updatable):
     @property
     def synonyms(self):
         return list(
-            self.relations
-            .annotate(status_group=Max("statuses__group"))
+            self.relations.annotate(status_group=Max("statuses__group"))
             .filter(status_group=2)
             .extra(where=["mineral_status.direct_status = TRUE"])
             .distinct()
@@ -510,6 +509,7 @@ class MineralStructure(BaseModel, Creatable, Updatable):
                     volume=Round(Avg("volume"), 4),
                 ),
             )
+            .order_by("-count")
         )
         return queryset.values("crystal_system", "count", "min", "max", "avg")
 
