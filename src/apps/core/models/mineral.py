@@ -586,7 +586,7 @@ class MineralCrystallography(BaseModel):
     gamma = models.FloatField(blank=True, null=True, default=None)
     z = models.IntegerField(blank=True, null=True, default=None)
 
-    inherited = models.BooleanField(null=False, default=False, help_text="Is the data inherited from parent?")
+    is_inherited = models.BooleanField(null=False, default=False, help_text="Is the data inherited from parent?")
 
     class Meta:
         db_table = "mineral_crystallography"
