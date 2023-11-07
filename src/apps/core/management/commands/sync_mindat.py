@@ -11,13 +11,13 @@ from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 from django.utils import timezone
 
+from ...choices import IMA_NOTE_CHOICES
+from ...choices import IMA_STATUS_CHOICES
 from ...constants import STATUS_POLYTYPE
 from ...constants import STATUS_UNCERTAIN_SYNONYM
 from ...constants import STATUS_UNCERTAIN_VARIETY
 from ...helpers import get_or_create_relation
 from ...models.core import FormulaSource
-from ...models.core import IMANote
-from ...models.core import IMAStatus
 from ...models.core import Status
 from ...models.crystal import CrystalSystem
 from ...models.mineral import MindatSync
@@ -206,7 +206,7 @@ class Command(BaseCommand):
 
                         if entry["ima_status"]:
                             for status in entry["ima_status"]:
-                                _status = IMAStatus.objects.get(key=status)
+                                [(_status, _)] = [x for x in IMA_STATUS_CHOICES if x[1] == status]
                                 _, _created = MineralIMAStatus.objects.get_or_create(
                                     mineral=mineral,
                                     status=_status,
@@ -216,7 +216,7 @@ class Command(BaseCommand):
 
                         if entry["ima_notes"]:
                             for note in entry["ima_notes"]:
-                                _note = IMANote.objects.get(key=note)
+                                [(_note, _)] = [x for x in IMA_NOTE_CHOICES if x[1] == note]
                                 _, _created = MineralIMANote.objects.get_or_create(
                                     mineral=mineral,
                                     note=_note,

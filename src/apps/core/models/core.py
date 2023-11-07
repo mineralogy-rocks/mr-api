@@ -121,32 +121,6 @@ class Status(BaseModel):
         return "{} - {}".format(self.status_id, self.description_short)
 
 
-class IMAStatus(BaseModel, Nameable):
-    key = models.CharField(max_length=100, null=False, unique=True)
-
-    class Meta:
-        db_table = "ima_status_list"
-        ordering = [
-            "key",
-        ]
-
-        verbose_name = "IMA Status"
-        verbose_name_plural = "IMA Statuses"
-
-
-class IMANote(BaseModel, Nameable):
-    key = models.CharField(max_length=100, null=False, unique=True)
-
-    class Meta:
-        db_table = "ima_note_list"
-        ordering = [
-            "key",
-        ]
-
-        verbose_name = "IMA Note"
-        verbose_name_plural = "IMA Notes"
-
-
 class RelationType(BaseModel, Nameable):
     note = models.TextField(blank=True, null=True)
 

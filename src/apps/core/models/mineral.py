@@ -20,6 +20,8 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
+from ..choices import IMA_NOTE_CHOICES
+from ..choices import IMA_STATUS_CHOICES
 from ..utils import shorten_text
 from ..utils import unique_slugify
 from .base import BaseModel
@@ -29,8 +31,6 @@ from .base import Updatable
 from .core import Country
 from .core import DataContext
 from .core import FormulaSource
-from .core import IMANote
-from .core import IMAStatus
 from .core import NsClass
 from .core import NsFamily
 from .core import NsSubclass
@@ -98,8 +98,6 @@ class Mineral(Nameable, Creatable, Updatable):
             "status",
         ),
     )
-    ima_statuses = models.ManyToManyField(IMAStatus, through="MineralIMAStatus")
-    ima_notes = models.ManyToManyField(IMANote, through="MineralIMANote")
     impurities = models.ManyToManyField(Ion, through="MineralImpurity", related_name="impurities")
     ion_positions = models.ManyToManyField(IonPosition, through="MineralIonPosition")
 
@@ -246,8 +244,8 @@ class MineralStatus(BaseModel, Creatable, Updatable):
 
 
 class MineralIMAStatus(BaseModel, Creatable):
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id")
-    status = models.ForeignKey(IMAStatus, models.CASCADE, db_column="ima_status_id", related_name="minerals")
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="ima_statuses")
+    status = models.PositiveSmallIntegerField(choices=IMA_STATUS_CHOICES, db_column="ima_status_id", default=None)
 
     class Meta:
         db_table = "mineral_ima_status"
@@ -256,12 +254,12 @@ class MineralIMAStatus(BaseModel, Creatable):
         verbose_name_plural = "IMA Statuses"
 
     def __str__(self):
-        return self.mineral.name + " " + self.status.key
+        return self.mineral.name + " " + str(self.status)
 
 
 class MineralIMANote(BaseModel, Creatable):
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id")
-    note = models.ForeignKey(IMANote, models.CASCADE, db_column="ima_note_id", related_name="minerals")
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="ima_notes")
+    note = models.PositiveSmallIntegerField(choices=IMA_NOTE_CHOICES, db_column="ima_note_id", default=None)
 
     class Meta:
         db_table = "mineral_ima_note"
@@ -270,7 +268,7 @@ class MineralIMANote(BaseModel, Creatable):
         verbose_name_plural = "IMA Notes"
 
     def __str__(self):
-        return self.mineral.name + " " + self.note.key
+        return self.mineral.name + " " + str(self.note)
 
 
 class MineralContext(BaseModel, Creatable):
@@ -587,6 +585,8 @@ class MineralCrystallography(BaseModel):
     alpha = models.FloatField(blank=True, null=True, default=None)
     gamma = models.FloatField(blank=True, null=True, default=None)
     z = models.IntegerField(blank=True, null=True, default=None)
+
+    inherited = models.BooleanField(null=False, default=False, help_text="Is the data inherited from parent?")
 
     class Meta:
         db_table = "mineral_crystallography"

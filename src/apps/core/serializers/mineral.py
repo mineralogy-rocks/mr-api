@@ -22,8 +22,6 @@ from ..utils import add_label
 from .core import CountryListSerializer
 from .core import DataContextSerilizer
 from .core import FormulaSourceSerializer
-from .core import IMANoteSerializer
-from .core import IMAStatusSerializer
 from .crystal import CrystalClassSerializer
 from .crystal import CrystalSystemSerializer
 from .crystal import SpaceGroupSerializer
@@ -160,10 +158,8 @@ class RetrieveController(serializers.Serializer):
 
     def to_representation(self, instance):
         if instance.is_grouping:
-            data = GroupingRetrieveSerializer(instance, context=self.context).data
-        else:
-            data = MineralRetrieveSerializer(instance, context=self.context).data
-        return data
+            return GroupingRetrieveSerializer(instance, context=self.context).data
+        return MineralRetrieveSerializer(instance, context=self.context).data
 
     @staticmethod
     def setup_eager_loading(**kwargs):
@@ -530,8 +526,8 @@ class MineralListSecondarySerializer(serializers.ModelSerializer):
     """
 
     formulas = FormulaSerializer(many=True)
-    ima_statuses = IMAStatusSerializer(many=True)
-    ima_notes = IMANoteSerializer(many=True)
+    ima_statuses = serializers.SerializerMethodField()
+    ima_notes = serializers.SerializerMethodField()
 
     class Meta:
         model = Mineral
@@ -541,6 +537,12 @@ class MineralListSecondarySerializer(serializers.ModelSerializer):
             "ima_statuses",
             "ima_notes",
         ]
+
+    def get_ima_statuses(self, instance):
+        return [x.get_status_display() for x in instance.ima_statuses.all()]
+
+    def get_ima_notes(self, instance):
+        return [x.get_note_display() for x in instance.ima_notes.all()]
 
     @staticmethod
     def setup_eager_loading(**kwargs):
