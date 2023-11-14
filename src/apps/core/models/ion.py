@@ -9,7 +9,6 @@ from .element import Element
 
 class IonClass(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "ion_class_list"
 
         verbose_name = "Ion Class"
@@ -21,7 +20,6 @@ class IonClass(BaseModel, Nameable):
 
 class IonSubclass(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "ion_subclass_list"
 
         verbose_name = "Ion Subclass"
@@ -33,7 +31,6 @@ class IonSubclass(BaseModel, Nameable):
 
 class IonGroup(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "ion_group_list"
 
         verbose_name = "Ion Group"
@@ -45,7 +42,6 @@ class IonGroup(BaseModel, Nameable):
 
 class IonSubgroup(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "ion_subgroup_list"
 
         verbose_name = "Ion Subgroup"
@@ -57,7 +53,6 @@ class IonSubgroup(BaseModel, Nameable):
 
 class IonType(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "ion_type_list"
 
         verbose_name = "Ion Type"
@@ -72,7 +67,6 @@ class IonPosition(BaseModel, Nameable):
     ions = models.ManyToManyField("core.Ion", through="core.MineralIonPosition")
 
     class Meta:
-        managed = False
         db_table = "ion_position_list"
         ordering = [
             "name",
@@ -101,6 +95,7 @@ class Ion(BaseModel, Nameable):
         db_column="ion_type_id",
         to_field="id",
         related_name="ions",
+        default=None,
     )
     variety_of = models.ForeignKey(
         "self",
@@ -109,6 +104,7 @@ class Ion(BaseModel, Nameable):
         to_field="id",
         null=True,
         blank=True,
+        default=None,
     )
     ion_class = models.ForeignKey(
         IonClass,
@@ -118,6 +114,7 @@ class Ion(BaseModel, Nameable):
         related_name="ions",
         blank=True,
         null=True,
+        default=None,
     )
     ion_subclass = models.ForeignKey(
         IonSubclass,
@@ -127,6 +124,7 @@ class Ion(BaseModel, Nameable):
         related_name="ions",
         blank=True,
         null=True,
+        default=None,
     )
     ion_group = models.ForeignKey(
         IonGroup,
@@ -136,6 +134,7 @@ class Ion(BaseModel, Nameable):
         related_name="ions",
         blank=True,
         null=True,
+        default=None,
     )
     ion_subgroup = models.ForeignKey(
         IonSubgroup,
@@ -145,6 +144,7 @@ class Ion(BaseModel, Nameable):
         related_name="ions",
         blank=True,
         null=True,
+        default=None,
     )
 
     elements = models.ManyToManyField(Element, through="IonElement")
@@ -152,9 +152,8 @@ class Ion(BaseModel, Nameable):
     ion_positions = models.ManyToManyField(IonPosition, through="core.MineralIonPosition")
 
     class Meta:
-        managed = False
         db_table = "ion_log"
-        unique_together = (("ion_type_id", "formula"),)
+        unique_together = (("ion_type", "formula"),)
 
         verbose_name = "Ion"
         verbose_name_plural = "Ions"
@@ -174,17 +173,17 @@ class Ion(BaseModel, Nameable):
 
 class IonElement(BaseModel):
 
-    ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id", to_field="id")
+    ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id", to_field="id", default=None)
     element = models.ForeignKey(
         Element,
         models.CASCADE,
         db_column="element_id",
         to_field="id",
         related_name="ions",
+        default=None,
     )
 
     class Meta:
-        managed = False
         db_table = "ion_element"
         unique_together = (("ion", "element"),)
 
@@ -197,11 +196,10 @@ class IonElement(BaseModel):
 
 class IonSubunit(BaseModel):
 
-    ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id", to_field="id")
-    subunit = models.ForeignKey(Ion, models.CASCADE, db_column="subunit_id", to_field="id", related_name="ions")
+    ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id", to_field="id", default=None)
+    subunit = models.ForeignKey(Ion, models.CASCADE, db_column="subunit_id", to_field="id", related_name="ions", default=None)
 
     class Meta:
-        managed = False
         db_table = "ion_subunit"
         unique_together = (("ion", "subunit"),)
 

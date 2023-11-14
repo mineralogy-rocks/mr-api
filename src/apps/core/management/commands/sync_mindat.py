@@ -11,11 +11,12 @@ from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 from django.utils import timezone
 
-from ...constants import (
-    STATUS_UNCERTAIN_VARIETY,
-    STATUS_UNCERTAIN_SYNONYM,
-    STATUS_POLYTYPE,
-)
+from ...choices import IMA_NOTE_CHOICES
+from ...choices import IMA_STATUS_CHOICES
+from ...constants import STATUS_POLYTYPE
+from ...constants import STATUS_UNCERTAIN_SYNONYM
+from ...constants import STATUS_UNCERTAIN_VARIETY
+from ...helpers import get_or_create_relation
 from ...models.core import FormulaSource
 from ...models.core import Status
 from ...models.crystal import CrystalSystem
@@ -24,9 +25,9 @@ from ...models.mineral import Mineral
 from ...models.mineral import MineralCrystallography
 from ...models.mineral import MineralFormula
 from ...models.mineral import MineralHistory
+from ...models.mineral import MineralIMANote
+from ...models.mineral import MineralIMAStatus
 from ...models.mineral import MineralStatus
-from ...models.mineral import MineralRelation
-from ...helpers import get_or_create_relation
 from ...utils import send_email
 from ...utils import shorten_text
 
@@ -39,7 +40,6 @@ class Command(BaseCommand):
     help = "syncs db with mindat.org"
 
     def handle(self, *args, **options):
-
         assert MINDAT_API_URL, "Please, add MINDAT_API_URL to your environment variables"
         assert MINDAT_API_USERNAME, "Please, add MINDAT_API_USERNAME to your environment variables"
         assert MINDAT_API_PASSWORD, "Please, add MINDAT_API_PASSWORD to your environment variables"
@@ -58,7 +58,7 @@ class Command(BaseCommand):
 
         is_successful = True
         last_datetime = datetime.strftime(last_datetime, "%Y-%m-%d %H:%M:%S")
-        # last_datetime = '2023-02-05 00:00:00'
+        # last_datetime = '2023-08-15 00:00:00'
         print(last_datetime)
 
         try:
@@ -201,7 +201,26 @@ class Command(BaseCommand):
                                     "note": formula_note,
                                 },
                             )
+                            if _created:
+                                is_updated = True
 
+                        if entry["ima_status"]:
+                            for status in entry["ima_status"]:
+                                [(_status, _)] = [x for x in IMA_STATUS_CHOICES if x[1] == status]
+                                _, _created = MineralIMAStatus.objects.get_or_create(
+                                    mineral=mineral,
+                                    status=_status,
+                                )
+                            if _created:
+                                is_updated = True
+
+                        if entry["ima_notes"]:
+                            for note in entry["ima_notes"]:
+                                [(_note, _)] = [x for x in IMA_NOTE_CHOICES if x[1] == note]
+                                _, _created = MineralIMANote.objects.get_or_create(
+                                    mineral=mineral,
+                                    note=_note,
+                                )
                             if _created:
                                 is_updated = True
 
