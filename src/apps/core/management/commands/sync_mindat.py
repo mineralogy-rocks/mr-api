@@ -11,8 +11,7 @@ from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 from django.utils import timezone
 
-from ...choices import IMA_NOTE_CHOICES
-from ...choices import IMA_STATUS_CHOICES
+from ... import choices as choices
 from ...constants import STATUS_POLYTYPE
 from ...constants import STATUS_UNCERTAIN_SYNONYM
 from ...constants import STATUS_UNCERTAIN_VARIETY
@@ -206,7 +205,7 @@ class Command(BaseCommand):
 
                         if entry["ima_status"]:
                             for status in entry["ima_status"]:
-                                [(_status, _)] = [x for x in IMA_STATUS_CHOICES if x[1] == status]
+                                _status = getattr(choices, status)
                                 _, _created = MineralIMAStatus.objects.get_or_create(
                                     mineral=mineral,
                                     status=_status,
@@ -216,7 +215,7 @@ class Command(BaseCommand):
 
                         if entry["ima_notes"]:
                             for note in entry["ima_notes"]:
-                                [(_note, _)] = [x for x in IMA_NOTE_CHOICES if x[1] == note]
+                                _note = getattr(choices, note)
                                 _, _created = MineralIMANote.objects.get_or_create(
                                     mineral=mineral,
                                     note=_note,
