@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "core",
     "bond",
+    "ddtrace.contrib.django",
 ]
 
 MIDDLEWARE = [
