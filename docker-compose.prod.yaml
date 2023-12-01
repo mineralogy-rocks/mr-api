@@ -39,9 +39,9 @@ services:
             - ./.envs/.prod/.do
 
     datadog:
-        container_name: dd-agent
+        container_name: datadog
         image: "gcr.io/datadoghq/agent:latest"
-        pid: host
+#        pid: host
         env_file:
             - ./.envs/.prod/.datadog
         volumes:
