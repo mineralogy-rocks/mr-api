@@ -39,3 +39,15 @@ services:
             - ./.envs/.prod/.db
             - ./.envs/.prod/.nginx
             - ./.envs/.prod/.do
+
+    datadog:
+        container_name: dd-agent
+        image: "gcr.io/datadoghq/agent:latest"
+        pid: host
+        env_file:
+            - ./.envs/.prod/.datadog
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - /proc/:/host/proc/:ro
+            - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+            - /var/lib/docker/containers:/var/lib/docker/containers:ro
