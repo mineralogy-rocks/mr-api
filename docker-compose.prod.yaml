@@ -28,8 +28,6 @@ services:
         restart: always
         image: registry.digitalocean.com/mr-project/backend:latest
         command: /start
-        extra_hosts:
-            - "host.docker.internal:host-gateway"
         volumes:
             - .:/app
         ports:
@@ -46,8 +44,6 @@ services:
         pid: host
         env_file:
             - ./.envs/.prod/.datadog
-        ports:
-            - "127.0.0.1:8126:8126/tcp"
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock:ro
             - /proc/:/host/proc/:ro
