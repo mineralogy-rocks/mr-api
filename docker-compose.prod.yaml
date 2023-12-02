@@ -41,7 +41,6 @@ services:
     datadog:
         container_name: datadog
         image: "gcr.io/datadoghq/agent:latest"
-#        pid: host
         env_file:
             - ./.envs/.prod/.datadog
         volumes:
