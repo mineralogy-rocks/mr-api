@@ -41,11 +41,14 @@ services:
     datadog:
         container_name: datadog
         image: "gcr.io/datadoghq/agent:latest"
+        pid: host
         env_file:
             - ./.envs/.prod/.datadog
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock:ro
-            - /proc/:/host/proc/:ro
-            - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
             - /var/lib/docker/containers:/var/lib/docker/containers:ro
-            - /etc/passwd:/etc/passwd:ro
+            - /proc/:/host/proc/:ro
+            - /opt/datadog-agent/run:/opt/datadog-agent/run:rw
+            - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+#            - /etc/passwd:/etc/passwd:ro
+            - /etc/os-release:/host/etc/os-release:ro
