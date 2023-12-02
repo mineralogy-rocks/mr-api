@@ -44,6 +44,10 @@ LOGGING = {
         "django.db.backends": {
             "level": "DEBUG",
         },
+        "ddtrace": {
+            "handlers": ["console"],
+            "level": "WARNING",
+        },
     },
 }
 
@@ -58,6 +62,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.postgres",
     "django.contrib.humanize",
+    "ddtrace.contrib.django",
     "django_filters",
     "rest_framework",
     "rest_framework_api_key",
@@ -68,7 +73,6 @@ INSTALLED_APPS = [
     "corsheaders",
     "core",
     "bond",
-    "ddtrace.contrib.django",
 ]
 
 MIDDLEWARE = [
