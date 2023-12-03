@@ -50,6 +50,7 @@ WORKDIR ${APP_HOME}/src
 # create the app user
 RUN addgroup --system backend \
     && adduser --system --ingroup backend backend
+RUN usermod -aG docker backend
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
   # dependencies for building Python packages
