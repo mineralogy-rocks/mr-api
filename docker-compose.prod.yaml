@@ -4,6 +4,8 @@ services:
 
     nginx:
         container_name: nginx
+        networks:
+            - backend
         build:
             context: .
             dockerfile: ./compose/production/nginx/Dockerfile
@@ -22,6 +24,8 @@ services:
 
     backend:
         container_name: backend
+        networks:
+            - backend
         build:
             context: .
             dockerfile: ./compose/production/backend/Dockerfile
@@ -42,6 +46,8 @@ services:
         container_name: datadog
         image: "gcr.io/datadoghq/agent:latest"
         pid: host
+        networks:
+            - backend
         links:
             - backend
             - nginx
@@ -56,3 +62,8 @@ services:
             - /opt/datadog-agent/run:/opt/datadog-agent/run:rw
             - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
             - /etc/os-release:/host/etc/os-release:ro
+
+
+networks:
+    backend:
+        driver: bridge
