@@ -44,9 +44,7 @@ services:
 
     datadog:
         container_name: datadog
-        build:
-            context: .
-            dockerfile: ./compose/production/datadog/Dockerfile
+        image: "gcr.io/datadoghq/agent:latest"
         pid: host
         networks:
             - backend
