@@ -47,10 +47,6 @@ ENV DD_VERSION="0.1.0"
 
 WORKDIR ${APP_HOME}/src
 
-# create the app user
-RUN addgroup --system backend \
-    && adduser --system --ingroup backend backend
-RUN usermod -a -G docker backend
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
   # dependencies for building Python packages
@@ -62,19 +58,15 @@ COPY --from=python-build-stage /app/wheels /wheels
 COPY --from=python-build-stage /app/src/requirements /requirements
 RUN pip install --no-cache /wheels/*
 
-COPY --chown=backend:backend ./compose/production/backend/entrypoint /entrypoint
+COPY ./compose/production/backend/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint
 
-COPY --chown=backend:backend ./compose/production/backend/start /start
+COPY ./compose/production/backend/start /start
 RUN sed -i 's/\r$//g' /start
 RUN chmod +x /start
 
 COPY . $APP_HOME
 
-# make backend owner of the WORKDIR directory as well.
-RUN chown backend:backend ${APP_HOME}
-
-USER backend
 
 ENTRYPOINT ["/entrypoint"]
