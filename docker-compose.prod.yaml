@@ -45,6 +45,8 @@ services:
         links:
             - backend
             - nginx
+        ports:
+            - "8126:8126"
         env_file:
             - ./.envs/.prod/.datadog
         volumes:
