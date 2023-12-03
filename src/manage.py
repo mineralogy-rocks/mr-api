@@ -3,7 +3,7 @@
 import os
 import sys
 
-import ddtrace.auto
+# import ddtrace.auto
 
 
 def main():
