@@ -12,8 +12,9 @@ services:
         restart: always
         ports:
             - "80:80"
-            - "81:81"
             - "443:443"
+        expose:
+            - "81"
         volumes:
             - ./nginx/prod/:/etc/nginx/
             - ./nginx/_data/log:/var/log/nginx
