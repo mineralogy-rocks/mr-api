@@ -45,6 +45,10 @@ ENV DD_SERVICE="backend"
 ENV DD_ENV="production"
 ENV DD_VERSION="0.1.0"
 
+LABEL com.datadoghq.tags.service="backend"
+LABEL com.datadoghq.tags.env="production"
+LABEL com.datadoghq.tags.version="0.1.0"
+
 WORKDIR ${APP_HOME}/src
 
 
