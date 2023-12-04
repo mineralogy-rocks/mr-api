@@ -52,7 +52,7 @@ services:
             - backend
             - nginx
         ports:
-            - "127.0.0.1:8126:8126/tcp"
+            - "8126:8126/tcp"
         env_file:
             - ./.envs/.prod/.datadog
         volumes:
@@ -60,6 +60,7 @@ services:
             - /var/lib/docker/containers:/var/lib/docker/containers:ro
             - /proc/:/host/proc/:ro
             - /opt/datadog-agent/run:/opt/datadog-agent/run:rw
+            - /opt/datadog/apm:/opt/datadog/apm
             - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
             - /etc/os-release:/host/etc/os-release:ro
 
