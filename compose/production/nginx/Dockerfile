@@ -12,7 +12,7 @@ FROM nginx:1.17.10-alpine
 LABEL "com.datadoghq.ad.check_names"='["nginx"]'
 LABEL "com.datadoghq.ad.init_configs"='[{}]'
 LABEL "com.datadoghq.ad.instances"='[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
-LABEL "com.datadoghq.ad.logs"='[{"source":"nginx","service":"nginx"}]'
+LABEL "com.datadoghq.ad.logs"='[{"source":"nginx","service":"backend"}]'
 
 COPY --from=build /etc/nginx /etc/nginx
 
