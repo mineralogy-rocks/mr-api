@@ -44,6 +44,8 @@ ENV PYTHONUNBUFFERED 1
 ENV DD_SERVICE="backend"
 ENV DD_ENV="production"
 ENV DD_VERSION="0.1.0"
+ENV DD_APPSEC_ENABLED=true
+ENV DD_LOGS_INJECTION=true
 
 LABEL com.datadoghq.tags.service="backend"
 LABEL com.datadoghq.tags.env="production"
