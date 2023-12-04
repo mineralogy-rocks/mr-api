@@ -11,7 +11,7 @@ FROM nginx:1.17.10-alpine
 
 LABEL "com.datadoghq.ad.check_names"='["nginx"]'
 LABEL "com.datadoghq.ad.init_configs"='[{}]'
-LABEL "com.datadoghq.ad.instances"='[{"nginx_status_url": "http://nginx:81/nginx_status/"}]'
+LABEL "com.datadoghq.ad.instances"='[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
 LABEL "com.datadoghq.ad.logs"='[{"source":"nginx", "service":"nginx"}]'
 
 COPY --chown=nginx:nginx --from=build /etc/nginx /etc/nginx
