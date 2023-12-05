@@ -18,6 +18,7 @@ services:
         volumes:
             - ./nginx/prod/:/etc/nginx/
             - ./nginx/_data/log:/var/log/nginx
+#            - /var/log/nginx:/var/log/nginx
             - ./nginx/dhparam.pem:/etc/nginx/dhparam.pem:ro
 
             - ./nginx/certbot:/etc/letsencrypt:ro
@@ -64,8 +65,6 @@ services:
             - /opt/datadog-agent/run:/opt/datadog-agent/run:rw
             - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
             - /etc/os-release:/host/etc/os-release:ro
-
-            - ./nginx/_data/log:/nginx/_data/log:ro
 
 
 networks:
