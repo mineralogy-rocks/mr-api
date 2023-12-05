@@ -56,6 +56,7 @@ services:
             - nginx
         ports:
             - "8126:8126/tcp"
+            - "8125:8125/udp"
         env_file:
             - ./.envs/.prod/.datadog
         volumes:
