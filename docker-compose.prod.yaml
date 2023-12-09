@@ -37,7 +37,7 @@ services:
         command: /start
         volumes:
             - .:/app
-            - /opt/datadog/apm:/opt/datadog/apm:ro
+            - /var/run/datadog/:/var/run/datadog/
         ports:
             - "8000:8000"
         env_file:
@@ -68,6 +68,7 @@ services:
             - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
             - /etc/os-release:/host/etc/os-release:ro
             - /opt/datadog/apm:/opt/datadog/apm
+            - /var/run/datadog/:/var/run/datadog/
 
 
 networks:
