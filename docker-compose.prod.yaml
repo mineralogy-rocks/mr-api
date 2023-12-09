@@ -26,6 +26,11 @@ services:
             - ./nginx/certbot:/etc/letsencrypt:ro
         env_file:
             - ./.envs/.prod/.nginx
+        labels:
+            com.datadoghq.ad.check_names: '["nginx"]'
+            com.datadoghq.ad.init_configs: '[{}]'
+            com.datadoghq.ad.instances: '[{"nginx_status_url": "http://%%host%%:81/nginx_status/"}]'
+            com.datadoghq.ad.logs: '[{"source": "nginx", "service": "nginx", "log_processing_rules": [{"type": "multi_line", "name": "log_start_with_date", "pattern": "\\d{4}/\\d{2}/\\d{2}"}]}]'
 
     backend:
         container_name: backend
