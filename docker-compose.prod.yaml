@@ -17,7 +17,7 @@ services:
             - "81"
         volumes:
             - ./nginx/prod/:/etc/nginx/
-            - ./nginx/_data/log:/var/log/nginx
+#            - ./nginx/_data/log:/var/log/nginx
             - ./nginx/dhparam.pem:/etc/nginx/dhparam.pem:ro
 
             - /var/log/nginx:/var/log/nginx
