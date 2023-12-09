@@ -18,8 +18,10 @@ services:
         volumes:
             - ./nginx/prod/:/etc/nginx/
             - ./nginx/_data/log:/var/log/nginx
-#            - /var/log/nginx:/var/log/nginx
             - ./nginx/dhparam.pem:/etc/nginx/dhparam.pem:ro
+
+            - /var/log/nginx:/var/log/nginx
+            - /var/run/datadog/:/var/run/datadog/
 
             - ./nginx/certbot:/etc/letsencrypt:ro
         env_file:
@@ -57,7 +59,6 @@ services:
             - nginx
         ports:
             - "8126:8126/tcp"
-#            - "8125:8125/udp"
         env_file:
             - ./.envs/.prod/.datadog
         volumes:
