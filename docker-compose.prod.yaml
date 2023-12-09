@@ -71,7 +71,11 @@ services:
             - /etc/os-release:/host/etc/os-release:ro
             - /opt/datadog/apm:/opt/datadog/apm
             - /var/run/datadog/:/var/run/datadog/
-
+        labels:
+            com.datadoghq.ad.check_names: '["nginx"]'
+            com.datadoghq.ad.init_configs: '[{}]'
+            com.datadoghq.ad.instances: '[{"nginx_status_url": "http://nginx:81/nginx_status/"}]'
+            com.datadoghq.ad.logs: '[{"source": "nginx", "service": "nginx", "path": "/var/log/nginx/*.log", "log_processing_rules": [{"type": "multi_line", "name": "log_start_with_date", "pattern": "\\d{4}/\\d{2}/\\d{2}"}]}]'
 
 networks:
     backend:
