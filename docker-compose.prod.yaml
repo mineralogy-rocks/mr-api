@@ -50,7 +50,9 @@ services:
 
     datadog:
         container_name: datadog
-        image: gcr.io/datadoghq/agent:latest
+        build:
+          context: .
+          dockerfile: ./compose/production/datadog/Dockerfile
         pid: host
         networks:
             - backend
