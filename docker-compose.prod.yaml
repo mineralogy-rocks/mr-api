@@ -20,7 +20,6 @@ services:
             - ./nginx/_data/log:/var/log/nginx
             - ./nginx/dhparam.pem:/etc/nginx/dhparam.pem:ro
 
-#            - /var/log/nginx:/var/log/nginx
             - /var/run/datadog/:/var/run/datadog/
 
             - ./nginx/certbot:/etc/letsencrypt:ro
@@ -39,6 +38,7 @@ services:
         command: /start
         volumes:
             - .:/app
+
             - /var/run/datadog/:/var/run/datadog/
         ports:
             - "8000:8000"
@@ -50,9 +50,7 @@ services:
 
     datadog:
         container_name: datadog
-        build:
-          context: .
-          dockerfile: ./compose/production/datadog/Dockerfile
+        image: gcr.io/datadoghq/agent:latest
         pid: host
         networks:
             - backend
@@ -73,6 +71,7 @@ services:
             - /etc/os-release:/host/etc/os-release:ro
             - /opt/datadog/apm:/opt/datadog/apm
             - /var/run/datadog/:/var/run/datadog/
+
             - ./nginx/_data/log:/var/log/nginx
 
 
