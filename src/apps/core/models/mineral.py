@@ -554,7 +554,7 @@ class MineralIonTheoretical(BaseModel):
         return self.ion.formula
 
 
-class MineralCrystallography(BaseModel):
+class MineralCrystallography(BaseModel, Updatable):
     mineral = models.OneToOneField(
         Mineral, models.SET_NULL, db_column="mineral_id", related_name="crystallography", null=True
     )
@@ -578,6 +578,8 @@ class MineralCrystallography(BaseModel):
         null=True,
         default=None,
     )
+    inherited_from = models.ForeignKey(Mineral, models.CASCADE, null=True, default=None)
+
     space_group = models.ForeignKey(SpaceGroup, models.CASCADE, db_column="space_group_id", null=True, default=None)
     a = models.FloatField(blank=True, null=True, default=None)
     b = models.FloatField(blank=True, null=True, default=None)
@@ -585,8 +587,6 @@ class MineralCrystallography(BaseModel):
     alpha = models.FloatField(blank=True, null=True, default=None)
     gamma = models.FloatField(blank=True, null=True, default=None)
     z = models.IntegerField(blank=True, null=True, default=None)
-
-    is_inherited = models.BooleanField(null=False, default=False, help_text="Is the data inherited from parent?")
 
     class Meta:
         db_table = "mineral_crystallography"
