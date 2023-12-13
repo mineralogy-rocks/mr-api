@@ -21,9 +21,6 @@ sudo cp ./.services/crontab/config /etc/cron.d/backend
 echo 'Building latest nginx image...'
 docker compose -f docker-compose.prod.yaml build nginx datadog
 
-#echo 'Logging into DigitalOcean container registry...'
-#doctl registry login --expiry-seconds 300
-
 echo 'Pulling latest backend image...'
 docker pull registry.gitlab.com/mineralogy.rocks/mr-api/backend:latest
 
