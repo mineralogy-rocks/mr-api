@@ -13,7 +13,7 @@ echo 'Pulling latest source code...'
 git pull
 
 echo 'Tagging latest backend image with `old` tag...'
-docker tag registry.digitalocean.com/mr-project/backend:latest registry.digitalocean.com/mr-project/backend:old
+docker tag registry.gitlab.com/mineralogy.rocks/mr-api/backend:latest registry.gitlab.com/mineralogy.rocks/mr-api/backend:old
 
 echo 'Setting cronjobs...'
 sudo cp ./.services/crontab/config /etc/cron.d/backend
@@ -21,11 +21,11 @@ sudo cp ./.services/crontab/config /etc/cron.d/backend
 echo 'Building latest nginx image...'
 docker compose -f docker-compose.prod.yaml build nginx datadog
 
-echo 'Logging into DigitalOcean container registry...'
-doctl registry login --expiry-seconds 300
+#echo 'Logging into DigitalOcean container registry...'
+#doctl registry login --expiry-seconds 300
 
 echo 'Pulling latest backend image...'
-docker pull registry.digitalocean.com/mr-project/backend:latest
+docker pull registry.gitlab.com/mineralogy.rocks/mr-api/backend:latest
 
 echo 'Removing dangling images...'
 docker image prune -f
