@@ -21,7 +21,7 @@ from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
 from ..choices import IMA_NOTE_CHOICES
-from ..choices import IMA_STATUS_CHOICES
+from ..choices import IMA_STATUS_CHOICES, INHERIT_CHOICES
 from ..utils import shorten_text
 from ..utils import unique_slugify
 from .base import BaseModel
@@ -422,6 +422,22 @@ class MineralFormula(BaseModel, Creatable):
         return mark_safe(self.formula)
 
 
+class MineralInheritance(BaseModel, Creatable, Updatable):
+
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="inheritance_chain")
+    prop = models.PositiveSmallIntegerField(choices=INHERIT_CHOICES, db_column="prop_id")
+    inherit_from = models.ForeignKey(Mineral, models.CASCADE, db_column="inherit_from_id", related_name="descendants")
+
+    class Meta:
+        db_table = "mineral_inheritance"
+
+        verbose_name = "Inheritance"
+        verbose_name_plural = "Inheritances"
+
+    def __str__(self):
+        return self.mineral.name + " " + self.prop + " " + self.inherit_from.name
+
+
 class MineralStructure(BaseModel, Creatable, Updatable):
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="structures")
     cod = models.IntegerField(null=True, blank=True, db_column="cod_id", help_text="Open Crystallography Database id")
@@ -578,7 +594,6 @@ class MineralCrystallography(BaseModel, Updatable):
         null=True,
         default=None,
     )
-    inherited_from = models.ForeignKey(Mineral, models.CASCADE, null=True, default=None)
 
     space_group = models.ForeignKey(SpaceGroup, models.CASCADE, db_column="space_group_id", null=True, default=None)
     a = models.FloatField(blank=True, null=True, default=None)

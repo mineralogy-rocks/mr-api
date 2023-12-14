@@ -51,3 +51,12 @@ IMA_NOTE_CHOICES = (
     (UNNAMED_INVALID, "Unnamed Invalid"),
     (NAMED_AMPHIBOLE, "Named Amphibole"),
 )
+
+
+INHERIT_FORMULA = 1
+INHERIT_CRYSTAL_SYSTEM = 2
+
+INHERIT_CHOICES = (
+    (INHERIT_FORMULA, "Inherit Formula"),
+    (INHERIT_CRYSTAL_SYSTEM, "Inherit Crystal System"),
+)

@@ -7,7 +7,9 @@ from django.db.models import Exists
 from django.db.models import OuterRef
 from django.db.models import Q
 
+from ...choices import INHERIT_CHOICES
 from ...models.mineral import Mineral
+from ...models.mineral import MineralInheritance
 from ...models.mineral import MineralCrystallography
 from ...queries import GET_INHERITANCE_CHAIN_LIST_QUERY
 
@@ -24,7 +26,7 @@ class Command(BaseCommand):
             .filter(statuses__group__in=[2, 3])
             .distinct()
             .filter(
-                Exists(MineralCrystallography.objects.filter(mineral=OuterRef("pk"), inherited_from__isnull=False))
+                Exists(MineralInheritance.objects.filter(mineral=OuterRef("pk"), inherited_from__isnull=False))
                 | Q(crystallography__isnull=True)
             )
         )
