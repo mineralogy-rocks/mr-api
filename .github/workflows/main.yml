@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout master
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - uses: docker/login-action@v2
         with:
@@ -52,7 +52,7 @@ jobs:
     if: github.ref == 'refs/heads/master'
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Add the private SSH key to the ssh-agent
         env:
