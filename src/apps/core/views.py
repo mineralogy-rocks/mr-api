@@ -52,6 +52,7 @@ from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRelationsSerializer
 from .serializers.mineral import RetrieveController
 from .utils import add_label
+from .tasks import calculate_inherited_props
 
 
 class MineralSearch(autocomplete.Select2QuerySetView):
