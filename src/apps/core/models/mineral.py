@@ -7,10 +7,21 @@ from django.contrib import admin
 from django.contrib.postgres.fields import ArrayField
 from django.db import connection
 from django.db import models
+from django.db.models import Avg
+from django.db.models import Count
+from django.db.models import F
+from django.db.models import Max
+from django.db.models import Min
 from django.db.models import Q
+from django.db.models.expressions import RawSQL
+from django.db.models.functions import JSONObject
+from django.db.models.functions import Round
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
+from ..choices import IMA_NOTE_CHOICES
+from ..choices import IMA_STATUS_CHOICES
 from ..utils import shorten_text
 from ..utils import unique_slugify
 from .base import BaseModel
@@ -18,6 +29,7 @@ from .base import Creatable
 from .base import Nameable
 from .base import Updatable
 from .core import Country
+from .core import DataContext
 from .core import FormulaSource
 from .core import NsClass
 from .core import NsFamily
@@ -95,7 +107,6 @@ class Mineral(Nameable, Creatable, Updatable):
     )
 
     class Meta:
-        managed = False
         db_table = "mineral_log"
         ordering = [
             "name",
@@ -106,6 +117,32 @@ class Mineral(Nameable, Creatable, Updatable):
 
     def __str__(self):
         return self.name
+
+    @cached_property
+    def members(self):
+        queryset = HierarchyView.objects.filter(
+            mineral=self,
+            is_parent=True,
+            # comment out, and calculate stats for ANY member
+            # relation__statuses__group__in=[3, 4, 11],
+            relation__direct_relations__direct_status=True,
+        )
+        return list(queryset.values_list("relation", flat=True))
+
+    @cached_property
+    def is_grouping(self):
+        return self.statuses.filter(group=1, minerals__direct_status=True).exists()
+
+    @property
+    def synonyms(self):
+        return list(
+            self.relations.annotate(status_group=Max("statuses__group"))
+            .filter(status_group=2)
+            .extra(where=["mineral_status.direct_status = TRUE"])
+            .distinct()
+            .order_by()
+            .values_list("id", flat=True)
+        )
 
     def get_absolute_url(self):
         return reverse("core:mineral-detail", kwargs={"pk": self.id})
@@ -137,8 +174,8 @@ class Mineral(Nameable, Creatable, Updatable):
         else:
             return None
 
-    def short_description(self):
-        return shorten_text(self.description, limit=700) if self.description else None
+    def short_description(self, limit=700):
+        return shorten_text(self.description, limit=limit) if self.description else None
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -185,7 +222,6 @@ class MineralStatus(BaseModel, Creatable, Updatable):
     )
 
     class Meta:
-        managed = False
         db_table = "mineral_status"
         unique_together = (("mineral", "status"),)
 
@@ -195,11 +231,56 @@ class MineralStatus(BaseModel, Creatable, Updatable):
     def __str__(self):
         return self.mineral.name + " " + self.status.description_short
 
+    @classmethod
+    def get_synonyms(cls, ids):
+        queryset = cls.objects.filter(mineral__in=ids, direct_status=False, status__group=2)
+        return list(queryset.values_list("mineral_status__relation", flat=True))
+
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
         MineralStatus.objects.filter(
             mineral=self.mineral, status=self.status, direct_status=(not self.direct_status)
         ).delete()
+
+
+class MineralIMAStatus(BaseModel, Creatable):
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="ima_statuses")
+    status = models.PositiveSmallIntegerField(choices=IMA_STATUS_CHOICES, db_column="ima_status_id", default=None)
+
+    class Meta:
+        db_table = "mineral_ima_status"
+
+        verbose_name = "IMA Status"
+        verbose_name_plural = "IMA Statuses"
+
+    def __str__(self):
+        return self.mineral.name + " " + str(self.status)
+
+
+class MineralIMANote(BaseModel, Creatable):
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="ima_notes")
+    note = models.PositiveSmallIntegerField(choices=IMA_NOTE_CHOICES, db_column="ima_note_id", default=None)
+
+    class Meta:
+        db_table = "mineral_ima_note"
+
+        verbose_name = "IMA Note"
+        verbose_name_plural = "IMA Notes"
+
+    def __str__(self):
+        return self.mineral.name + " " + str(self.note)
+
+
+class MineralContext(BaseModel, Creatable):
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="contexts")
+    context = models.ForeignKey(DataContext, models.CASCADE, db_column="context_id", related_name="minerals")
+    data = models.JSONField(blank=True, null=True)
+
+    class Meta:
+        db_table = "mineral_context"
+
+        verbose_name = "Data Context"
+        verbose_name_plural = "Data Contexts"
 
 
 class MineralRelation(BaseModel):
@@ -224,7 +305,6 @@ class MineralRelation(BaseModel):
     )
 
     class Meta:
-        managed = False
         db_table = "mineral_relation"
         unique_together = (
             "mineral",
@@ -299,7 +379,6 @@ class MineralRelationSuggestion(BaseModel):
     is_processed = models.BooleanField(null=False, default=False, help_text="Is the suggestion processed?")
 
     class Meta:
-        managed = False
         db_table = "mineral_relation_suggestion"
         unique_together = (
             "mineral",
@@ -330,7 +409,6 @@ class MineralFormula(BaseModel, Creatable):
     )
 
     class Meta:
-        managed = False
         db_table = "mineral_formula"
 
         verbose_name = "Ideal Formula"
@@ -385,7 +463,6 @@ class MineralStructure(BaseModel, Creatable, Updatable):
     note = models.TextField(null=True, blank=True, help_text="Note of the structure.")
 
     class Meta:
-        managed = False
         db_table = "mineral_structure"
 
         verbose_name = "Analytical Measurement"
@@ -393,6 +470,57 @@ class MineralStructure(BaseModel, Creatable, Updatable):
 
     def __str__(self):
         return mark_safe(self.formula) or self.note
+
+    @classmethod
+    def aggregate_by_system(cls, ids):
+        queryset = (
+            cls.objects.values("mineral__crystallography__crystal_system")
+            .filter(mineral__in=ids)
+            .annotate(
+                crystal_system=F("mineral__crystallography__crystal_system"),
+                count=Count("id"),
+                min=JSONObject(
+                    a=Min("a"),
+                    b=Min("b"),
+                    c=Min("c"),
+                    alpha=Min("alpha"),
+                    beta=Min("beta"),
+                    gamma=Min("gamma"),
+                    volume=Min("volume"),
+                ),
+                max=JSONObject(
+                    a=Max("a"),
+                    b=Max("b"),
+                    c=Max("c"),
+                    alpha=Max("alpha"),
+                    beta=Max("beta"),
+                    gamma=Max("gamma"),
+                    volume=Max("volume"),
+                ),
+                avg=JSONObject(
+                    a=Round(Avg("a"), 4),
+                    b=Round(Avg("b"), 4),
+                    c=Round(Avg("c"), 4),
+                    alpha=Round(Avg("alpha"), 4),
+                    beta=Round(Avg("beta"), 4),
+                    gamma=Round(Avg("gamma"), 4),
+                    volume=Round(Avg("volume"), 4),
+                ),
+            )
+            .order_by("-count")
+        )
+        return queryset.values("crystal_system", "count", "min", "max", "avg")
+
+    @classmethod
+    def aggregate_by_element(cls, ids):
+        queryset = (
+            cls.objects.filter(mineral__in=ids)
+            .annotate(element=RawSQL("UNNEST(regexp_matches(formula, 'REE|[A-Z][a-z]?', 'g'))", []))
+            .values("element")
+            .annotate(count=Count("id", distinct=True))
+            .order_by("-count", "element")
+        )
+        return queryset.values("element", "count")
 
 
 class MineralImpurity(BaseModel):
@@ -402,7 +530,6 @@ class MineralImpurity(BaseModel):
     rich_poor = models.BooleanField(null=True, blank=True)
 
     class Meta:
-        managed = False
         db_table = "mineral_impurity"
 
         verbose_name = "Impurity"
@@ -417,7 +544,6 @@ class MineralIonTheoretical(BaseModel):
     ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id", related_name="minerals_theoretical")
 
     class Meta:
-        managed = False
         db_table = "mineral_ion_theoretical"
         unique_together = (("mineral", "ion"),)
 
@@ -429,13 +555,22 @@ class MineralIonTheoretical(BaseModel):
 
 
 class MineralCrystallography(BaseModel):
-    mineral = models.OneToOneField(Mineral, models.CASCADE, db_column="mineral_id", related_name="crystallography")
+    mineral = models.OneToOneField(
+        Mineral, models.SET_NULL, db_column="mineral_id", related_name="crystallography", null=True
+    )
     crystal_system = models.ForeignKey(
         CrystalSystem,
         models.CASCADE,
         db_column="crystal_system_id",
         related_name="minerals",
+        null=True,
+        default=None,
     )
+    # crystal_system = models.PositiveSmallIntegerField(
+    #     choices=CRYSTAL_SYSTEM_CHOICES,
+    #     null=True,
+    #     default=None,
+    # )
     crystal_class = models.ForeignKey(
         CrystalClass,
         models.CASCADE,
@@ -451,25 +586,25 @@ class MineralCrystallography(BaseModel):
     gamma = models.FloatField(blank=True, null=True, default=None)
     z = models.IntegerField(blank=True, null=True, default=None)
 
+    is_inherited = models.BooleanField(null=False, default=False, help_text="Is the data inherited from parent?")
+
     class Meta:
-        managed = False
         db_table = "mineral_crystallography"
 
         verbose_name = "Crystallography"
         verbose_name_plural = "Crystallographies"
 
     def __str__(self):
-        return self.crystal_system.name
+        return str(self.crystal_system)
 
 
 class MineralCountry(BaseModel):
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id")
-    country = models.ForeignKey(Country, models.CASCADE, db_column="country_id", related_name="minerals")
+    country = models.ForeignKey(Country, models.CASCADE, db_column="country_id", related_name="minerals", default=None)
 
     note = models.TextField(db_column="note", blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = "mineral_country"
         unique_together = (("mineral", "country"),)
 
@@ -509,7 +644,6 @@ class MineralHistory(BaseModel):
     first_known_use = models.TextField(blank=True, null=True, help_text="First known use notation")
 
     class Meta:
-        managed = False
         db_table = "mineral_history"
         verbose_name = "Discovery Context"
         verbose_name_plural = "Discovery contexts"
@@ -531,7 +665,6 @@ class MineralHierarchy(BaseModel):
     )
 
     class Meta:
-        managed = False
         db_table = "mineral_hierarchy"
         unique_together = (("mineral", "parent"),)
 
@@ -548,7 +681,6 @@ class HierarchyView(BaseModel):
     is_parent = models.BooleanField()
 
     class Meta:
-        managed = False
         db_table = "mineral_hierarchy_view"
         ordering = [
             "id",
@@ -586,7 +718,6 @@ class MineralIonPosition(BaseModel):
     quantity = models.TextField(blank=True, null=True, db_column="ion_quantity")
 
     class Meta:
-        managed = False
         db_table = "mineral_ion_position"
         ordering = [
             "mineral",
@@ -604,7 +735,6 @@ class MindatSync(BaseModel, Creatable):
     is_successful = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
         db_table = "mindat_sync_log"
 
         verbose_name = "Mindat Sync History"

@@ -3,6 +3,8 @@
 import os
 import sys
 
+# import ddtrace.auto
+
 
 def main():
     """Run administrative tasks."""

@@ -3,6 +3,7 @@ from django.db.models import Prefetch
 from rest_framework import serializers
 
 from ..models.core import Country
+from ..models.core import DataContext
 from ..models.core import FormulaSource
 from ..models.core import NsClass
 from ..models.core import NsFamily
@@ -22,7 +23,6 @@ class StatusGroupSerializer(serializers.ModelSerializer):
 
 
 class StatusListSerializer(serializers.ModelSerializer):
-
     group = StatusGroupSerializer()
 
     class Meta:
@@ -47,7 +47,6 @@ class StatusListSerializer(serializers.ModelSerializer):
 
 
 class CountryListSerializer(serializers.ModelSerializer):
-
     iso_code = serializers.CharField(source="alpha_2")
 
     class Meta:
@@ -95,7 +94,6 @@ class NsFamilyListSerializer(CountsFieldMixin, serializers.ModelSerializer):
 
 
 class NsSubclassListSerializer(CountsFieldMixin, serializers.ModelSerializer):
-
     counts = serializers.SerializerMethodField()
 
     class Meta:
@@ -122,7 +120,6 @@ class NsSubclassListSerializer(CountsFieldMixin, serializers.ModelSerializer):
 
 
 class NsSubclassFamilyListSerializer(NsSubclassListSerializer):
-
     families = NsFamilyListSerializer(many=True)
 
     class Meta:
@@ -131,7 +128,6 @@ class NsSubclassFamilyListSerializer(NsSubclassListSerializer):
 
 
 class NsClassSubclassFamilyListSerializer(CountsFieldMixin, serializers.ModelSerializer):
-
     counts = serializers.SerializerMethodField()
     subclasses = NsSubclassFamilyListSerializer(many=True)
 
@@ -170,4 +166,13 @@ class FormulaSourceSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "url",
+        ]
+
+
+class DataContextSerilizer(serializers.ModelSerializer):
+    class Meta:
+        model = DataContext
+        fields = [
+            "id",
+            "name",
         ]

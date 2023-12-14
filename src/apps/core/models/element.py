@@ -7,7 +7,6 @@ from .base import Nameable
 
 class GoldschmidtClass(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "goldschmidt_class_list"
 
         verbose_name = "Goldschmidt Class"
@@ -19,7 +18,6 @@ class GoldschmidtClass(BaseModel, Nameable):
 
 class BondingType(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "bonding_type_list"
 
         verbose_name = "Bonding Type"
@@ -31,7 +29,6 @@ class BondingType(BaseModel, Nameable):
 
 class PhaseState(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "phase_state_list"
 
         verbose_name = "Phase State"
@@ -43,7 +40,6 @@ class PhaseState(BaseModel, Nameable):
 
 class ChemicalGroup(BaseModel, Nameable):
     class Meta:
-        managed = False
         db_table = "chemical_group_list"
 
         verbose_name = "Chemical Group"
@@ -109,6 +105,7 @@ class Element(BaseModel):
         db_column="goldschmidt_class_id",
         to_field="id",
         related_name="elements",
+        default=None,
     )
     phase_state = models.ForeignKey(
         PhaseState,
@@ -116,6 +113,7 @@ class Element(BaseModel):
         db_column="phase_state_id",
         to_field="id",
         related_name="elements",
+        default=None,
     )
     bonding_type = models.ForeignKey(
         BondingType,
@@ -123,6 +121,7 @@ class Element(BaseModel):
         db_column="bonding_type_id",
         to_field="id",
         related_name="elements",
+        default=None,
     )
     chemical_group = models.ForeignKey(
         ChemicalGroup,
@@ -130,10 +129,10 @@ class Element(BaseModel):
         db_column="chemical_group_id",
         to_field="id",
         related_name="elements",
+        default=None,
     )
 
     class Meta:
-        managed = False
         db_table = "element_list"
 
         verbose_name = "ELement"

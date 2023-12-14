@@ -6,12 +6,10 @@ from .base import Nameable
 
 
 class NsClass(models.Model):
-
     id = models.SmallIntegerField(primary_key=True)
     description = models.TextField()
 
     class Meta:
-        managed = False
         db_table = "ns_class"
         ordering = [
             "id",
@@ -25,7 +23,6 @@ class NsClass(models.Model):
 
 
 class NsSubclass(BaseModel):
-
     ns_class = models.ForeignKey(
         NsClass,
         models.CASCADE,
@@ -37,7 +34,6 @@ class NsSubclass(BaseModel):
     description = models.TextField()
 
     class Meta:
-        managed = False
         db_table = "ns_subclass"
         unique_together = (("ns_class", "ns_subclass"),)
         ordering = [
@@ -53,7 +49,6 @@ class NsSubclass(BaseModel):
 
 
 class NsFamily(BaseModel):
-
     ns_class = models.ForeignKey(
         NsClass,
         models.CASCADE,
@@ -72,7 +67,6 @@ class NsFamily(BaseModel):
     description = models.TextField()
 
     class Meta:
-        managed = False
         db_table = "ns_family"
         unique_together = (("ns_class", "ns_subclass", "ns_family"),)
         ordering = [
@@ -88,11 +82,9 @@ class NsFamily(BaseModel):
 
 
 class StatusGroup(BaseModel, Nameable):
-
     slug = models.CharField(max_length=100, unique=True)
 
     class Meta:
-        managed = False
         db_table = "status_group_list"
         ordering = [
             "name",
@@ -106,7 +98,6 @@ class StatusGroup(BaseModel, Nameable):
 
 
 class Status(BaseModel):
-
     status_id = models.FloatField(null=False)
     group = models.ForeignKey(StatusGroup, models.CASCADE, db_column="status_group_id", to_field="id")
     description_long = models.TextField(blank=True, null=True)
@@ -114,7 +105,6 @@ class Status(BaseModel):
     slug = models.CharField(max_length=200, unique=True)
 
     class Meta:
-        managed = False
         db_table = "status_list"
         ordering = [
             "status_id",
@@ -132,11 +122,9 @@ class Status(BaseModel):
 
 
 class RelationType(BaseModel, Nameable):
-
     note = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = "relation_type_list"
 
         verbose_name = "Relation Type"
@@ -147,7 +135,6 @@ class RelationType(BaseModel, Nameable):
 
 
 class Country(BaseModel, Nameable):
-
     alpha_2 = models.CharField(max_length=10, null=True)
     alpha_3 = models.CharField(max_length=10, null=True)
     country_code = models.IntegerField(null=True)
@@ -156,7 +143,6 @@ class Country(BaseModel, Nameable):
     intermediate_region = models.CharField(max_length=100, null=True)
 
     class Meta:
-        managed = False
         db_table = "country_list"
 
         verbose_name = "Country"
@@ -167,15 +153,24 @@ class Country(BaseModel, Nameable):
 
 
 class FormulaSource(BaseModel, Nameable):
-
     url = models.URLField()
 
     class Meta:
-        managed = False
         db_table = "formula_source_list"
 
         verbose_name = "Formula Source"
         verbose_name_plural = "Formula Sources"
+
+    def __str__(self):
+        return self.name
+
+
+class DataContext(BaseModel, Nameable):
+    class Meta:
+        db_table = "data_context_list"
+
+        verbose_name = "Data Context"
+        verbose_name_plural = "Data Contexts"
 
     def __str__(self):
         return self.name
