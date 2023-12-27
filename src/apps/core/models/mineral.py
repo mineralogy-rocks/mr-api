@@ -21,7 +21,8 @@ from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
 from ..choices import IMA_NOTE_CHOICES
-from ..choices import IMA_STATUS_CHOICES, INHERIT_CHOICES
+from ..choices import IMA_STATUS_CHOICES
+from ..choices import INHERIT_CHOICES
 from ..utils import shorten_text
 from ..utils import unique_slugify
 from .base import BaseModel
@@ -422,8 +423,7 @@ class MineralFormula(BaseModel, Creatable):
         return mark_safe(self.formula)
 
 
-class MineralInheritance(BaseModel, Creatable, Updatable):
-
+class MineralInheritance(BaseModel, Creatable):
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="inheritance_chain")
     prop = models.PositiveSmallIntegerField(choices=INHERIT_CHOICES, db_column="prop_id")
     inherit_from = models.ForeignKey(Mineral, models.CASCADE, db_column="inherit_from_id", related_name="descendants")
@@ -435,7 +435,7 @@ class MineralInheritance(BaseModel, Creatable, Updatable):
         verbose_name_plural = "Inheritances"
 
     def __str__(self):
-        return self.mineral.name + " " + self.prop + " " + self.inherit_from.name
+        return str(self.prop) + ": " + self.mineral.name + " " + " " + self.inherit_from.name
 
 
 class MineralStructure(BaseModel, Creatable, Updatable):

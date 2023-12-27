@@ -6,6 +6,7 @@ from django.db.models import Prefetch
 from rest_framework import serializers
 
 from ..annotations import _annotate__statuses_array
+from ..choices import INHERIT_CHOICES
 from ..models.core import Status
 from ..models.mineral import Mineral
 from ..models.mineral import MineralContext
@@ -13,6 +14,7 @@ from ..models.mineral import MineralCrystallography
 from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHierarchy
 from ..models.mineral import MineralHistory
+from ..models.mineral import MineralInheritance
 from ..models.mineral import MineralStatus
 from ..models.mineral import MineralStructure
 from ..queries import GET_DATA_CONTEXTS_QUERY
@@ -25,6 +27,20 @@ from .core import FormulaSourceSerializer
 from .crystal import CrystalClassSerializer
 from .crystal import CrystalSystemSerializer
 from .crystal import SpaceGroupSerializer
+
+
+class MineralInheritanceCreateSerializer(serializers.ModelSerializer):
+    mineral = serializers.PrimaryKeyRelatedField(queryset=Mineral.objects.all())
+    prop = serializers.ChoiceField(choices=INHERIT_CHOICES)
+    inherit_from = serializers.PrimaryKeyRelatedField(queryset=Mineral.objects.all())
+
+    class Meta:
+        model = MineralInheritance
+        fields = [
+            "mineral",
+            "prop",
+            "inherit_from",
+        ]
 
 
 class MineralHistorySerializer(serializers.ModelSerializer):

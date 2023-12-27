@@ -58,8 +58,8 @@ from .serializers.mineral import MineralListSecondarySerializer
 from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRelationsSerializer
 from .serializers.mineral import RetrieveController
-from .utils import add_label
 from .tasks import calculate_inherited_props
+from .utils import add_label
 
 
 class MineralSearch(autocomplete.Select2QuerySetView):
@@ -562,6 +562,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         # instance.seen += 1
         # instance.save(update_fields=["seen"])
         calculate_inherited_props()
+        return Response(status=status.HTTP_200_OK)
 
         queryset = self.queryset.all()
 

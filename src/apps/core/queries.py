@@ -371,9 +371,9 @@ GET_DATA_CONTEXTS_QUERY = """
 GET_INHERITANCE_PROPS_QUERY = """
     SELECT
         temp.id as base_id,
-        ml.id,
-        ml.name,
-        ml.slug,
+        ml.name as base_name,
+        _ml.id,
+        _ml.name as name,
         ARRAY(
             SELECT DISTINCT sl.status_id
             FROM mineral_status ms
@@ -388,18 +388,18 @@ GET_INHERITANCE_PROPS_QUERY = """
         ) AS statuses,
         (
             SELECT EXISTS (SELECT 1 FROM mineral_formula mf WHERE mf.mineral_id = temp.id)
+        ) AS base_has_formula,
+        (
+            SELECT EXISTS (SELECT 1 FROM mineral_formula mf WHERE mf.mineral_id = temp.relation_id)
         ) AS has_formula,
         (
-            SELECT EXISTS (SELECT 1 FROM mineral_formula mf WHERE mf.mineral_id = ml.id)
-        ) AS has_parent_formula,
-        (
             SELECT EXISTS (SELECT 1 FROM mineral_crystallography mc WHERE mc.mineral_id = temp.id)
-        ) AS has_crystallography,
+        ) AS base_has_crystallography,
         (
             SELECT jsonb_build_object('id', mc.id, 'crystal_system', mc.crystal_system_id)
             FROM mineral_crystallography mc
             WHERE mc.mineral_id = ml.id
-        ) AS crystallography,
+        ) AS has_crystallography,
         temp.depth
     FROM (
         WITH RECURSIVE cte(id, mineral_id, relation_id, DEPTH) AS (
@@ -423,5 +423,21 @@ GET_INHERITANCE_PROPS_QUERY = """
         )
         SELECT cte.* FROM cte
     ) temp
-    INNER JOIN mineral_log ml ON temp.relation_id = ml.id;
+    INNER JOIN mineral_log ml ON temp.id = ml.id
+    INNER JOIN mineral_log _ml ON temp.relation_id = _ml.id;
+"""
+
+
+FIX_DOUBLE_STATUS = """
+delete from mineral_status where id in (
+    select ms.id
+    from mineral_relation mr
+     inner join mineral_status ms on mr.mineral_status_id = ms.id and ms.direct_status
+     inner join (select mr.*, ms.status_id
+                 from mineral_relation mr
+                          inner join mineral_status ms on mr.mineral_status_id = ms.id and ms.direct_status) _mr
+                on mr.mineral_id = _mr.relation_id and
+                   mr.relation_id = _mr.mineral_id
+                    and ms.status_id = _mr.status_id
+);
 """
