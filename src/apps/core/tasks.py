@@ -11,6 +11,7 @@ from .queries import GET_INHERITANCE_PROPS_QUERY
 CHUNK_SIZE = 100
 STATUS_SYNONYM = np.arange(2.00, 2.11, 0.01, dtype=np.double)
 STATUS_VARIETY = np.arange(4.00, 4.06, 0.01, dtype=np.double)
+STATUS_GROUP = np.arange(1.00, 1.40, 0.10, dtype=np.double)
 STATUS_POLYTYPE = [3.0]
 STATUS_MIXTURE = [8.0]
 STATUS_APPROVED = [0.0]
@@ -49,6 +50,14 @@ def calculate_inherited_props(chunk_size=100):
     #    We only retrieve those cases where child doesn't have formula and a parent has formula.
     _populate_formulas(inheritance_chain)
 
+    # 4. Calculate inherited crystal systems for Structural [4.04] and Uncertain Varieties [4.05].
+    #    We only retrieve those cases where child doesn't have crystal system and a parent has crystal system.
+    _populate_crystal_systems(inheritance_chain)
+
+
+def _populate_crystal_systems(inheritance_chain: pd.DataFrame):
+    pass
+
 
 def _populate_formulas(inheritance_chain: pd.DataFrame):
     _inherited_props = inheritance_chain.loc[
@@ -68,11 +77,9 @@ def _populate_formulas(inheritance_chain: pd.DataFrame):
         # - a. make sure we do not inherit from synonyms [2.*], polytypes [3.0], mixtures [8.0]
         _props = _props[
             ~_props["statuses"].apply(
-                lambda x: bool(
-                    np.intersect1d(
-                        np.concatenate([STATUS_SYNONYM, STATUS_POLYTYPE, STATUS_MIXTURE], dtype=np.float32),
-                        np.array(x, dtype=np.float32),
-                    ).any()
+                lambda x: _is_intersect(
+                    np.concatenate([STATUS_SYNONYM, STATUS_POLYTYPE, STATUS_MIXTURE], dtype=np.float32),
+                    np.array(x, dtype=np.float32),
                 )
             )
         ]
@@ -80,23 +87,33 @@ def _populate_formulas(inheritance_chain: pd.DataFrame):
             continue
         # - b. arrange by depth and get:
         #      I. Base is a chemical variety:
-        #        (1) the closest variety
-        #        (2) or IMA-approved mineral
-        #        (3) or default the closest item present
+        #        (1) the closest variety or IMA-approved mineral
+        #        (2) or default the closest item present
         #      II. Base is a synonym:
         #        TODO: implement
         _props = _props.sort_values(by=["depth"], ascending=True)
+        _has_priority = _is_intersect(
+            np.concatenate([STATUS_APPROVED, STATUS_VARIETY], dtype=np.float32),
+            np.concatenate([*_props.statuses], dtype=np.float32),
+        )
         for _prop in _props.itertuples():
-            if bool(
-                np.intersect1d(
+            if _has_priority:
+                if _is_intersect(
                     np.concatenate([STATUS_APPROVED, STATUS_VARIETY], dtype=np.float32),
                     np.array(_prop.statuses, dtype=np.float32),
-                ).any()
-            ):
-                _create_objs += [MineralInheritance(mineral_id=_item, prop=INHERIT_FORMULA, inherit_from_id=_prop.id)]
-                break
-            continue
+                ):
+                    _create_objs += [
+                        MineralInheritance(mineral_id=_item, prop=INHERIT_FORMULA, inherit_from_id=_prop.id)
+                    ]
+                    break
+                continue
+            _create_objs += [MineralInheritance(mineral_id=_item, prop=INHERIT_FORMULA, inherit_from_id=_prop.id)]
+            break
 
     if _create_objs:
         _created_objs = MineralInheritance.objects.bulk_create(_create_objs, batch_size=1000)
         print(_created_objs)
+
+
+def _is_intersect(x, y):
+    return bool(np.intersect1d(x, y).any())
