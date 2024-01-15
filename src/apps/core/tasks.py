@@ -17,16 +17,17 @@ STATUS_MIXTURE = [8.0]
 STATUS_APPROVED = [0.0]
 
 
-def calculate_inherited_props(chunk_size=100):
+def calculate_inherited_props(chunk_size=1000):
     # 0. Truncate inheritance table and restart sequence.
     with connection.cursor() as cursor:
+        print("Truncating table {}".format(MineralInheritance._meta.db_table))
         cursor.execute("TRUNCATE TABLE {} RESTART IDENTITY CASCADE;".format(MineralInheritance._meta.db_table))
 
     # 1. Get all objects that needs to inherit properties
-    objects = Mineral.objects.only("id", "name").filter(statuses__group__in=[3]).distinct()
+    objects = Mineral.objects.only("id", "name").filter(statuses__group__in=[2, 3]).distinct()
     objects = objects.values_list("id", flat=True)
 
-    # 2. Calculate inheritance chain in batches of BATCH_SIZE
+    # 2. Calculate inheritance chain in batches of chunk_size
     inheritance_chain = pd.DataFrame()
     for batch in range(0, len(objects), chunk_size):
         print("Calculating inheritance chain for batch {} to {}".format(batch, batch + chunk_size))
@@ -46,34 +47,48 @@ def calculate_inherited_props(chunk_size=100):
     )
     inheritance_chain["statuses"] = inheritance_chain.apply(lambda x: [float(_x) for _x in x["statuses"]], axis=1)
 
-    # 3. Calculate inherited formulas for Chemical [4.00] and Uncertain Varieties [4.05].
-    #    We only retrieve those cases where child doesn't have formula and a parent has formula.
+    # 3. Calculate inherited formulas for all synonyms [2.*] and varieties [4.*].
+    #    We only retrieve those entries where child doesn't have formula and a parent has formula.
     _populate_formulas(inheritance_chain)
 
     # 4. Calculate inherited crystal systems for Structural [4.04] and Uncertain Varieties [4.05].
-    #    We only retrieve those cases where child doesn't have crystal system and a parent has crystal system.
+    #    We only retrieve those entries where child doesn't have crystal system and a parent has crystal system.
     _populate_crystal_systems(inheritance_chain)
 
 
 def _populate_crystal_systems(inheritance_chain: pd.DataFrame):
-    pass
-
-
-def _populate_formulas(inheritance_chain: pd.DataFrame):
     _inherited_props = inheritance_chain.loc[
-        inheritance_chain.index.where(~inheritance_chain.base_has_formula & inheritance_chain.has_formula).dropna(),
-        ["base_id", "base_name", "id", "name", "base_statuses", "statuses", "depth", "base_has_formula", "has_formula"],
+        inheritance_chain.index.where(
+            ~inheritance_chain.base_has_crystallography & inheritance_chain.has_crystallography
+        ).dropna(),
+        [
+            "base_id",
+            "base_name",
+            "id",
+            "name",
+            "base_statuses",
+            "statuses",
+            "depth",
+            "base_has_crystallography",
+            "has_crystallography",
+        ],
     ]
     _inherited_props = _inherited_props[
-        _inherited_props["base_statuses"].apply(lambda x: bool(np.intersect1d([4.00, 4.05], x).any()))
+        _inherited_props["base_statuses"].apply(
+            lambda x: _is_intersect(
+                np.concatenate([STATUS_SYNONYM, STATUS_VARIETY], dtype=np.float32),
+                np.array(x, dtype=np.float32),
+            )
+        )
     ]
+
     if _inherited_props.empty:
         return
 
     _create_objs = []
     # group by base_id and iterate over inheritance chain
     for _item, _props in _inherited_props.groupby("base_id"):
-        # It is fine to inherit from grouping terms, as those contain general formula definitions.
+        # It is fine to inherit from grouping terms, as those may contain avg (?) crystal system of the grouping members
         # - a. make sure we do not inherit from synonyms [2.*], polytypes [3.0], mixtures [8.0]
         _props = _props[
             ~_props["statuses"].apply(
@@ -86,7 +101,7 @@ def _populate_formulas(inheritance_chain: pd.DataFrame):
         if _props.empty:
             continue
         # - b. arrange by depth and get:
-        #      I. Base is a chemical variety:
+        #      I. Base is a variety:
         #        (1) the closest variety or IMA-approved mineral
         #        (2) or default the closest item present
         #      II. Base is a synonym:
@@ -113,6 +128,70 @@ def _populate_formulas(inheritance_chain: pd.DataFrame):
     if _create_objs:
         _created_objs = MineralInheritance.objects.bulk_create(_create_objs, batch_size=1000)
         print(_created_objs)
+    pass
+
+
+def _populate_formulas(inheritance_chain: pd.DataFrame):
+    _inherited_props = inheritance_chain.loc[
+        inheritance_chain.index.where(~inheritance_chain.base_has_formula & inheritance_chain.has_formula).dropna(),
+        ["base_id", "base_name", "id", "name", "base_statuses", "statuses", "depth", "base_has_formula", "has_formula"],
+    ]
+    _inherited_props = _inherited_props[
+        _inherited_props["base_statuses"].apply(
+            lambda x: _is_intersect(
+                np.concatenate([STATUS_SYNONYM, STATUS_VARIETY, STATUS_POLYTYPE], dtype=np.float32),
+                np.array(x, dtype=np.float32),
+            )
+        )
+    ]
+
+    if _inherited_props.empty:
+        return
+
+    _create_objs = []
+    # group by base_id and iterate over inheritance chain
+    for _item, _props in _inherited_props.groupby("base_id"):
+        # It is fine to inherit from grouping terms, as those contain general formula definitions.
+        # Basically, it is fine to inherit from any term that has formula, except synonyms or mixtures.
+        # - a. so make sure we do not inherit from synonyms [2.*], and mixtures [8.0]
+        _props = _props[
+            ~_props["statuses"].apply(
+                lambda x: _is_intersect(
+                    np.concatenate([STATUS_SYNONYM, STATUS_MIXTURE], dtype=np.float32),
+                    np.array(x, dtype=np.float32),
+                )
+            )
+        ]
+        if _props.empty:
+            continue
+        # - b. arrange by depth and get:
+        #      I. Base is a variety:
+        #        (1) the closest variety or IMA-approved mineral
+        #        (2) or default the closest item present
+        #      II. Base is a synonym:
+        #        TODO: implement
+        _props = _props.sort_values(by=["depth"], ascending=True)
+        _has_priority = _is_intersect(
+            np.concatenate([STATUS_APPROVED, STATUS_VARIETY], dtype=np.float32),
+            np.concatenate([*_props.statuses], dtype=np.float32),
+        )
+
+        for _prop in _props.itertuples():
+            if _has_priority:
+                if _is_intersect(
+                    np.concatenate([STATUS_APPROVED, STATUS_VARIETY], dtype=np.float32),
+                    np.array(_prop.statuses, dtype=np.float32),
+                ):
+                    _create_objs += [
+                        MineralInheritance(mineral_id=_item, prop=INHERIT_FORMULA, inherit_from_id=_prop.id)
+                    ]
+                    break
+                continue
+            _create_objs += [MineralInheritance(mineral_id=_item, prop=INHERIT_FORMULA, inherit_from_id=_prop.id)]
+            break
+
+    if _create_objs:
+        _created_objs = MineralInheritance.objects.bulk_create(_create_objs, batch_size=1000)
 
 
 def _is_intersect(x, y):
