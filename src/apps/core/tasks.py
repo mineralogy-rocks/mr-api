@@ -3,12 +3,11 @@ import numpy as np
 import pandas as pd
 from django.db import connection
 
-from .choices import INHERIT_FORMULA
+from .choices import INHERIT_FORMULA, INHERIT_CRYSTAL_SYSTEM
 from .models.mineral import Mineral
 from .models.mineral import MineralInheritance
 from .queries import GET_INHERITANCE_PROPS_QUERY
 
-CHUNK_SIZE = 100
 STATUS_SYNONYM = np.arange(2.00, 2.11, 0.01, dtype=np.double)
 STATUS_VARIETY = np.arange(4.00, 4.06, 0.01, dtype=np.double)
 STATUS_GROUP = np.arange(1.00, 1.40, 0.10, dtype=np.double)
@@ -118,17 +117,15 @@ def _populate_crystal_systems(inheritance_chain: pd.DataFrame):
                     np.array(_prop.statuses, dtype=np.float32),
                 ):
                     _create_objs += [
-                        MineralInheritance(mineral_id=_item, prop=INHERIT_FORMULA, inherit_from_id=_prop.id)
+                        MineralInheritance(mineral_id=_item, prop=INHERIT_CRYSTAL_SYSTEM, inherit_from_id=_prop.id)
                     ]
                     break
                 continue
-            _create_objs += [MineralInheritance(mineral_id=_item, prop=INHERIT_FORMULA, inherit_from_id=_prop.id)]
+            _create_objs += [MineralInheritance(mineral_id=_item, prop=INHERIT_CRYSTAL_SYSTEM, inherit_from_id=_prop.id)]
             break
 
     if _create_objs:
-        _created_objs = MineralInheritance.objects.bulk_create(_create_objs, batch_size=1000)
-        print(_created_objs)
-    pass
+        MineralInheritance.objects.bulk_create(_create_objs, batch_size=1000)
 
 
 def _populate_formulas(inheritance_chain: pd.DataFrame):
@@ -191,7 +188,7 @@ def _populate_formulas(inheritance_chain: pd.DataFrame):
             break
 
     if _create_objs:
-        _created_objs = MineralInheritance.objects.bulk_create(_create_objs, batch_size=1000)
+        MineralInheritance.objects.bulk_create(_create_objs, batch_size=1000)
 
 
 def _is_intersect(x, y):

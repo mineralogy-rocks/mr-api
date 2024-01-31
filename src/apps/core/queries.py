@@ -396,9 +396,7 @@ GET_INHERITANCE_PROPS_QUERY = """
             SELECT EXISTS (SELECT 1 FROM mineral_crystallography mc WHERE mc.mineral_id = temp.id)
         ) AS base_has_crystallography,
         (
-            SELECT jsonb_build_object('id', mc.id, 'crystal_system', mc.crystal_system_id)
-            FROM mineral_crystallography mc
-            WHERE mc.mineral_id = ml.id
+            SELECT EXISTS (SELECT 1 FROM mineral_crystallography mc WHERE mc.mineral_id = temp.relation_id)
         ) AS has_crystallography,
         temp.depth
     FROM (

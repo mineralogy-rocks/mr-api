@@ -335,9 +335,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                     _related_objects = pd.DataFrame([dict(zip(_fields, x)) for x in _related_objects])
 
             if len(_related_objects):
-                _formula, _crystal_system = self._get_related_formula(
-                    _related_objects
-                ), self._get_related_crystal_system(_related_objects)
+                _formula, _crystal_system = [], self._get_related_crystal_system(_related_objects)
 
             _serializer_class = self.get_serializer_class(is_secondary=True)
             _serializer = _serializer_class(_queryset, many=True)
@@ -351,9 +349,10 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
                 _merge = pd.merge(pd.DataFrame(data), pd.DataFrame(_data), on="id", how="left")
 
                 _merge["_statuses"] = _merge.apply(lambda x: [y["status_id"] for y in x["statuses"]], axis=1)
-                _merge["has_formula"] = _merge.apply(
-                    lambda x: len(np.intersect1d([0.0, 4.0, 4.05], x["_statuses"])) and x["formulas"], axis=1
-                )
+                _merge['has_formula'] = True
+                # _merge["has_formula"] = _merge.apply(
+                #     lambda x: len(np.intersect1d([0.0, 4.0, 4.05], x["_statuses"])) and x["formulas"], axis=1
+                # )
                 _merge["has_crystal_system"] = _merge.apply(
                     lambda x: len(np.intersect1d([0.0, 4.04, 4.05], x["_statuses"])) and x["crystal_systems"], axis=1
                 )
@@ -561,9 +560,6 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     def retrieve(self, request, *args, **kwargs):
         # instance.seen += 1
         # instance.save(update_fields=["seen"])
-        calculate_inherited_props()
-        return Response(status=status.HTTP_200_OK)
-
         queryset = self.queryset.all()
 
         # Perform the lookup filtering.

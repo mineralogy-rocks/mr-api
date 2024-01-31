@@ -2,11 +2,11 @@
 from django.contrib.humanize.templatetags.humanize import naturalday
 from django.db import connection
 from django.db import models
-from django.db.models import Prefetch
+from django.db.models import Prefetch, F, Q
 from rest_framework import serializers
-
+from django.db.models.functions import JSONObject
+from django.contrib.postgres.aggregates import ArrayAgg
 from ..annotations import _annotate__statuses_array
-from ..choices import INHERIT_CHOICES
 from ..models.core import Status
 from ..models.mineral import Mineral
 from ..models.mineral import MineralContext
@@ -27,20 +27,6 @@ from .core import FormulaSourceSerializer
 from .crystal import CrystalClassSerializer
 from .crystal import CrystalSystemSerializer
 from .crystal import SpaceGroupSerializer
-
-
-class MineralInheritanceCreateSerializer(serializers.ModelSerializer):
-    mineral = serializers.PrimaryKeyRelatedField(queryset=Mineral.objects.all())
-    prop = serializers.ChoiceField(choices=INHERIT_CHOICES)
-    inherit_from = serializers.PrimaryKeyRelatedField(queryset=Mineral.objects.all())
-
-    class Meta:
-        model = MineralInheritance
-        fields = [
-            "mineral",
-            "prop",
-            "inherit_from",
-        ]
 
 
 class MineralHistorySerializer(serializers.ModelSerializer):
@@ -88,6 +74,16 @@ class HierarchyParentsHyperlinkSerializer(serializers.ModelSerializer):
         ]
 
 
+class InheritObjSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = MineralInheritance
+        fields = [
+            "name",
+            'slug',
+        ]
+
+
 class FormulaSerializer(serializers.ModelSerializer):
     formula = serializers.CharField(source="formula_escape")
     source = FormulaSourceSerializer()
@@ -118,13 +114,24 @@ class InheritedFormulaSerializer(FormulaSerializer):
         ]
 
 
-class FormulaRelatedSerializer(InheritedFormulaSerializer):
-    from_ = serializers.JSONField(source="from")
+# class FormulaRelatedSerializer(InheritedFormulaSerializer):
+#     from_ = serializers.JSONField(source="from")
+#
+#     class Meta:
+#         model = MineralFormula
+#         fields = InheritedFormulaSerializer.Meta.fields + [
+#             "from_",
+#         ]
+
+
+class FormulaRelatedSerializer(FormulaSerializer):
+
+    inherit_from = InheritObjSerializer()
 
     class Meta:
         model = MineralFormula
-        fields = InheritedFormulaSerializer.Meta.fields + [
-            "from_",
+        fields = FormulaSerializer.Meta.fields + [
+            "inherit_from",
         ]
 
 
@@ -568,6 +575,9 @@ class MineralListSecondarySerializer(serializers.ModelSerializer):
 
         prefetch_related = [
             models.Prefetch("formulas", MineralFormula.objects.select_related("source")),
+            models.Prefetch("inheritance_chain",
+                            MineralInheritance.objects.select_related("inherit_from")
+                                                          .prefetch_related("inherit_from__formulas__source", "inherit_from__crystallography")),
             "ima_statuses",
             "ima_notes",
         ]
