@@ -1,18 +1,17 @@
 # -*- coding: UTF-8 -*-
 from django.contrib.humanize.templatetags.humanize import naturalday
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import connection
 from django.db import models
-from django.db.models import Prefetch, F, Q
+from django.db.models import Prefetch
 from rest_framework import serializers
-from django.db.models.functions import JSONObject
-from django.contrib.postgres.aggregates import ArrayAgg
+
 from ..annotations import _annotate__statuses_array
 from ..models.core import Status
 from ..models.mineral import Mineral
 from ..models.mineral import MineralContext
 from ..models.mineral import MineralCrystallography
 from ..models.mineral import MineralFormula
-from ..models.mineral import MineralHierarchy
 from ..models.mineral import MineralHistory
 from ..models.mineral import MineralInheritance
 from ..models.mineral import MineralStatus
@@ -22,7 +21,6 @@ from ..queries import GET_INHERITANCE_CHAIN_RETRIEVE_QUERY
 from ..serializers.core import StatusListSerializer
 from ..utils import add_label
 from .core import CountryListSerializer
-from .core import DataContextSerilizer
 from .core import FormulaSourceSerializer
 from .crystal import CrystalClassSerializer
 from .crystal import CrystalSystemSerializer
@@ -41,46 +39,6 @@ class MineralHistorySerializer(serializers.ModelSerializer):
             "discovery_year_note",
             "first_usage_date",
             "first_known_use",
-        ]
-
-
-class HierarchyChildrenHyperlinkSerializer(serializers.ModelSerializer):
-    id = serializers.PrimaryKeyRelatedField(source="mineral", read_only=True)
-
-    name = serializers.StringRelatedField(source="mineral")
-    url = serializers.HyperlinkedRelatedField(source="mineral", read_only=True, view_name="core:mineral-detail")
-
-    class Meta:
-        model = MineralHierarchy
-        fields = [
-            "id",
-            "name",
-            "url",
-        ]
-
-
-class HierarchyParentsHyperlinkSerializer(serializers.ModelSerializer):
-    id = serializers.PrimaryKeyRelatedField(source="parent", read_only=True)
-
-    name = serializers.StringRelatedField(source="parent")
-    url = serializers.HyperlinkedRelatedField(source="parent", read_only=True, view_name="core:mineral-detail")
-
-    class Meta:
-        model = MineralHierarchy
-        fields = [
-            "id",
-            "name",
-            "url",
-        ]
-
-
-class InheritObjSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = MineralInheritance
-        fields = [
-            "name",
-            'slug',
         ]
 
 
@@ -104,34 +62,46 @@ class FormulaSerializer(serializers.ModelSerializer):
         return naturalday(instance.created_at)
 
 
-class InheritedFormulaSerializer(FormulaSerializer):
-    mineral = serializers.PrimaryKeyRelatedField(read_only=True)
+class MineralContextSerializer(serializers.ModelSerializer):
+    data = serializers.JSONField()
 
     class Meta:
-        model = MineralFormula
-        fields = FormulaSerializer.Meta.fields + [
-            "mineral",
+        model = MineralContext
+        fields = [
+            "context",
+            "data",
         ]
 
 
-# class FormulaRelatedSerializer(InheritedFormulaSerializer):
-#     from_ = serializers.JSONField(source="from")
-#
-#     class Meta:
-#         model = MineralFormula
-#         fields = InheritedFormulaSerializer.Meta.fields + [
-#             "from_",
-#         ]
+class MineralListInheritanceSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(source="inherit_from", read_only=True)
+    name = serializers.StringRelatedField(source="inherit_from")
+    slug = serializers.SlugRelatedField(source="inherit_from", read_only=True, slug_field="slug")
+    statuses = serializers.JSONField()
 
-
-class FormulaRelatedSerializer(FormulaSerializer):
-
-    inherit_from = InheritObjSerializer()
+    formulas = FormulaSerializer(source="inherit_from.formulas", many=True)
+    crystallography = CrystalSystemSerializer(source="inherit_from.crystallography.crystal_system")
 
     class Meta:
-        model = MineralFormula
-        fields = FormulaSerializer.Meta.fields + [
-            "inherit_from",
+        model = MineralInheritance
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "statuses",
+            "prop",
+            "formulas",
+            "crystallography",
+        ]
+
+
+class MineralRetrieveInheritanceSerializer(MineralListInheritanceSerializer):
+    contexts = MineralContextSerializer(source="inherit_from.contexts", many=True)
+
+    class Meta:
+        model = MineralInheritance
+        fields = MineralListInheritanceSerializer.Meta.fields + [
+            "contexts",
         ]
 
 
@@ -147,30 +117,6 @@ class CrystallographySerializer(serializers.ModelSerializer):
             "crystal_system",
             "crystal_class",
             "space_group",
-        ]
-
-
-class InheritedCrystallographySerializer(CrystallographySerializer):
-    mineral = serializers.PrimaryKeyRelatedField(read_only=True)
-
-    class Meta:
-        model = MineralCrystallography
-        fields = CrystallographySerializer.Meta.fields + [
-            "mineral",
-        ]
-
-
-class CrystallographyRelatedSerializer(serializers.ModelSerializer):
-    mineral = serializers.PrimaryKeyRelatedField(read_only=True)
-    crystal_system = CrystalSystemSerializer()
-    from_ = serializers.JSONField(source="from")
-
-    class Meta:
-        model = MineralCrystallography
-        fields = [
-            "mineral",
-            "crystal_system",
-            "from_",
         ]
 
 
@@ -206,33 +152,22 @@ class RetrieveController(serializers.Serializer):
                 "ns_family",
             ]
             prefetch_related += [
-                "contexts__context",
+                "contexts",
+                models.Prefetch(
+                    "inheritance_chain",
+                    MineralInheritance.objects.annotate(statuses=ArrayAgg("inherit_from__statuses__status_id"))
+                    .extra(where=["mineral_status.direct_status = TRUE"])
+                    .select_related("inherit_from")
+                    .prefetch_related(
+                        "inherit_from__formulas__source",
+                        "inherit_from__crystallography__crystal_system",
+                        "inherit_from__contexts",
+                    ),
+                ),
             ]
 
         queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
         return queryset
-
-
-class MineralContextSerializer(serializers.ModelSerializer):
-    type = DataContextSerilizer(source="context")
-    data = serializers.JSONField()
-
-    class Meta:
-        model = MineralContext
-        fields = [
-            "type",
-            "data",
-        ]
-
-
-class InheritedMineralContextSerializer(MineralContextSerializer):
-    mineral = serializers.PrimaryKeyRelatedField(read_only=True)
-
-    class Meta:
-        model = MineralContext
-        fields = MineralContextSerializer.Meta.fields + [
-            "mineral",
-        ]
 
 
 class BaseRetrieveSerializer(serializers.ModelSerializer):
@@ -387,7 +322,7 @@ class MineralRetrieveSerializer(BaseRetrieveSerializer):
     crystallography = CrystallographySerializer()
     history = MineralHistorySerializer()
     contexts = MineralContextSerializer(many=True)
-    inheritance_chain = serializers.SerializerMethodField()
+    inheritance_chain = MineralRetrieveInheritanceSerializer(many=True)
 
     class Meta:
         model = Mineral
@@ -479,23 +414,7 @@ class MineralListSerializer(serializers.ModelSerializer):
         queryset = kwargs.get("queryset")
 
         select_related = []
-
-        prefetch_related = [
-            # models.Prefetch("formulas", MineralFormula.objects.select_related("source")),
-            # models.Prefetch(
-            #     "children_hierarchy",
-            #     MineralHierarchy.objects.select_related("mineral", "parent").order_by("mineral__statuses__status_id"),
-            # ),
-            # models.Prefetch(
-            #     "parents_hierarchy",
-            #     MineralHierarchy.objects.select_related("mineral", "parent").order_by("parent__statuses__status_id"),
-            # ),
-            # models.Prefetch(
-            #     "discovery_countries",
-            #     Country.objects.filter(~Q(id=250)),
-            # ),
-            # models.Prefetch("statuses", Status.objects.select_related("group")),
-        ]
+        prefetch_related = []
 
         queryset = queryset.select_related(*select_related).prefetch_related(*prefetch_related)
         return queryset
@@ -549,6 +468,7 @@ class MineralListSecondarySerializer(serializers.ModelSerializer):
     """
 
     formulas = FormulaSerializer(many=True)
+    inheritance_chain = MineralListInheritanceSerializer(many=True)
     ima_statuses = serializers.SerializerMethodField()
     ima_notes = serializers.SerializerMethodField()
 
@@ -559,6 +479,7 @@ class MineralListSecondarySerializer(serializers.ModelSerializer):
             "formulas",
             "ima_statuses",
             "ima_notes",
+            "inheritance_chain",
         ]
 
     def get_ima_statuses(self, instance):
@@ -572,12 +493,19 @@ class MineralListSecondarySerializer(serializers.ModelSerializer):
         queryset = kwargs.get("queryset")
 
         select_related = []
-
         prefetch_related = [
             models.Prefetch("formulas", MineralFormula.objects.select_related("source")),
-            models.Prefetch("inheritance_chain",
-                            MineralInheritance.objects.select_related("inherit_from")
-                                                          .prefetch_related("inherit_from__formulas__source", "inherit_from__crystallography")),
+            models.Prefetch(
+                "inheritance_chain",
+                MineralInheritance.objects.annotate(statuses=ArrayAgg("inherit_from__statuses__status_id"))
+                .extra(where=["mineral_status.direct_status = TRUE"])
+                .select_related("inherit_from")
+                .prefetch_related(
+                    "inherit_from__statuses",
+                    "inherit_from__formulas__source",
+                    "inherit_from__crystallography__crystal_system",
+                ),
+            ),
             "ima_statuses",
             "ima_notes",
         ]

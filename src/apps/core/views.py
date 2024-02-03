@@ -2,14 +2,12 @@
 import numpy as np
 import pandas as pd
 from dal import autocomplete
-from django.db import connection
 from django.db.models import Avg
 from django.db.models import Count
 from django.db.models import F
 from django.db.models import Max
 from django.db.models import Min
 from django.db.models import Q
-from django.db.models.functions import JSONObject
 from django.db.models.functions import Round
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
@@ -39,26 +37,20 @@ from .models.core import NsSubclass
 from .models.core import Status
 from .models.mineral import HierarchyView
 from .models.mineral import Mineral
-from .models.mineral import MineralCrystallography
-from .models.mineral import MineralFormula
 from .models.mineral import MineralRelation
 from .models.mineral import MineralStructure
 from .pagination import CustomCursorPagination
-from .queries import GET_INHERITANCE_CHAIN_LIST_QUERY
 from .queries import LIST_VIEW_QUERY
 from .serializers.core import NsClassSubclassFamilyListSerializer
 from .serializers.core import NsFamilyListSerializer
 from .serializers.core import NsSubclassListSerializer
 from .serializers.core import StatusListSerializer
 from .serializers.mineral import BaseMineralRelationsSerializer
-from .serializers.mineral import CrystallographyRelatedSerializer
-from .serializers.mineral import FormulaRelatedSerializer
 from .serializers.mineral import MineralAnalyticalDataSerializer
 from .serializers.mineral import MineralListSecondarySerializer
 from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRelationsSerializer
 from .serializers.mineral import RetrieveController
-from .tasks import calculate_inherited_props
 from .utils import add_label
 
 
@@ -324,19 +316,6 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         if page is not None:
             _queryset = _queryset.filter(id__in=[x.id for x in page])
 
-            base_ids = [str(x.id) for x in page if not x._is_grouping]
-            _related_objects, _formula, _crystal_system = [], [], []
-
-            if len(base_ids):
-                with connection.cursor() as cursor:
-                    cursor.execute(GET_INHERITANCE_CHAIN_LIST_QUERY, [tuple(base_ids)])
-                    _related_objects = cursor.fetchall()
-                    _fields = [x[0] for x in cursor.description]
-                    _related_objects = pd.DataFrame([dict(zip(_fields, x)) for x in _related_objects])
-
-            if len(_related_objects):
-                _formula, _crystal_system = [], self._get_related_crystal_system(_related_objects)
-
             _serializer_class = self.get_serializer_class(is_secondary=True)
             _serializer = _serializer_class(_queryset, many=True)
             serializer = self.get_serializer(page, many=True)
@@ -347,164 +326,12 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
             if len(_data) and len(data):
                 _merge = pd.merge(pd.DataFrame(data), pd.DataFrame(_data), on="id", how="left")
-
-                _merge["_statuses"] = _merge.apply(lambda x: [y["status_id"] for y in x["statuses"]], axis=1)
-                _merge['has_formula'] = True
-                # _merge["has_formula"] = _merge.apply(
-                #     lambda x: len(np.intersect1d([0.0, 4.0, 4.05], x["_statuses"])) and x["formulas"], axis=1
-                # )
-                _merge["has_crystal_system"] = _merge.apply(
-                    lambda x: len(np.intersect1d([0.0, 4.04, 4.05], x["_statuses"])) and x["crystal_systems"], axis=1
-                )
-
-                _drop_columns = [
-                    "_statuses",
-                    "has_formula",
-                    "has_crystal_system",
-                    "base_mineral",
-                ]
-                if len(_formula):
-                    _merge = _merge.merge(
-                        _formula, left_on="id", right_on="base_mineral", how="left", suffixes=("", "__temp")
-                    )
-                    _merge["formulas"] = _merge.apply(
-                        lambda x: x["formulas"] if x["has_formula"] else x["formulas__temp"], axis=1
-                    )
-                    _merge["formulas"] = _merge["formulas"].apply(lambda x: [] if x is np.nan else x)
-                if len(_crystal_system):
-                    _merge = _merge.merge(
-                        _crystal_system, left_on="id", right_on="base_mineral", how="left", suffixes=("", "__temp")
-                    )
-                    _merge["crystal_systems"] = _merge.apply(
-                        lambda x: x["crystal_systems"] if x["has_crystal_system"] else x["crystal_systems__temp"],
-                        axis=1,
-                    )
-                    _merge["crystal_systems"] = _merge["crystal_systems"].apply(lambda x: [] if x is np.nan else x)
-                _drop_columns += [x for x in _merge.columns if x.endswith("__temp")]
-                _merge = _merge.drop(columns=_drop_columns, errors="ignore")
                 _merge = _merge.replace({np.nan: None})
                 output = _merge.to_dict("records")
 
             return self.get_paginated_response(output)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-
-    def _get_related_crystal_system(self, related_objects):
-        _crystal_systems = (
-            MineralCrystallography.objects.select_related("crystal_system")
-            .filter(mineral__in=related_objects["relation"])
-            .annotate(
-                **{
-                    "from": JSONObject(slug=F("mineral__slug"), name=F("mineral__name")),
-                }
-            )
-        )
-
-        _crystal_systems_data = CrystallographyRelatedSerializer(_crystal_systems, many=True).data
-
-        if not len(_crystal_systems_data):
-            return []
-
-        _relations = pd.merge(
-            related_objects, pd.DataFrame(_crystal_systems_data), left_on="relation", right_on="mineral", how="inner"
-        )
-        _relations["from_"] = _relations.apply(
-            lambda x: {
-                **x["from_"],
-                "statuses": x["statuses"],
-            },
-            axis=1,
-        )
-
-        _relations["crystal_systems"] = _relations.apply(
-            lambda x: [
-                {
-                    **x["crystal_system"],
-                    "from": x["from_"],
-                }
-            ],
-            axis=1,
-        )
-        _relations = _relations.drop(columns=["from_"])
-        _relations = _relations.sort_values(by=["depth"], ascending=True).drop_duplicates(
-            subset=["base_mineral"], keep="first"
-        )
-        _relations.drop(
-            columns=[
-                "mineral",
-                "relation",
-                "statuses",
-                "depth",
-                "crystal_system",
-            ],
-            inplace=True,
-        )
-        _relations["base_mineral"] = _relations["base_mineral"].astype("str")
-
-        return _relations
-
-    def _get_related_formula(self, related_objects):
-        _formulas = (
-            MineralFormula.objects.select_related("source")
-            .filter(mineral__in=related_objects["relation"])
-            .annotate(
-                **{
-                    "from": JSONObject(slug=F("mineral__slug"), name=F("mineral__name")),
-                }
-            )
-        )
-        _formulas_data = FormulaRelatedSerializer(_formulas, many=True).data
-
-        if not len(_formulas_data):
-            return []
-
-        _relations = pd.merge(
-            related_objects, pd.DataFrame(_formulas_data), left_on="relation", right_on="mineral", how="inner"
-        )
-        _relations["from_"] = _relations.apply(
-            lambda x: {
-                **x["from_"],
-                "statuses": x["statuses"],
-            },
-            axis=1,
-        )
-
-        _relations["formulas"] = _relations.apply(
-            lambda x: {
-                "formula": x["formula"],
-                "from": x["from_"],
-                "note": x["note"],
-                "source": x["source"],
-                "show_on_site": x["show_on_site"],
-                "created_at": x["created_at"],
-            },
-            axis=1,
-        )
-        _relations = _relations.drop(columns=["note", "source", "show_on_site", "created_at", "from_", "formula"])
-        _relations = (
-            _relations.groupby(["base_mineral", "relation", "depth"])
-            .agg(
-                {
-                    "formulas": lambda x: list(x),
-                    "statuses": lambda x: list(x)[0] if len(list(x)) else None,
-                }
-            )
-            .reset_index()
-        )
-        _relations = _relations.sort_values(by=["depth"], ascending=True).drop_duplicates(
-            subset=["base_mineral"], keep="first"
-        )
-        _relations.drop(
-            columns=[
-                "relation",
-                "statuses",
-                "depth",
-            ],
-            inplace=True,
-        )
-        _relations["base_mineral"] = _relations["base_mineral"].astype("str")
-
-        return _relations
 
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)

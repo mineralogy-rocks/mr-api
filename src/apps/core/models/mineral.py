@@ -20,6 +20,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
+from ..choices import CONTEXT_CHOICES
 from ..choices import IMA_NOTE_CHOICES
 from ..choices import IMA_STATUS_CHOICES
 from ..choices import INHERIT_CHOICES
@@ -30,7 +31,6 @@ from .base import Creatable
 from .base import Nameable
 from .base import Updatable
 from .core import Country
-from .core import DataContext
 from .core import FormulaSource
 from .core import NsClass
 from .core import NsFamily
@@ -144,6 +144,11 @@ class Mineral(Nameable, Creatable, Updatable):
             .order_by()
             .values_list("id", flat=True)
         )
+
+    @property
+    def inherited_formulas(self):
+        _chain = self.inheritance_chain.filter(prop=2)
+        return self.formulas.filter(mineral__in=_chain.values("inherit_from"))
 
     def get_absolute_url(self):
         return reverse("core:mineral-detail", kwargs={"pk": self.id})
@@ -274,7 +279,7 @@ class MineralIMANote(BaseModel, Creatable):
 
 class MineralContext(BaseModel, Creatable):
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="contexts")
-    context = models.ForeignKey(DataContext, models.CASCADE, db_column="context_id", related_name="minerals")
+    context = models.PositiveSmallIntegerField(choices=CONTEXT_CHOICES, db_column="context_id", default=None)
     data = models.JSONField(blank=True, null=True)
 
     class Meta:
@@ -433,6 +438,11 @@ class MineralInheritance(BaseModel, Creatable):
 
         verbose_name = "Inheritance"
         verbose_name_plural = "Inheritances"
+
+        indexes = [
+            models.Index(fields=["prop"]),
+            models.Index(fields=["inherit_from"]),
+        ]
 
     def __str__(self):
         return str(self.prop) + ": " + self.mineral.name + " " + " " + self.inherit_from.name

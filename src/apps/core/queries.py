@@ -247,7 +247,7 @@ GET_DATA_CONTEXTS_QUERY = """
         WHERE mc.mineral_id IN %s
     )
     SELECT jsonb_build_object(
-                'type', (SELECT jsonb_build_object('id', dcl.id, 'name', dcl.name) FROM data_context_list dcl WHERE dcl.id = 1),
+                'context', mineralContext.context_id,
                 'data',
                 jsonb_build_object(
                     'hardness', jsonb_build_object(
@@ -365,7 +365,8 @@ GET_DATA_CONTEXTS_QUERY = """
                     )
                 )
             )::json AS contexts
-    FROM mineralContext;
+    FROM mineralContext
+    GROUP BY mineralContext.context_id;
 """
 
 GET_INHERITANCE_PROPS_QUERY = """
