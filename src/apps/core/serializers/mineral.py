@@ -75,6 +75,7 @@ class MineralContextSerializer(serializers.ModelSerializer):
 
 class MineralListInheritanceSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(source="inherit_from", read_only=True)
+    mindat_id = serializers.IntegerField(source="inherit_from.mindat_id")
     name = serializers.StringRelatedField(source="inherit_from")
     slug = serializers.SlugRelatedField(source="inherit_from", read_only=True, slug_field="slug")
     statuses = serializers.JSONField()
@@ -86,6 +87,7 @@ class MineralListInheritanceSerializer(serializers.ModelSerializer):
         model = MineralInheritance
         fields = [
             "id",
+            "mindat_id",
             "name",
             "slug",
             "statuses",
@@ -379,7 +381,7 @@ class MineralListSerializer(serializers.ModelSerializer):
     seen = serializers.IntegerField()
     updated_at = serializers.SerializerMethodField()
 
-    crystal_systems = serializers.JSONField()
+    crystallography = serializers.JSONField(source='crystal_systems')
     statuses = serializers.JSONField(source="_statuses")
     relations = serializers.JSONField(source="_relations")
     discovery_countries = serializers.JSONField(source="_discovery_countries")
@@ -400,7 +402,7 @@ class MineralListSerializer(serializers.ModelSerializer):
             "is_grouping",
             "seen",
             "updated_at",
-            "crystal_systems",
+            "crystallography",
             "statuses",
             "relations",
             "discovery_countries",
