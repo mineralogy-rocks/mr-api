@@ -97,16 +97,6 @@ class MineralListInheritanceSerializer(serializers.ModelSerializer):
         ]
 
 
-class MineralRetrieveInheritanceSerializer(MineralListInheritanceSerializer):
-    contexts = MineralContextSerializer(source="inherit_from.contexts", many=True)
-
-    class Meta:
-        model = MineralInheritance
-        fields = MineralListInheritanceSerializer.Meta.fields + [
-            "contexts",
-        ]
-
-
 class CrystallographySerializer(serializers.ModelSerializer):
     crystal_system = CrystalSystemSerializer()
     crystal_class = CrystalClassSerializer()
@@ -119,6 +109,17 @@ class CrystallographySerializer(serializers.ModelSerializer):
             "crystal_system",
             "crystal_class",
             "space_group",
+        ]
+
+
+class MineralRetrieveInheritanceSerializer(MineralListInheritanceSerializer):
+    contexts = MineralContextSerializer(source="inherit_from.contexts", many=True)
+    crystallography = CrystallographySerializer(source="inherit_from.crystallography")
+
+    class Meta:
+        model = MineralInheritance
+        fields = MineralListInheritanceSerializer.Meta.fields + [
+            "contexts",
         ]
 
 
@@ -163,6 +164,8 @@ class RetrieveController(serializers.Serializer):
                     .prefetch_related(
                         "inherit_from__formulas__source",
                         "inherit_from__crystallography__crystal_system",
+                        "inherit_from__crystallography__crystal_class",
+                        "inherit_from__crystallography__space_group",
                         "inherit_from__contexts",
                     ),
                 ),
@@ -293,8 +296,7 @@ class GroupingRetrieveSerializer(BaseRetrieveSerializer):
     def to_representation(self, instance):
         _members = instance.members
         _members_synonyms = MineralStatus.get_synonyms(_members)
-        _relations = [instance.id, *(instance.synonyms + _members + _members_synonyms)]
-        instance._relations = _relations
+        instance._relations = [instance.id, *(instance.synonyms + _members + _members_synonyms)]
         return super().to_representation(instance)
 
 
@@ -381,7 +383,7 @@ class MineralListSerializer(serializers.ModelSerializer):
     seen = serializers.IntegerField()
     updated_at = serializers.SerializerMethodField()
 
-    crystallography = serializers.JSONField(source='crystal_systems')
+    crystallography = serializers.JSONField(source="crystal_systems")
     statuses = serializers.JSONField(source="_statuses")
     relations = serializers.JSONField(source="_relations")
     discovery_countries = serializers.JSONField(source="_discovery_countries")
