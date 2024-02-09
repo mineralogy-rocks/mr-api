@@ -447,6 +447,11 @@ class MineralInheritance(BaseModel, Creatable):
     def __str__(self):
         return str(self.prop) + ": " + self.mineral.name + " " + " " + self.inherit_from.name
 
+    @classmethod
+    def get_redirect_ids(cls, ids, prop):
+        queryset = cls.objects.filter(mineral__in=ids, prop=prop)
+        return list(queryset.values("mineral", "inherit_from"))
+
 
 class MineralStructure(BaseModel, Creatable, Updatable):
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="structures")

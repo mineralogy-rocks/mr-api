@@ -247,7 +247,7 @@ GET_DATA_CONTEXTS_QUERY = """
         WHERE mc.mineral_id IN %s
     )
     SELECT jsonb_build_object(
-                'context', mineralContext.context_id,
+                'context', 1,
                 'data',
                 jsonb_build_object(
                     'hardness', jsonb_build_object(
@@ -265,7 +265,7 @@ GET_DATA_CONTEXTS_QUERY = """
                                     )
                             FROM (
                                 SELECT color,
-                                       count(color),
+                                       count(color) AS count,
                                        array_remove(array_agg(DISTINCT (entities ->> 0)), NULL) AS entities
                                     FROM (
                                         SELECT
@@ -294,7 +294,7 @@ GET_DATA_CONTEXTS_QUERY = """
                                     )
                             FROM (
                                 SELECT color,
-                                        count(color),
+                                        count(color) AS count,
                                         array_remove(array_agg(DISTINCT (entities ->> 0)), NULL) AS entities
                                     FROM (
                                         SELECT
@@ -364,9 +364,8 @@ GET_DATA_CONTEXTS_QUERY = """
                         ) subquery
                     )
                 )
-            )::json AS contexts
-    FROM mineralContext
-    GROUP BY mineralContext.context_id;
+            )::json AS physicalContext
+    FROM mineralContext;
 """
 
 GET_INHERITANCE_PROPS_QUERY = """
