@@ -20,8 +20,10 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 
+from ..choices import CONTEXT_CHOICES
 from ..choices import IMA_NOTE_CHOICES
 from ..choices import IMA_STATUS_CHOICES
+from ..choices import INHERIT_CHOICES
 from ..utils import shorten_text
 from ..utils import unique_slugify
 from .base import BaseModel
@@ -29,7 +31,6 @@ from .base import Creatable
 from .base import Nameable
 from .base import Updatable
 from .core import Country
-from .core import DataContext
 from .core import FormulaSource
 from .core import NsClass
 from .core import NsFamily
@@ -143,6 +144,11 @@ class Mineral(Nameable, Creatable, Updatable):
             .order_by()
             .values_list("id", flat=True)
         )
+
+    @property
+    def inherited_formulas(self):
+        _chain = self.inheritance_chain.filter(prop=2)
+        return self.formulas.filter(mineral__in=_chain.values("inherit_from"))
 
     def get_absolute_url(self):
         return reverse("core:mineral-detail", kwargs={"pk": self.id})
@@ -273,7 +279,7 @@ class MineralIMANote(BaseModel, Creatable):
 
 class MineralContext(BaseModel, Creatable):
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="contexts")
-    context = models.ForeignKey(DataContext, models.CASCADE, db_column="context_id", related_name="minerals")
+    context = models.PositiveSmallIntegerField(choices=CONTEXT_CHOICES, db_column="context_id", default=None)
     data = models.JSONField(blank=True, null=True)
 
     class Meta:
@@ -422,6 +428,31 @@ class MineralFormula(BaseModel, Creatable):
         return mark_safe(self.formula)
 
 
+class MineralInheritance(BaseModel, Creatable):
+    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="inheritance_chain")
+    prop = models.PositiveSmallIntegerField(choices=INHERIT_CHOICES, db_column="prop_id")
+    inherit_from = models.ForeignKey(Mineral, models.CASCADE, db_column="inherit_from_id", related_name="descendants")
+
+    class Meta:
+        db_table = "mineral_inheritance"
+
+        verbose_name = "Inheritance"
+        verbose_name_plural = "Inheritances"
+
+        indexes = [
+            models.Index(fields=["prop"]),
+            models.Index(fields=["inherit_from"]),
+        ]
+
+    def __str__(self):
+        return str(self.prop) + ": " + self.mineral.name + " " + " " + self.inherit_from.name
+
+    @classmethod
+    def get_redirect_ids(cls, ids, prop):
+        queryset = cls.objects.filter(mineral__in=ids, prop=prop)
+        return list(queryset.values("mineral", "inherit_from"))
+
+
 class MineralStructure(BaseModel, Creatable, Updatable):
     mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="structures")
     cod = models.IntegerField(null=True, blank=True, db_column="cod_id", help_text="Open Crystallography Database id")
@@ -554,7 +585,7 @@ class MineralIonTheoretical(BaseModel):
         return self.ion.formula
 
 
-class MineralCrystallography(BaseModel):
+class MineralCrystallography(BaseModel, Updatable):
     mineral = models.OneToOneField(
         Mineral, models.SET_NULL, db_column="mineral_id", related_name="crystallography", null=True
     )
@@ -578,6 +609,7 @@ class MineralCrystallography(BaseModel):
         null=True,
         default=None,
     )
+
     space_group = models.ForeignKey(SpaceGroup, models.CASCADE, db_column="space_group_id", null=True, default=None)
     a = models.FloatField(blank=True, null=True, default=None)
     b = models.FloatField(blank=True, null=True, default=None)
@@ -585,8 +617,6 @@ class MineralCrystallography(BaseModel):
     alpha = models.FloatField(blank=True, null=True, default=None)
     gamma = models.FloatField(blank=True, null=True, default=None)
     z = models.IntegerField(blank=True, null=True, default=None)
-
-    is_inherited = models.BooleanField(null=False, default=False, help_text="Is the data inherited from parent?")
 
     class Meta:
         db_table = "mineral_crystallography"

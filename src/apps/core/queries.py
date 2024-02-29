@@ -247,7 +247,7 @@ GET_DATA_CONTEXTS_QUERY = """
         WHERE mc.mineral_id IN %s
     )
     SELECT jsonb_build_object(
-                'type', (SELECT jsonb_build_object('id', dcl.id, 'name', dcl.name) FROM data_context_list dcl WHERE dcl.id = 1),
+                'context', 1,
                 'data',
                 jsonb_build_object(
                     'hardness', jsonb_build_object(
@@ -265,7 +265,7 @@ GET_DATA_CONTEXTS_QUERY = """
                                     )
                             FROM (
                                 SELECT color,
-                                       count(color),
+                                       count(color) AS count,
                                        array_remove(array_agg(DISTINCT (entities ->> 0)), NULL) AS entities
                                     FROM (
                                         SELECT
@@ -294,7 +294,7 @@ GET_DATA_CONTEXTS_QUERY = """
                                     )
                             FROM (
                                 SELECT color,
-                                        count(color),
+                                        count(color) AS count,
                                         array_remove(array_agg(DISTINCT (entities ->> 0)), NULL) AS entities
                                     FROM (
                                         SELECT
@@ -364,6 +364,78 @@ GET_DATA_CONTEXTS_QUERY = """
                         ) subquery
                     )
                 )
-            )::json AS contexts
+            )::json AS physicalContext
     FROM mineralContext;
+"""
+
+GET_INHERITANCE_PROPS_QUERY = """
+    SELECT
+        temp.id as base_id,
+        ml.name as base_name,
+        _ml.id,
+        _ml.name as name,
+        ARRAY(
+            SELECT DISTINCT sl.status_id
+            FROM mineral_status ms
+            INNER JOIN status_list sl ON ms.status_id = sl.id
+            WHERE ms.mineral_id = temp.id AND ms.direct_status
+        ) AS base_statuses,
+        ARRAY(
+            SELECT DISTINCT sl.status_id
+            FROM mineral_status ms
+            INNER JOIN status_list sl ON ms.status_id = sl.id
+            WHERE ms.mineral_id = temp.relation_id AND ms.direct_status
+        ) AS statuses,
+        (
+            SELECT EXISTS (SELECT 1 FROM mineral_formula mf WHERE mf.mineral_id = temp.id)
+        ) AS base_has_formula,
+        (
+            SELECT EXISTS (SELECT 1 FROM mineral_formula mf WHERE mf.mineral_id = temp.relation_id)
+        ) AS has_formula,
+        (
+            SELECT EXISTS (SELECT 1 FROM mineral_crystallography mc WHERE mc.mineral_id = temp.id)
+        ) AS base_has_crystallography,
+        (
+            SELECT EXISTS (SELECT 1 FROM mineral_crystallography mc WHERE mc.mineral_id = temp.relation_id)
+        ) AS has_crystallography,
+        temp.depth
+    FROM (
+        WITH RECURSIVE cte(id, mineral_id, relation_id, DEPTH) AS (
+            SELECT
+                mr.mineral_id,
+                mr.mineral_id,
+                mr.relation_id,
+                0
+            FROM mineral_relation mr
+            INNER JOIN mineral_status ms ON mr.mineral_status_id = ms.id AND ms.direct_status
+            WHERE ms.status_id <> 1 AND mr.mineral_id IN %s
+            UNION
+            SELECT
+                cte.id,
+                mr.mineral_id,
+                mr.relation_id,
+                DEPTH + 1
+            FROM mineral_relation mr
+            INNER JOIN cte ON mr.mineral_id = cte.relation_id
+            INNER JOIN mineral_status ms ON mr.mineral_status_id = ms.id AND ms.direct_status
+        )
+        SELECT cte.* FROM cte
+    ) temp
+    INNER JOIN mineral_log ml ON temp.id = ml.id
+    INNER JOIN mineral_log _ml ON temp.relation_id = _ml.id;
+"""
+
+
+FIX_DOUBLE_STATUS = """
+delete from mineral_status where id in (
+    select ms.id
+    from mineral_relation mr
+     inner join mineral_status ms on mr.mineral_status_id = ms.id and ms.direct_status
+     inner join (select mr.*, ms.status_id
+                 from mineral_relation mr
+                          inner join mineral_status ms on mr.mineral_status_id = ms.id and ms.direct_status) _mr
+                on mr.mineral_id = _mr.relation_id and
+                   mr.relation_id = _mr.mineral_id
+                    and ms.status_id = _mr.status_id
+);
 """
