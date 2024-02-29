@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "storages",
     "corsheaders",
     "core",
+    "blog",
     "bond",
 ]
 
