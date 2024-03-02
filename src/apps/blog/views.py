@@ -2,10 +2,15 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework.authentication import SessionAuthentication
+from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.mixins import ListModelMixin
 from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.renderers import BrowsableAPIRenderer
+from rest_framework.renderers import JSONRenderer
 from rest_framework.viewsets import GenericViewSet
+from rest_framework_api_key.permissions import HasAPIKey
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import Category
@@ -21,7 +26,11 @@ class TagViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
     queryset = Tag.objects.all()
     serializer_class = TagListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasAPIKey | IsAuthenticated]
+    renderer_classes = [
+        JSONRenderer,
+        BrowsableAPIRenderer,
+    ]
     authentication_classes = [SessionAuthentication, JWTAuthentication]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
 
@@ -34,7 +43,11 @@ class CategoryViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
     queryset = Category.objects.all()
     serializer_class = CategoryListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasAPIKey | IsAuthenticated]
+    renderer_classes = [
+        JSONRenderer,
+        BrowsableAPIRenderer,
+    ]
     authentication_classes = [SessionAuthentication, JWTAuthentication]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
 
@@ -47,12 +60,16 @@ class PostViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
     queryset = Post.objects.all()
     serializer_class = PostListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasAPIKey | IsAuthenticated]
+    renderer_classes = [
+        JSONRenderer,
+        BrowsableAPIRenderer,
+    ]
     authentication_classes = [SessionAuthentication, JWTAuthentication]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
 
-    filterset_fields = ["name", "description", "content", "views", "likes", "tags", "category"]
-    ordering_fields = ["id", "name", "description", "content", "views", "likes", "tags", "category"]
+    filterset_fields = ["name", "description", "content", "views", "likes", "tags", "category", "is_published"]
+    ordering_fields = ["id", "name", "description", "content", "views", "likes", "tags", "category", "published_at"]
     ordering = ["id"]
 
     def get_queryset(self):
@@ -67,4 +84,18 @@ class PostViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     def get_serializer_class(self):
         if self.action == "retrieve":
             return PostDetailSerializer
-        return PostListSerializer
+        return self.serializer_class
+
+    @action(detail=True, methods=["post"], url_path="increment-views")
+    def increment_views(self, request, pk=None):
+        post = get_object_or_404(Post, pk=pk)
+        post.views += 1
+        post.save()
+        return self.retrieve(request, pk)
+
+    @action(detail=True, methods=["post"], url_path="increment-likes")
+    def increment_likes(self, request, pk=None):
+        post = get_object_or_404(Post, pk=pk)
+        post.likes += 1
+        post.save()
+        return self.retrieve(request, pk)

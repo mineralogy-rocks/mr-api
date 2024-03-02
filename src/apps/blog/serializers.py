@@ -34,6 +34,10 @@ class PostListSerializer(BaseSerializer):
             "likes",
             "tags",
             "category",
+            "created_at",
+            "updated_at",
+            "is_published",
+            "published_at",
         ]
         depth = 1
 
@@ -54,6 +58,9 @@ class PostListSerializer(BaseSerializer):
 
 class PostDetailSerializer(BaseSerializer):
 
+    tags = TagListSerializer(many=True)
+    category = CategoryListSerializer()
+
     class Meta:
         model = Post
         fields = BaseSerializer.Meta.fields + [
@@ -63,5 +70,9 @@ class PostDetailSerializer(BaseSerializer):
             "likes",
             "tags",
             "category",
+            "created_at",
+            "updated_at",
+            "is_published",
+            "published_at",
         ]
         depth = 1
