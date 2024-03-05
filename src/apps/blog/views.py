@@ -9,6 +9,7 @@ from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.renderers import JSONRenderer
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_api_key.permissions import HasAPIKey
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -58,7 +59,7 @@ class CategoryViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
 class PostViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
-    queryset = Post.objects.all()
+    queryset = Post.objects.filter(is_published=True)
     serializer_class = PostListSerializer
     permission_classes = [HasAPIKey | IsAuthenticated]
     renderer_classes = [
@@ -67,8 +68,10 @@ class PostViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     ]
     authentication_classes = [SessionAuthentication, JWTAuthentication]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    lookup_field = "slug"
+    lookup_url_kwarg = "slug"
 
-    filterset_fields = ["name", "description", "content", "views", "likes", "tags", "category", "is_published"]
+    filterset_fields = ["name", "description", "content", "views", "likes", "tags", "category"]
     ordering_fields = ["id", "name", "description", "content", "views", "likes", "tags", "category", "published_at"]
     ordering = ["id"]
 
@@ -87,15 +90,17 @@ class PostViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
         return self.serializer_class
 
     @action(detail=True, methods=["post"], url_path="increment-views")
-    def increment_views(self, request, pk=None):
-        post = get_object_or_404(Post, pk=pk)
+    def increment_views(self, request, slug=None):
+        post = get_object_or_404(Post, slug=slug)
         post.views += 1
         post.save()
-        return self.retrieve(request, pk)
+        return Response({"views": post.views})
+        # return self.retrieve(request, slug)
 
     @action(detail=True, methods=["post"], url_path="increment-likes")
-    def increment_likes(self, request, pk=None):
-        post = get_object_or_404(Post, pk=pk)
+    def increment_likes(self, request, slug=None):
+        post = get_object_or_404(Post, slug=slug)
         post.likes += 1
         post.save()
-        return self.retrieve(request, pk)
+        return Response({"likes": post.likes})
+        # return self.retrieve(request, slug)

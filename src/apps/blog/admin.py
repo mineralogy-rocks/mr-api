@@ -1,48 +1,35 @@
 # -*- coding: UTF-8 -*-
 from django.contrib import admin
-from django.db.models import Exists
-from django.db.models import OuterRef
-from django.db.models import Prefetch
+from django.db.models import Count
 
 from .models import Category
 from .models import Post
 from .models import Tag
 
 
-@admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-
-    list_display = ["id", "name"]
-    search_fields = ["name"]
-
+class PostCountMixin(object):
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        queryset = queryset.prefetch_related(
-            Prefetch(
-                "posts",
-                queryset=Post.objects.annotate(
-                    has_posts=Exists(Post.objects.filter(category=OuterRef("pk")).only("id"))
-                ),
-            )
-        )
+        queryset = queryset.annotate(_posts=Count("posts"))
         return queryset
+
+    @admin.display(description="Posts")
+    def _posts(self, instance):
+        return instance._posts
+
+
+@admin.register(Category)
+class CategoryAdmin(PostCountMixin, admin.ModelAdmin):
+
+    list_display = ["id", "name", "_posts"]
+    search_fields = ["name"]
 
 
 @admin.register(Tag)
-class TagAdmin(admin.ModelAdmin):
+class TagAdmin(PostCountMixin, admin.ModelAdmin):
 
-    list_display = ["id", "name"]
+    list_display = ["id", "name", "_posts"]
     search_fields = ["name"]
-
-    def get_queryset(self, request):
-        queryset = super().get_queryset(request)
-        queryset = queryset.prefetch_related(
-            Prefetch(
-                "posts",
-                queryset=Post.objects.annotate(has_posts=Exists(Post.objects.filter(tags=OuterRef("pk")).only("id"))),
-            )
-        )
-        return queryset
 
 
 @admin.register(Post)
