@@ -47,7 +47,7 @@ class Post(BaseModel, Nameable, Creatable, Updatable):
     published_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ["id"]
+        ordering = ["-published_at"]
 
         verbose_name = "Post"
         verbose_name_plural = "Posts"

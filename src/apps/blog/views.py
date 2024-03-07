@@ -39,6 +39,11 @@ class TagViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     ordering_fields = ["id", "name"]
     ordering = ["id"]
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class CategoryViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
@@ -55,6 +60,11 @@ class CategoryViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     filterset_fields = ["name"]
     ordering_fields = ["id", "name"]
     ordering = ["id"]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class PostViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
@@ -73,7 +83,7 @@ class PostViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
     filterset_fields = ["name", "description", "content", "views", "likes", "tags", "category"]
     ordering_fields = ["id", "name", "description", "content", "views", "likes", "tags", "category", "published_at"]
-    ordering = ["id"]
+    ordering = ["-published_at"]
 
     def get_queryset(self):
         queryset = super().get_queryset()
