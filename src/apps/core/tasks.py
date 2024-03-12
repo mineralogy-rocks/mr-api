@@ -8,9 +8,9 @@ from .models.mineral import Mineral
 from .models.mineral import MineralInheritance
 from .queries import GET_INHERITANCE_PROPS_QUERY
 
-STATUS_SYNONYM = np.arange(2.00, 2.11, 0.01, dtype=np.double)
-STATUS_VARIETY = np.arange(4.00, 4.06, 0.01, dtype=np.double)
-STATUS_GROUP = np.arange(1.00, 1.40, 0.10, dtype=np.double)
+STATUS_SYNONYM = np.arange(2.00, 2.12, 0.01, dtype=np.double)
+STATUS_VARIETY = np.arange(4.00, 4.07, 0.01, dtype=np.double)
+STATUS_GROUP = np.arange(1.00, 1.50, 0.10, dtype=np.double)
 STATUS_POLYTYPE = [3.0]
 STATUS_MIXTURE = [8.0]
 STATUS_APPROVED = [0.0]
