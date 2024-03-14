@@ -21,7 +21,7 @@ class PostCountMixin(object):
 @admin.register(Category)
 class CategoryAdmin(PostCountMixin, admin.ModelAdmin):
 
-    list_display = ["id", "name", "_posts"]
+    list_display = ["id", "name", "slug", "_posts"]
     search_fields = ["name"]
 
 

@@ -24,6 +24,7 @@ class CategoryListSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "slug",
         ]
 
 

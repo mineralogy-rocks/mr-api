@@ -21,6 +21,7 @@ from .serializers import CategoryListSerializer
 from .serializers import PostDetailSerializer
 from .serializers import PostListSerializer
 from .serializers import TagListSerializer
+from .filters import PostFilter
 
 
 class TagViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
@@ -81,7 +82,7 @@ class PostViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
 
-    filterset_fields = ["name", "description", "content", "views", "likes", "tags", "category"]
+    filterset_class = PostFilter
     ordering_fields = ["id", "name", "description", "content", "views", "likes", "tags", "category", "published_at"]
     ordering = ["-published_at"]
 
