@@ -72,12 +72,14 @@ class PostDetailSerializer(serializers.ModelSerializer):
 
     tags = TagListSerializer(many=True)
     category = CategoryListSerializer()
+    published_at = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
         fields = [
             "id",
             "name",
+            "slug",
             "description",
             "content",
             "views",
@@ -90,3 +92,6 @@ class PostDetailSerializer(serializers.ModelSerializer):
             "published_at",
         ]
         depth = 1
+
+    def get_published_at(self, obj):
+        return obj.published_at.strftime("%B %d, %Y") + " (" + naturaltime(obj.published_at) + ")"
