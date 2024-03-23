@@ -14,6 +14,7 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_api_key.permissions import HasAPIKey
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from .filters import PostFilter
 from .models import Category
 from .models import Post
 from .models import Tag
@@ -21,7 +22,6 @@ from .serializers import CategoryListSerializer
 from .serializers import PostDetailSerializer
 from .serializers import PostListSerializer
 from .serializers import TagListSerializer
-from .filters import PostFilter
 
 
 class TagViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
@@ -99,6 +99,16 @@ class PostViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
         if self.action == "retrieve":
             return PostDetailSerializer
         return self.serializer_class
+
+    @action(detail=True, methods=["get"], url_path="views")
+    def views(self, request, slug=None):
+        post = get_object_or_404(Post, slug=slug)
+        return Response({"count": post.views})
+
+    @action(detail=True, methods=["get"], url_path="likes")
+    def likes(self, request, slug=None):
+        post = get_object_or_404(Post, slug=slug)
+        return Response({"count": post.likes})
 
     @action(detail=True, methods=["post"], url_path="increment-views")
     def increment_views(self, request, slug=None):
