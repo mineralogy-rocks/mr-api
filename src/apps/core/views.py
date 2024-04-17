@@ -406,7 +406,9 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         _is_grouping = _instance.is_grouping
         serializer_cls = self.get_serializer_class()
-        queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request, is_grouping=_is_grouping)
+        queryset = serializer_cls.setup_eager_loading(
+            queryset=queryset, request=request, is_grouping=_is_grouping, instance=_instance
+        )
         instance = queryset.get(id=_instance.id)
         serializer = serializer_cls(instance, context={"request": request})
 

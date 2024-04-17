@@ -150,7 +150,7 @@ class RetrieveController(serializers.Serializer):
 
     @staticmethod
     def setup_eager_loading(**kwargs):
-        queryset, is_grouping = kwargs.get("queryset"), kwargs.get("is_grouping")
+        queryset, is_grouping, instance = kwargs.get("queryset"), kwargs.get("is_grouping"), kwargs.get("instance")
 
         select_related = []
         prefetch_related = [
@@ -161,7 +161,8 @@ class RetrieveController(serializers.Serializer):
         ]
 
         if not is_grouping:
-            _iherited_ids = MineralInheritance.objects.filter(mineral__in=queryset).distinct("inherit_from")
+            # TODO: make this work without passing instance from the outer View
+            _iherited_ids = MineralInheritance.objects.filter(mineral=instance).distinct("inherit_from")
             select_related += [
                 "crystallography__crystal_system",
                 "crystallography__crystal_class",
@@ -175,6 +176,7 @@ class RetrieveController(serializers.Serializer):
                 models.Prefetch(
                     "inheritance_chain",
                     MineralInheritance.objects.filter(id__in=_iherited_ids)
+                    # MineralInheritance.objects
                     .annotate(statuses=ArrayAgg("inherit_from__statuses__status_id"))
                     .extra(where=["mineral_status.direct_status = TRUE"])
                     .select_related("inherit_from")
