@@ -4,7 +4,6 @@ from sentry_sdk.integrations.django import DjangoIntegration
 
 from .base import *
 
-
 INSTALLED_APPS += [
     "ddtrace.contrib.django",
 ]

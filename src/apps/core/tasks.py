@@ -3,7 +3,9 @@ import numpy as np
 import pandas as pd
 from django.db import connection
 
-from .choices import INHERIT_FORMULA, INHERIT_CRYSTAL_SYSTEM, INHERIT_PHYSICAL_PROPERTIES
+from .choices import INHERIT_CRYSTAL_SYSTEM
+from .choices import INHERIT_FORMULA
+from .choices import INHERIT_PHYSICAL_PROPERTIES
 from .models.mineral import Mineral
 from .models.mineral import MineralInheritance
 from .queries import GET_INHERITANCE_PROPS_QUERY
@@ -90,13 +92,10 @@ def _populate_props(chain: pd.DataFrame, prop_id, prohibited_statuses: list = []
                     np.concatenate([STATUS_APPROVED, STATUS_VARIETY], dtype=np.float32),
                     np.array(_prop.statuses, dtype=np.float32),
                 ):
-                    _create_objs += [
-                        MineralInheritance(mineral_id=_item, prop=prop_id, inherit_from_id=_prop.id)
-                    ]
+                    _create_objs += [MineralInheritance(mineral_id=_item, prop=prop_id, inherit_from_id=_prop.id)]
                     break
                 continue
-            _create_objs += [
-                MineralInheritance(mineral_id=_item, prop=prop_id, inherit_from_id=_prop.id)]
+            _create_objs += [MineralInheritance(mineral_id=_item, prop=prop_id, inherit_from_id=_prop.id)]
             break
 
     if _create_objs:

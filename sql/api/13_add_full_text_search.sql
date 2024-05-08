@@ -12,4 +12,3 @@ ALTER TABLE mineral_log ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (
 ) STORED;
 
 CREATE INDEX search_vector_idx ON mineral_log USING GIN (search_vector);
-

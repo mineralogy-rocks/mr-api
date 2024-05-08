@@ -16,6 +16,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            self._slugify(Mineral, 'name')
+            self._slugify(Mineral, "name")
         except Exception as e:
             raise CommandError(e)
