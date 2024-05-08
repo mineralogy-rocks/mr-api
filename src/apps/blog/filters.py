@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 from django_filters import rest_framework as filters
 
-from .models import Post, Category
+from .models import Post
 
 
 class PostFilter(filters.FilterSet):
@@ -13,11 +13,4 @@ class PostFilter(filters.FilterSet):
 
     class Meta:
         model = Post
-        fields = [
-            "name",
-            "views",
-            "likes",
-            "tags",
-            "category"
-        ]
-
+        fields = ["name", "views", "likes", "tags", "category"]
