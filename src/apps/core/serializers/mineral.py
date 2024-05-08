@@ -174,8 +174,7 @@ class RetrieveController(serializers.Serializer):
                 "contexts",
                 models.Prefetch(
                     "inheritance_chain",
-                    MineralInheritance.objects
-                    .annotate(statuses=ArrayAgg("inherit_from__statuses__status_id"))
+                    MineralInheritance.objects.annotate(statuses=ArrayAgg("inherit_from__statuses__status_id"))
                     .extra(where=["mineral_status.direct_status = TRUE"])
                     .select_related("inherit_from")
                     .prefetch_related(
@@ -379,7 +378,6 @@ class MineralRetrieveSerializer(BaseRetrieveSerializer):
     def to_representation(self, instance):
         instance._relations = [instance.id, *instance.synonyms]
         return super().to_representation(instance)
-
 
 
 class MineralListSerializer(serializers.ModelSerializer):

@@ -19,10 +19,10 @@ from nested_admin import NestedModelAdmin
 from .forms import MineralRelationFormset
 from .inlines import MineralDirectRelationSuggestionInline
 from .inlines import MineralFormulaInline
-from .inlines import MineralStructureInline
 from .inlines import MineralHistoryInline
 from .inlines import MineralReverseRelationSuggestionInline
 from .inlines import MineralStatusInline
+from .inlines import MineralStructureInline
 from .models.core import FormulaSource
 from .models.core import NsClass
 from .models.core import NsFamily
@@ -75,7 +75,6 @@ class FormulaSourceAdmin(admin.ModelAdmin):
     list_display_links = ["id"]
 
     list_filter = ["name"]
-
 
 
 @admin.register(NsClass)

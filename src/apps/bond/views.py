@@ -6,18 +6,18 @@ from bs4 import BeautifulSoup
 from django.http import FileResponse
 from openpyxl import Workbook
 from rest_framework import renderers
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from svg.path import parse_path
 
 from .serializers import SVGSerializer
 
-
 path_elements = [
-    {'id': '_T-O_', 'd': 'M19,101.28H93'},
-    {'id': '_T-O_-2', 'd': 'M111,101.28h70'},
-    {'id': '_T-O_-3', 'd': 'M102.5,91.78V21.78'},
-    {'id': '_T-O_-4', 'd': 'M102.5,180.78V110.78'}
+    {"id": "_T-O_", "d": "M19,101.28H93"},
+    {"id": "_T-O_-2", "d": "M111,101.28h70"},
+    {"id": "_T-O_-3", "d": "M102.5,91.78V21.78"},
+    {"id": "_T-O_-4", "d": "M102.5,180.78V110.78"},
 ]
 
 
@@ -53,7 +53,7 @@ class SVGView(APIView):
 
         # get all the g elements with id containing uppercase letters
         g_elements = soup.find_all("g", {"id": re.compile(r"_[A-Z]*")})
-        labels = soup.find_all("text", { "class": "cls-2" })
+        labels = soup.find_all("text", {"class": "cls-2"})
 
         # for label in labels:
         #     x, y = label.get("transform").split("(")[1].split(")")[0].split(" ")
@@ -64,7 +64,9 @@ class SVGView(APIView):
                 path_data = parse_path(d)
                 coordinates = []
                 print(path_data)
-                coordinates.append((path_data[1].start.real, path_data[1].start.imag, path_data[1].end.real, path_data[1].end.imag))
+                coordinates.append(
+                    (path_data[1].start.real, path_data[1].start.imag, path_data[1].end.real, path_data[1].end.imag)
+                )
                 ws.append(
                     [
                         g.get("id"),
@@ -84,5 +86,5 @@ class SVGView(APIView):
         response = FileResponse(buffer, as_attachment=True, filename=file_name)
         response["Content-Disposition"] = f"attachment; filename={file_name}"
         response["Content-Type"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        
+
         return response

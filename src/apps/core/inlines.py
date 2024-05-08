@@ -1,8 +1,10 @@
 # -*- coding: UTF-8 -*-
 from django.contrib import admin
-from django.forms import Textarea
-from django.db.models import Q, CharField, TextField
 from django.contrib.postgres.fields import ArrayField
+from django.db.models import CharField
+from django.db.models import Q
+from django.db.models import TextField
+from django.forms import Textarea
 from django.utils.safestring import mark_safe
 from nested_admin import NestedStackedInline
 from nested_admin import NestedTabularInline
@@ -17,11 +19,11 @@ from .forms import MineralStatusFormset
 from .forms import ModelChoiceField
 from .models.core import Status
 from .models.mineral import MineralFormula
-from .models.mineral import MineralStructure
 from .models.mineral import MineralHistory
 from .models.mineral import MineralRelation
 from .models.mineral import MineralRelationSuggestion
 from .models.mineral import MineralStatus
+from .models.mineral import MineralStructure
 from .utils import get_relation_note
 
 
@@ -104,9 +106,9 @@ class MineralStructureInline(NestedStackedInline):
     extra = 0
 
     formfield_overrides = {
-        CharField: {'widget': Textarea(attrs={'rows': 1, 'cols': 80})},
-        TextField: {'widget': Textarea(attrs={'rows': 3, 'cols': 80})},
-        ArrayField: {'widget': Textarea(attrs={'rows': 3, 'cols': 80})},
+        CharField: {"widget": Textarea(attrs={"rows": 1, "cols": 80})},
+        TextField: {"widget": Textarea(attrs={"rows": 3, "cols": 80})},
+        ArrayField: {"widget": Textarea(attrs={"rows": 3, "cols": 80})},
     }
 
     def get_queryset(self, request):
@@ -124,7 +126,14 @@ class MineralStructureInline(NestedStackedInline):
     @admin.display(description="Links")
     def _links(self, instance):
         _links = instance.links or []
-        return mark_safe("<br>".join(['<a href=' + _link + ' target="_blank" rel="noopener noreferrer">' + _link + '</a>' for _link in _links]))
+        return mark_safe(
+            "<br>".join(
+                [
+                    "<a href=" + _link + ' target="_blank" rel="noopener noreferrer">' + _link + "</a>"
+                    for _link in _links
+                ]
+            )
+        )
 
 
 class MineralRelationInline(NestedStackedInline):

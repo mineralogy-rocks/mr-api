@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
-from rest_framework.pagination import CursorPagination, _reverse_ordering
+from rest_framework.pagination import CursorPagination
+from rest_framework.pagination import _reverse_ordering
 
 from .models.mineral import Mineral
 
@@ -8,9 +9,12 @@ class CustomCursorPagination(CursorPagination):
     """
     Custom paginator allows to use cursor pagination with Window function
     """
+
     def get_ordering(self, request, queryset, view):
-        if request.query_params.get('q', None) is not None:
-            return ['ordering',]
+        if request.query_params.get("q", None) is not None:
+            return [
+                "ordering",
+            ]
         return super().get_ordering(request, queryset, view)
 
     def paginate_raw_queryset(self, queryset, request, view=None, query=None):
@@ -20,8 +24,7 @@ class CustomCursorPagination(CursorPagination):
         """
         assert query is not None, (
             "'%s' should either include a `query` attribute, "
-            "or override the `paginate_queryset()` method."
-            % self.__class__.__name__
+            "or override the `paginate_queryset()` method." % self.__class__.__name__
         )
 
         self.request = request
@@ -44,13 +47,13 @@ class CustomCursorPagination(CursorPagination):
         else:
             queryset = queryset.order_by(*self.ordering)
 
-        filter, limit = '', ''
+        filter, limit = "", ""
 
         # If we have a cursor with a fixed position then filter by that.
         if current_position is not None:
             order = self.ordering[0]
-            is_reversed = order.startswith('-')
-            order_attr = order.lstrip('-')
+            is_reversed = order.startswith("-")
+            order_attr = order.lstrip("-")
 
             # Test for: (cursor reversed) XOR (queryset reversed)
             if self.cursor.reverse != is_reversed:
@@ -65,12 +68,9 @@ class CustomCursorPagination(CursorPagination):
         limit = " LIMIT %s OFFSET %s;" % (offset + self.page_size + 1, offset)
 
         sql, params = queryset.query.sql_with_params()
-        _queryset = Mineral.objects.raw(
-            (query % sql) + filter + limit,
-            params
-        )
+        _queryset = Mineral.objects.raw((query % sql) + filter + limit, params)
         results = list(_queryset)
-        self.page = list(results[:self.page_size])
+        self.page = list(results[: self.page_size])
 
         # Determine the position of the final item following the page.
         if len(results) > len(self.page):
