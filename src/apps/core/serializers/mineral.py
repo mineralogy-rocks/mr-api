@@ -7,6 +7,7 @@ from django.db.models import Prefetch
 from rest_framework import serializers
 
 from ..annotations import _annotate__statuses_array
+from ..choices import INHERIT_CRYSTAL_SYSTEM
 from ..models.core import Status
 from ..models.mineral import Mineral
 from ..models.mineral import MineralContext
@@ -17,12 +18,10 @@ from ..models.mineral import MineralInheritance
 from ..models.mineral import MineralStatus
 from ..models.mineral import MineralStructure
 from ..queries import GET_DATA_CONTEXTS_QUERY
-from ..queries import GET_INHERITANCE_CHAIN_RETRIEVE_QUERY
 from ..serializers.core import StatusListSerializer
 from ..utils import add_label
 from .core import CountryListSerializer
 from .core import FormulaSourceSerializer
-from ..choices import INHERIT_CRYSTAL_SYSTEM
 from .crystal import CrystalClassSerializer
 from .crystal import CrystalSystemSerializer
 from .crystal import SpaceGroupSerializer
@@ -113,14 +112,29 @@ class CrystallographySerializer(serializers.ModelSerializer):
         ]
 
 
-class MineralRetrieveInheritanceSerializer(MineralListInheritanceSerializer):
+class MineralRetrieveInheritanceSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(source="inherit_from", read_only=True)
+    mindat_id = serializers.IntegerField(source="inherit_from.mindat_id")
+    name = serializers.StringRelatedField(source="inherit_from")
+    slug = serializers.SlugRelatedField(source="inherit_from", read_only=True, slug_field="slug")
+    statuses = serializers.JSONField()
+
     contexts = MineralContextSerializer(source="inherit_from.contexts", many=True)
     crystallography = CrystallographySerializer(source="inherit_from.crystallography")
+    formulas = FormulaSerializer(source="inherit_from.formulas", many=True)
 
     class Meta:
         model = MineralInheritance
-        fields = MineralListInheritanceSerializer.Meta.fields + [
+        fields = [
+            "id",
+            "mindat_id",
+            "name",
+            "slug",
+            "statuses",
+            "prop",
             "contexts",
+            "crystallography",
+            "formulas",
         ]
 
 
@@ -147,6 +161,7 @@ class RetrieveController(serializers.Serializer):
         ]
 
         if not is_grouping:
+            # TODO: make this work without passing instance from the outer View
             select_related += [
                 "crystallography__crystal_system",
                 "crystallography__crystal_class",
@@ -264,8 +279,7 @@ class GroupingRetrieveSerializer(BaseRetrieveSerializer):
         _select_related = [
             "history",
         ]
-        _prefetch_related = [
-        ]
+        _prefetch_related = []
         _only = [
             "id",
             "name",
@@ -275,14 +289,17 @@ class GroupingRetrieveSerializer(BaseRetrieveSerializer):
 
         _minerals = (
             Mineral.objects.filter(id__in=_members)
-            .annotate(crystal_system=models.Case(
-                models.When(inheritance_chain__prop=INHERIT_CRYSTAL_SYSTEM,
-                                   then=models.F("inheritance_chain__inherit_from__crystallography__crystal_system")),
-                models.When(crystallography__isnull=False,
-                            then=models.F("crystallography__crystal_system")),
-                default=None,
-                output_field=models.IntegerField(),
-            ))
+            .annotate(
+                crystal_system=models.Case(
+                    models.When(
+                        inheritance_chain__prop=INHERIT_CRYSTAL_SYSTEM,
+                        then=models.F("inheritance_chain__inherit_from__crystallography__crystal_system"),
+                    ),
+                    models.When(crystallography__isnull=False, then=models.F("crystallography__crystal_system")),
+                    default=None,
+                    output_field=models.IntegerField(),
+                )
+            )
             .select_related(*_select_related)
             .prefetch_related(*_prefetch_related)
             .only(*_only)
@@ -306,8 +323,11 @@ class GroupingRetrieveSerializer(BaseRetrieveSerializer):
             # if item inherits crystal system, we substitute the ids with the inherited ones if present.
             # If it's not present, we just keep the original id.
             _inheritance_chain = MineralInheritance.get_redirect_ids(ids, INHERIT_CRYSTAL_SYSTEM)
-            _inheritance_ids = [x['mineral'] for x in _inheritance_chain]
-            ids = [x if x not in _inheritance_ids else _inheritance_chain[_inheritance_ids.index(x)]['inherit_from'] for x in ids]
+            _inheritance_ids = [x["mineral"] for x in _inheritance_chain]
+            ids = [
+                x if x not in _inheritance_ids else _inheritance_chain[_inheritance_ids.index(x)]["inherit_from"]
+                for x in ids
+            ]
             return MineralStructure.aggregate_by_system(ids)
         return None
 
@@ -354,34 +374,6 @@ class MineralRetrieveSerializer(BaseRetrieveSerializer):
             "history",
             "inheritance_chain",
         ]
-
-    def get_inheritance_chain(self, instance):
-        inheritance_chain = []
-        if instance.statuses.filter(group__id__in=[2, 3, 4]).exists():
-            with connection.cursor() as cursor:
-                cursor.execute(GET_INHERITANCE_CHAIN_RETRIEVE_QUERY, [(instance.id,)])
-                _inheritance_chain = cursor.fetchall()
-                fields = [x[0] for x in cursor.description]
-                inheritance_chain = [dict(zip(fields, x)) for x in _inheritance_chain]
-
-        _ids = [x["id"] for x in inheritance_chain]
-        _prefetch_related = [
-            "formulas__source",
-            "contexts__context",
-            Prefetch(
-                "crystallography",
-                MineralCrystallography.objects.select_related("crystal_system", "crystal_class", "space_group").only(
-                    "id", "mineral", "crystal_system", "crystal_class", "space_group"
-                ),
-            ),
-        ]
-        _inherited_instances = Mineral.objects.filter(id__in=_ids).prefetch_related(*_prefetch_related)
-        _inherited_instances = _annotate__statuses_array(_inherited_instances)
-
-        for _instance in _inherited_instances:
-            _instance.depth = inheritance_chain[_ids.index(_instance.id)]["depth"]
-
-        return MineralSmallSerializer(_inherited_instances, many=True, context=self.context).data
 
     def to_representation(self, instance):
         instance._relations = [instance.id, *instance.synonyms]

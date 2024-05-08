@@ -13,6 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include
@@ -25,8 +26,9 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("_nested_admin/", include("nested_admin.urls")),
     path("", include("core.urls")),
-    path('auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path("auth/", include("rest_framework.urls", namespace="rest_framework")),
     path("bond/", include("bond.urls"), name="bond"),
+    path("blog/", include("blog.urls"), name="blog"),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "schema/swagger-ui/",

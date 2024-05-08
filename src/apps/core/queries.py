@@ -398,6 +398,12 @@ GET_INHERITANCE_PROPS_QUERY = """
         (
             SELECT EXISTS (SELECT 1 FROM mineral_crystallography mc WHERE mc.mineral_id = temp.relation_id)
         ) AS has_crystallography,
+        (
+            SELECT EXISTS (SELECT 1 FROM mineral_context mc WHERE mc.mineral_id = temp.id AND mc.context_id = 1)
+        ) AS base_has_physical_properties,
+        (
+            SELECT EXISTS (SELECT 1 FROM mineral_context mc WHERE mc.mineral_id = temp.relation_id AND mc.context_id = 1)
+        ) AS has_physical_properties,
         temp.depth
     FROM (
         WITH RECURSIVE cte(id, mineral_id, relation_id, DEPTH) AS (
