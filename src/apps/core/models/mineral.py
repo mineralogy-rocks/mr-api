@@ -151,7 +151,7 @@ class Mineral(Nameable, Creatable, Updatable):
         return self.formulas.filter(mineral__in=_chain.values("inherit_from"))
 
     def get_absolute_url(self):
-        return reverse("core:mineral-detail", kwargs={"pk": self.id})
+        return reverse("core:mineral-detail", kwargs={"slug": self.slug})
 
     def get_admin_url(self):
         return reverse("admin:core_mineral_change", args=(self.id,))

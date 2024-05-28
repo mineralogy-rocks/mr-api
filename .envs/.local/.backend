@@ -10,7 +10,7 @@ USE_S3=False
 
 SENDGRID_API_KEY=some-secret-key
 DJANGO_DEFAULT_FROM_EMAIL=liubomyr.gavryliv@gmail.com
-DJANGO_FRONTEND_DOMAIN=https://mineralogy.rocks
+DJANGO_FRONTEND_DOMAIN=mineralogy.rocks
 DJANGO_BACKEND_DOMAIN=api.dev.mineralogy.rocks
 
 MINDAT_API_USERNAME=iamuser@only.com

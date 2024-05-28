@@ -278,7 +278,7 @@ class Command(BaseCommand):
                 context = {
                     "minerals": fetched,
                     "base_url": f"{settings.SCHEMA}://{settings.BACKEND_DOMAIN}",
-                    "domain": settings.FRONTEND_DOMAIN,
+                    "domain": f"{settings.SCHEMA}://{settings.FRONTEND_DOMAIN}",
                     "link": sync_log.get_absolute_url(),
                 }
                 send_email(
