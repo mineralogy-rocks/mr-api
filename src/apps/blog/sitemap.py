@@ -13,4 +13,4 @@ class BlogSitemap(SitemapMixin, Sitemap):
         return Post.objects.filter(is_published=True)
 
     def lastmod(self, obj):
-        return obj.published_at
+        return obj.updated_at

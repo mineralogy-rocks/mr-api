@@ -5,13 +5,13 @@ from .mixins.sitemap import SitemapMixin
 from .models.mineral import Mineral
 
 STATIC_PAGES_MAP = {
-    "index": {"location": "/", "changefreq": "daily"},
-    "explore": {"location": "/explore", "changefreq": "daily"},
-    "blog": {"location": "/blog", "changefreq": "daily"},
-    "about": {"location": "/about", "changefreq": "daily"},
-    "contact": {"location": "/contact", "changefreq": "daily"},
-    "privacy": {"location": "/privacy-policy", "changefreq": "daily"},
-    "terms": {"location": "/terms-of-service", "changefreq": "daily"},
+    "index": {"location": "/", "changefreq": "weekly"},
+    "explore": {"location": "/explore", "changefreq": "weekly"},
+    "blog": {"location": "/blog", "changefreq": "weekly"},
+    "about": {"location": "/about", "changefreq": "monthly"},
+    "contact": {"location": "/contact", "changefreq": "monthly"},
+    "privacy": {"location": "/privacy-policy", "changefreq": "monthly"},
+    "terms": {"location": "/terms-of-service", "changefreq": "monthly"},
 }
 
 
@@ -31,7 +31,7 @@ class MineralSitemap(SitemapMixin, Sitemap):
 
     changefreq = "daily"
     priority = 0.5
-    limit = 100
+    limit = 3000
 
     def items(self):
         return Mineral.objects.all()
