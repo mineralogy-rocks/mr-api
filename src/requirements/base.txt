@@ -23,7 +23,7 @@ mccabe==0.7.0
 nltk==3.8.1
 openpyxl==3.0.10
 pandas==1.5.3
-pylint==2.15.5
+pylint==3.2.2
 pylint-django==2.5.5
 pylint-plugin-utils==0.8
 python-dateutil==2.8.2
