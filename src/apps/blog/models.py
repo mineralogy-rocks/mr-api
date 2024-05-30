@@ -57,6 +57,9 @@ class Post(BaseModel, Nameable, Creatable, Updatable):
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return f"/blog/{self.slug}/"
+
     def clean(self):
         if self.is_published and not self.published_at:
             raise ValidationError({"published_at": "Published date is required for published posts."})
