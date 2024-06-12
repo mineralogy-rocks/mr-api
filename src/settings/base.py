@@ -73,7 +73,6 @@ INSTALLED_APPS = [
     "corsheaders",
     "core",
     "blog",
-    "bond",
 ]
 
 MIDDLEWARE = [
@@ -86,6 +85,20 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    },
+    "mineral": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": "/cache/mineral",
+        "OPTIONS": {
+            "MAX_ENTRIES": 1000,
+        },
+        "TIMEOUT": 60,
+    },
+}
 
 ROOT_URLCONF = "urls"
 

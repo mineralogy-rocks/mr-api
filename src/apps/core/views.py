@@ -2,13 +2,9 @@
 import numpy as np
 import pandas as pd
 from dal import autocomplete
-from django.db.models import Avg
 from django.db.models import Count
 from django.db.models import F
-from django.db.models import Max
-from django.db.models import Min
 from django.db.models import Q
-from django.db.models.functions import Round
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework import status
@@ -28,6 +24,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .annotations import _annotate__is_grouping
 from .annotations import _annotate__ns_index
+from .choices import INHERIT_CRYSTAL_SYSTEM
 from .filters import MineralFilter
 from .filters import NickelStrunzFilter
 from .filters import StatusFilter
@@ -37,7 +34,9 @@ from .models.core import NsSubclass
 from .models.core import Status
 from .models.mineral import HierarchyView
 from .models.mineral import Mineral
+from .models.mineral import MineralInheritance
 from .models.mineral import MineralRelation
+from .models.mineral import MineralStatus
 from .models.mineral import MineralStructure
 from .pagination import CustomCursorPagination
 from .queries import LIST_VIEW_QUERY
@@ -51,7 +50,6 @@ from .serializers.mineral import MineralListSecondarySerializer
 from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRelationsSerializer
 from .serializers.mineral import RetrieveController
-from .utils import add_label
 
 
 class MineralSearch(autocomplete.Select2QuerySetView):
@@ -531,46 +529,49 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request)
         return Response(serializer_cls(queryset, many=True).data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=["get"], url_path="analytical-data")
-    def analytical_data(self, request, *args, **options):
+    @action(detail=True, methods=["get"])
+    def structures(self, request, *args, **options):
         instance = self.get_object()
-        queryset = MineralStructure.objects.filter(mineral=instance)
-        serializer_cls = self.get_serializer_class()
+        _is_grouping = instance.is_grouping
+        _relations = [instance.id, *instance.synonyms]
 
-        _aggregations = {}
-        _fields = ["a", "b", "c", "alpha", "beta", "gamma", "volume"]
-        for _field in _fields:
-            _aggregations.update(
-                {f"min_{_field}": Min(_field), f"max_{_field}": Max(_field), f"avg_{_field}": Round(Avg(_field), 4)}
-            )
-        _summary_queryset = queryset.aggregate(**_aggregations)
+        if _is_grouping:
+            _members = instance.members
+            _members_synonyms = MineralStatus.get_synonyms(_members)
+            _relations += [*(_members + _members_synonyms)]
 
-        _summary = {}
-        for _field in ["a", "b", "c", "alpha", "beta", "gamma", "volume"]:
-            _label = "Å"
-            if _field in ["alpha", "beta", "gamma"]:
-                _label = "°"
-            elif _field == "volume":
-                _label = "Å³"
-            _summary[_field] = {
-                "min": add_label(_summary_queryset[f"min_{_field}"], label=_label),
-                "max": add_label(_summary_queryset[f"max_{_field}"], label=_label),
-                "avg": add_label(_summary_queryset[f"avg_{_field}"], label=_label),
-            }
+            _inheritance_chain = MineralInheritance.get_redirect_ids(_relations, INHERIT_CRYSTAL_SYSTEM)
+            _inheritance_ids = [x["mineral"] for x in _inheritance_chain]
 
-        _count = queryset.count()
+            for _relation in _relations:
+                if _relation in _inheritance_ids:
+                    _index = _inheritance_ids.index(_relation)
+                    _inherit_from = _inheritance_chain[_index].get("inherit_from")
+                    _relations[_relations.index(_relation)] = _inherit_from
+                else:
+                    pass
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            data = self.get_serializer(page, many=True).data
-            response = self.get_paginated_response(data)
-            response.data["count"] = _count
-            response.data["summary"] = _summary
-            response.data.move_to_end("count", last=False)
-            return response
+        # cache the relations of mineral
+        # caches['mineral-relations'].set(, _relations)
 
-        data = serializer_cls(queryset, many=True).data
-        data["summary"] = _summary
-        data["count"] = _count
-        data.move_to_end("count", last=False)
-        return Response(data, status=status.HTTP_200_OK)
+        return Response(MineralStructure.aggregate_by_system(_relations), status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"])
+    def elements(self, request, *args, **options):
+        instance = self.get_object()
+        _is_grouping = instance.is_grouping
+        _relations = [instance.id, *instance.synonyms]
+
+        if _is_grouping:
+            _members = instance.members
+            _members_synonyms = MineralStatus.get_synonyms(_members)
+            _relations += [*(_members + _members_synonyms)]
+
+            _inheritance_chain = MineralInheritance.get_redirect_ids(_relations, INHERIT_CRYSTAL_SYSTEM)
+            _inheritance_ids = [x.get("mineral") for x in _inheritance_chain]
+            _relations = [
+                _inheritance_chain[_inheritance_ids.index(x)].get("inherit_from") if x in _inheritance_ids else x
+                for x in _relations
+            ]
+
+        return Response(MineralStructure.aggregate_by_element(_relations), status=status.HTTP_200_OK)
