@@ -24,6 +24,7 @@ from ..choices import CONTEXT_CHOICES
 from ..choices import IMA_NOTE_CHOICES
 from ..choices import IMA_STATUS_CHOICES
 from ..choices import INHERIT_CHOICES
+from ..choices import INHERIT_FORMULA
 from ..utils import shorten_text
 from ..utils import unique_slugify
 from .base import BaseModel
@@ -145,10 +146,20 @@ class Mineral(Nameable, Creatable, Updatable):
             .values_list("id", flat=True)
         )
 
+    @cached_property
+    def horizontal_relations(self):
+        # All horizontal + below for grouping terms
+        _relations = [self.id, *self.synonyms]
+        if self.is_grouping:
+            _members = self.members
+            _members_synonyms = MineralStatus.get_synonyms(_members)
+            _relations += [*(_members + _members_synonyms)]
+        return list(set(_relations))
+
     @property
     def inherited_formulas(self):
-        _chain = self.inheritance_chain.filter(prop=2)
-        return self.formulas.filter(mineral__in=_chain.values("inherit_from"))
+        _chain = self.inheritance_chain.filter(prop=INHERIT_FORMULA)
+        return MineralFormula.objects.filter(mineral__in=_chain.values("inherit_from"))
 
     def get_absolute_url(self):
         return reverse("core:mineral-detail", kwargs={"slug": self.slug})
@@ -450,7 +461,17 @@ class MineralInheritance(BaseModel, Creatable):
     @classmethod
     def get_redirect_ids(cls, ids, prop):
         queryset = cls.objects.filter(mineral__in=ids, prop=prop)
-        return list(queryset.values("mineral", "inherit_from"))
+        _inheritance_chain = list(queryset.values("mineral", "inherit_from"))
+        _inheritance_ids = [x["mineral"] for x in _inheritance_chain]
+
+        for _relation in ids:
+            if _relation in _inheritance_ids:
+                _index = _inheritance_ids.index(_relation)
+                _inherit_from = _inheritance_chain[_index].get("inherit_from")
+                ids[ids.index(_relation)] = _inherit_from
+            else:
+                pass
+        return set(ids)
 
 
 class MineralStructure(BaseModel, Creatable, Updatable):

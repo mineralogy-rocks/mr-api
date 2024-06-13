@@ -15,7 +15,6 @@ from ..models.mineral import MineralCrystallography
 from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHistory
 from ..models.mineral import MineralInheritance
-from ..models.mineral import MineralStatus
 from ..models.mineral import MineralStructure
 from ..queries import GET_DATA_CONTEXTS_QUERY
 from ..serializers.core import StatusListSerializer
@@ -227,15 +226,15 @@ class BaseRetrieveSerializer(serializers.ModelSerializer):
         return getattr(self.instance, "_relations", None)
 
     def get_structures(self, instance):
-        ids = self._relations
-        if ids:
-            return MineralStructure.aggregate_by_system(ids)
+        _relations = instance.horizontal_relations
+        if _relations:
+            return MineralStructure.aggregate_by_system(_relations)
         return None
 
     def get_elements(self, instance):
-        ids = self._relations
-        if ids:
-            return MineralStructure.aggregate_by_element(ids)
+        _relations = instance.horizontal_relations
+        if _relations:
+            return MineralStructure.aggregate_by_element(_relations)
         return None
 
 
@@ -312,30 +311,16 @@ class GroupingRetrieveSerializer(BaseRetrieveSerializer):
     def get_contexts(instance):
         _contexts = []
         with connection.cursor() as cursor:
-            cursor.execute(GET_DATA_CONTEXTS_QUERY, [tuple(instance._relations)])
+            cursor.execute(GET_DATA_CONTEXTS_QUERY, [instance.horizontal_relations])
             _contexts = cursor.fetchall()
             _contexts = [x for y in _contexts for x in y]
         return _contexts
 
     def get_structures(self, instance):
-        ids = self._relations
-        if ids:
-            # if item inherits crystal system, we substitute the ids with the inherited ones if present.
-            # If it's not present, we just keep the original id.
-            _inheritance_chain = MineralInheritance.get_redirect_ids(ids, INHERIT_CRYSTAL_SYSTEM)
-            _inheritance_ids = [x["mineral"] for x in _inheritance_chain]
-            ids = [
-                x if x not in _inheritance_ids else _inheritance_chain[_inheritance_ids.index(x)]["inherit_from"]
-                for x in ids
-            ]
-            return MineralStructure.aggregate_by_system(ids)
+        _relations = MineralInheritance.get_redirect_ids(instance.horizontal_relations, INHERIT_CRYSTAL_SYSTEM)
+        if _relations:
+            return MineralStructure.aggregate_by_system(_relations)
         return None
-
-    def to_representation(self, instance):
-        _members = instance.members
-        _members_synonyms = MineralStatus.get_synonyms(_members)
-        instance._relations = [instance.id, *(instance.synonyms + _members + _members_synonyms)]
-        return super().to_representation(instance)
 
 
 class MineralSmallSerializer(serializers.ModelSerializer):
@@ -374,10 +359,6 @@ class MineralRetrieveSerializer(BaseRetrieveSerializer):
             "history",
             "inheritance_chain",
         ]
-
-    def to_representation(self, instance):
-        instance._relations = [instance.id, *instance.synonyms]
-        return super().to_representation(instance)
 
 
 class MineralListSerializer(serializers.ModelSerializer):

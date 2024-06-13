@@ -241,130 +241,142 @@ GET_INHERITANCE_CHAIN_RETRIEVE_QUERY = """
 
 
 GET_DATA_CONTEXTS_QUERY = """
-    WITH mineralContext AS (
-        SELECT mc.context_id, jsonb_strip_nulls(mc.DATA) AS data
-        FROM mineral_context mc
-        WHERE mc.mineral_id IN %s
+   WITH mineralContext AS (
+        SELECT context_id, jsonb_strip_nulls(DATA) AS data
+        FROM mineral_context
+        WHERE mineral_id = ANY(%s)
+    ),
+    aggregatedColors AS (
+        SELECT
+            color,
+            COUNT(color) AS count,
+            array_remove(array_agg(DISTINCT (entities ->> 0)), NULL) AS entities
+        FROM (
+            SELECT
+                data -> 'primaryColor' AS color,
+                jsonb_path_query(data, '$.entities') AS entities
+            FROM (
+                SELECT jsonb_path_query(mc.DATA, '$.color[*] ? (@ != null)') AS data
+                FROM mineralContext mc
+                WHERE mc.context_id = 1
+            ) _inner
+        ) AS subquery
+        GROUP BY color
+        ORDER BY count DESC
+    ),
+    aggregatedStreaks AS (
+        SELECT
+            color,
+            COUNT(color) AS count,
+            array_remove(array_agg(DISTINCT (entities ->> 0)), NULL) AS entities
+        FROM (
+            SELECT
+                data -> 'primaryColor' AS color,
+                jsonb_path_query(data, '$.entities') AS entities
+            FROM (
+                SELECT jsonb_path_query(mc.DATA, '$.streak[*] ? (@ != null)') AS data
+                FROM mineralContext mc
+                WHERE mc.context_id = 1
+            ) _inner
+        ) AS subquery
+        GROUP BY color
+        ORDER BY count DESC
+    ),
+    transparency AS (
+        SELECT
+            'transparency' AS attr,
+            jsonb_build_object('value', COUNT(*), 'key', key) AS aggregated_data
+        FROM (
+            SELECT jsonb_array_elements_text(data -> 'transparency') AS key
+            FROM mineralContext
+            WHERE context_id = 1
+        ) subquery
+        GROUP BY key
+    ),
+    tenacity AS (
+        SELECT
+            'tenacity' AS attr,
+            jsonb_build_object('value', COUNT(*), 'key', key) AS aggregated_data
+        FROM (
+            SELECT jsonb_array_elements_text(data -> 'tenacity') AS key
+            FROM mineralContext
+            WHERE context_id = 1
+        ) subquery
+        GROUP BY key
+    ),
+    lustre AS (
+        SELECT
+            'lustre' AS attr,
+            jsonb_build_object('value', COUNT(*), 'key', key) AS aggregated_data
+        FROM (
+            SELECT jsonb_array_elements_text(data -> 'lustre') AS key
+            FROM mineralContext
+            WHERE context_id = 1
+        ) subquery
+        GROUP BY key
+    ),
+    fracture AS (
+        SELECT
+            'fracture' AS attr,
+            jsonb_build_object('value', COUNT(*), 'key', key) AS aggregated_data
+        FROM (
+            SELECT jsonb_array_elements_text(data -> 'fracture') AS key
+            FROM mineralContext
+            WHERE context_id = 1
+        ) subquery
+        GROUP BY key
+    ),
+    cleavage AS (
+        SELECT
+            'cleavage' AS attr,
+            jsonb_build_object('value', COUNT(*), 'key', key) AS aggregated_data
+        FROM (
+            SELECT jsonb_array_elements_text(data -> 'cleavage') AS key
+            FROM mineralContext
+            WHERE context_id = 1
+        ) subquery
+        GROUP BY key
     )
     SELECT jsonb_build_object(
-                'context', 1,
-                'data',
-                jsonb_build_object(
-                    'hardness', jsonb_build_object(
-                        'min', array_remove(array_agg(data -> 'hardnessMin'), NULL),
-                        'max', array_remove(array_agg(data -> 'hardnessMax'), NULL)
-                    ),
-                    'colorNote', string_agg(DISTINCT (data ->> 'colorNote')::TEXT, '; '),
-                    'color', (
-                        SELECT jsonb_agg(
-                                        jsonb_build_object(
-                                                'key', color,
-                                                'value', count,
-                                                'entities', entities
-                                        )
-                                    )
-                            FROM (
-                                SELECT color,
-                                       count(color) AS count,
-                                       array_remove(array_agg(DISTINCT (entities ->> 0)), NULL) AS entities
-                                    FROM (
-                                        SELECT
-                                            _inner.data -> 'primaryColor' AS color,
-                                            jsonb_path_query(_inner.data, '$.entities') AS entities
-                                        FROM
-                                            (
-                                                SELECT jsonb_path_query(mc.DATA, '$.color[*] ? (@ != null)') as data
-                                                FROM mineralContext mc
-                                                WHERE mc.context_id = 1
-                                            ) _inner
-                                        ORDER BY color
-                                    ) AS subquery
-                                GROUP BY color
-                                ORDER BY count DESC
-                            ) _inner
-                    ),
-                    'streakNote', string_agg(DISTINCT (data ->> 'streakNote')::TEXT, '; '),
-                    'streak', (
-                        SELECT jsonb_agg(
-                                        jsonb_build_object(
-                                                'key', color,
-                                                'value', count,
-                                                'entities', entities
-                                        )
-                                    )
-                            FROM (
-                                SELECT color,
-                                        count(color) AS count,
-                                        array_remove(array_agg(DISTINCT (entities ->> 0)), NULL) AS entities
-                                    FROM (
-                                        SELECT
-                                            _inner.data -> 'primaryColor' AS color,
-                                            jsonb_path_query(_inner.data, '$.entities') AS entities
-                                        FROM
-                                            (
-                                                SELECT jsonb_path_query(mc.DATA, '$.streak[*] ? (@ != null)') as data
-                                                FROM mineralContext mc
-                                                WHERE mc.context_id = 1
-                                            ) _inner
-                                        ORDER BY color
-                                    ) AS subquery
-                                GROUP BY color
-                                ORDER BY count DESC
-                            ) _inner
-                    ),
-                    'luminescence', string_agg(DISTINCT (data ->> 'luminescence')::TEXT, '; '),
-                    'transparency', (
-                        SELECT jsonb_agg(jsonb_build_object('value', value, 'key', key))
-                        FROM (
-                            SELECT count(*) AS value, jsonb_array_elements_text(mc.DATA -> 'transparency') AS key
-                            FROM mineralContext mc
-                            WHERE mc.context_id = 1
-                            GROUP BY key
-                            ORDER by value DESC
-                        ) subquery
-                    ),
-                    'tenacity', (
-                        SELECT jsonb_agg(jsonb_build_object('value', value, 'key', key))
-                        FROM (
-                            SELECT count(*) AS value, jsonb_array_elements_text(mc.DATA -> 'tenacity') AS key
-                            FROM mineralContext mc
-                            WHERE mc.context_id = 1
-                            GROUP BY key
-                            ORDER by value DESC
-                        ) subquery
-                    ),
-                    'lustre', (
-                        SELECT jsonb_agg(jsonb_build_object('value', value, 'key', key))
-                        FROM (
-                            SELECT count(*) AS value, jsonb_array_elements_text(mc.DATA -> 'lustre') AS key
-                            FROM mineralContext mc
-                            WHERE mc.context_id = 1
-                            GROUP BY key
-                            ORDER by value DESC
-                        ) subquery
-                    ),
-                    'fracture', (
-                        SELECT jsonb_agg(jsonb_build_object('value', value, 'key', key))
-                        FROM (
-                            SELECT count(*) AS value, jsonb_array_elements_text(mc.DATA -> 'fracture') AS key
-                            FROM mineralContext mc
-                            WHERE mc.context_id = 1
-                            GROUP BY key
-                            ORDER by value DESC
-                        ) subquery
-                    ),
-                    'cleavage', (
-                        SELECT jsonb_agg(jsonb_build_object('value', value, 'key', key))
-                        FROM (
-                            SELECT count(*) AS value, jsonb_array_elements_text(mc.DATA -> 'cleavage') AS key
-                            FROM mineralContext mc
-                            WHERE mc.context_id = 1
-                            GROUP BY key
-                            ORDER by value DESC
-                        ) subquery
-                    )
-                )
-            )::json AS physicalContext
+        'context', 1,
+        'data', jsonb_build_object(
+            'hardness', jsonb_build_object(
+                'min', array_remove(array_agg(data -> 'hardnessMin'), NULL),
+                'max', array_remove(array_agg(data -> 'hardnessMax'), NULL)
+            ),
+            'colorNote', string_agg(DISTINCT (data ->> 'colorNote')::TEXT, '; '),
+            'color', (
+                SELECT jsonb_agg(jsonb_build_object('key', color, 'value', count, 'entities', entities))
+                FROM aggregatedColors
+            ),
+            'streakNote', string_agg(DISTINCT (data ->> 'streakNote')::TEXT, '; '),
+            'streak', (
+                SELECT jsonb_agg(jsonb_build_object('key', color, 'value', count, 'entities', entities))
+                FROM aggregatedStreaks
+            ),
+            'luminescence', string_agg(DISTINCT (data ->> 'luminescence')::TEXT, '; '),
+            'transparency', (
+                SELECT jsonb_agg(aggregated_data)
+                FROM transparency
+            ),
+            'tenacity', (
+                SELECT jsonb_agg(aggregated_data)
+                FROM tenacity
+            ),
+            'lustre', (
+                SELECT jsonb_agg(aggregated_data)
+                FROM lustre
+            ),
+            'fracture', (
+                SELECT jsonb_agg(aggregated_data)
+                FROM fracture
+            ),
+            'cleavage', (
+                SELECT jsonb_agg(aggregated_data)
+                FROM cleavage
+            )
+        )
+    )::json AS physicalContext
     FROM mineralContext;
 """
 

@@ -25,6 +25,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from .annotations import _annotate__is_grouping
 from .annotations import _annotate__ns_index
 from .choices import INHERIT_CRYSTAL_SYSTEM
+from .choices import INHERIT_FORMULA
 from .filters import MineralFilter
 from .filters import NickelStrunzFilter
 from .filters import StatusFilter
@@ -36,7 +37,6 @@ from .models.mineral import HierarchyView
 from .models.mineral import Mineral
 from .models.mineral import MineralInheritance
 from .models.mineral import MineralRelation
-from .models.mineral import MineralStatus
 from .models.mineral import MineralStructure
 from .pagination import CustomCursorPagination
 from .queries import LIST_VIEW_QUERY
@@ -532,46 +532,15 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     @action(detail=True, methods=["get"])
     def structures(self, request, *args, **options):
         instance = self.get_object()
-        _is_grouping = instance.is_grouping
-        _relations = [instance.id, *instance.synonyms]
+        _relations = instance.horizontal_relations
 
-        if _is_grouping:
-            _members = instance.members
-            _members_synonyms = MineralStatus.get_synonyms(_members)
-            _relations += [*(_members + _members_synonyms)]
-
-            _inheritance_chain = MineralInheritance.get_redirect_ids(_relations, INHERIT_CRYSTAL_SYSTEM)
-            _inheritance_ids = [x["mineral"] for x in _inheritance_chain]
-
-            for _relation in _relations:
-                if _relation in _inheritance_ids:
-                    _index = _inheritance_ids.index(_relation)
-                    _inherit_from = _inheritance_chain[_index].get("inherit_from")
-                    _relations[_relations.index(_relation)] = _inherit_from
-                else:
-                    pass
-
-        # cache the relations of mineral
-        # caches['mineral-relations'].set(, _relations)
-
+        _relations = MineralInheritance.get_redirect_ids(_relations, INHERIT_CRYSTAL_SYSTEM)
         return Response(MineralStructure.aggregate_by_system(_relations), status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"])
     def elements(self, request, *args, **options):
         instance = self.get_object()
-        _is_grouping = instance.is_grouping
-        _relations = [instance.id, *instance.synonyms]
+        _relations = instance.horizontal_relations
 
-        if _is_grouping:
-            _members = instance.members
-            _members_synonyms = MineralStatus.get_synonyms(_members)
-            _relations += [*(_members + _members_synonyms)]
-
-            _inheritance_chain = MineralInheritance.get_redirect_ids(_relations, INHERIT_CRYSTAL_SYSTEM)
-            _inheritance_ids = [x.get("mineral") for x in _inheritance_chain]
-            _relations = [
-                _inheritance_chain[_inheritance_ids.index(x)].get("inherit_from") if x in _inheritance_ids else x
-                for x in _relations
-            ]
-
+        _relations = MineralInheritance.get_redirect_ids(_relations, INHERIT_FORMULA)
         return Response(MineralStructure.aggregate_by_element(_relations), status=status.HTTP_200_OK)
