@@ -242,15 +242,16 @@ GET_INHERITANCE_CHAIN_RETRIEVE_QUERY = """
 
 GET_DATA_CONTEXTS_QUERY = """
    WITH mineralContext AS (
-        SELECT context_id, jsonb_strip_nulls(DATA) AS data
-        FROM mineral_context
-        WHERE mineral_id = ANY(%s)
+        SELECT mc.context_id, jsonb_strip_nulls(mc.data) AS data
+        FROM mineral_context mc
+        INNER JOIN mineral_log ml on ml.id = mc.mineral_id
+        WHERE ml.id = ANY(%s)
     ),
     aggregatedColors AS (
         SELECT
             color,
             COUNT(color) AS count,
-            array_remove(array_agg(DISTINCT (entities ->> 0)), NULL) AS entities
+            jsonb_agg_strict(DISTINCT (entities ->> 0)) AS entities
         FROM (
             SELECT
                 data -> 'primaryColor' AS color,
@@ -268,7 +269,7 @@ GET_DATA_CONTEXTS_QUERY = """
         SELECT
             color,
             COUNT(color) AS count,
-            array_remove(array_agg(DISTINCT (entities ->> 0)), NULL) AS entities
+            jsonb_agg_strict(DISTINCT (entities ->> 0)) AS entities
         FROM (
             SELECT
                 data -> 'primaryColor' AS color,
@@ -341,8 +342,8 @@ GET_DATA_CONTEXTS_QUERY = """
         'context', 1,
         'data', jsonb_build_object(
             'hardness', jsonb_build_object(
-                'min', array_remove(array_agg(data -> 'hardnessMin'), NULL),
-                'max', array_remove(array_agg(data -> 'hardnessMax'), NULL)
+                'min', jsonb_agg_strict(data -> 'hardnessMin'),
+                'max', jsonb_agg_strict(data -> 'hardnessMax')
             ),
             'colorNote', string_agg(DISTINCT (data ->> 'colorNote')::TEXT, '; '),
             'color', (

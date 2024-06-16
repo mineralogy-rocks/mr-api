@@ -218,13 +218,6 @@ class BaseRetrieveSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
-    @property
-    def _relations(self):
-        """
-        This property should be set in the `to_representation` method of the serializer.
-        """
-        return getattr(self.instance, "_relations", None)
-
     def get_structures(self, instance):
         _relations = instance.horizontal_relations
         if _relations:
@@ -315,12 +308,6 @@ class GroupingRetrieveSerializer(BaseRetrieveSerializer):
             _contexts = cursor.fetchall()
             _contexts = [x for y in _contexts for x in y]
         return _contexts
-
-    def get_structures(self, instance):
-        _relations = MineralInheritance.get_redirect_ids(instance.horizontal_relations, INHERIT_CRYSTAL_SYSTEM)
-        if _relations:
-            return MineralStructure.aggregate_by_system(_relations)
-        return None
 
 
 class MineralSmallSerializer(serializers.ModelSerializer):
