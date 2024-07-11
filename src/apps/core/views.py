@@ -2,13 +2,9 @@
 import numpy as np
 import pandas as pd
 from dal import autocomplete
-from django.db.models import Avg
 from django.db.models import Count
 from django.db.models import F
-from django.db.models import Max
-from django.db.models import Min
 from django.db.models import Q
-from django.db.models.functions import Round
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework import status
@@ -28,6 +24,9 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .annotations import _annotate__is_grouping
 from .annotations import _annotate__ns_index
+from .annotations import _annotate__statuses_array
+from .choices import INHERIT_CRYSTAL_SYSTEM
+from .choices import INHERIT_FORMULA
 from .filters import MineralFilter
 from .filters import NickelStrunzFilter
 from .filters import StatusFilter
@@ -37,6 +36,7 @@ from .models.core import NsSubclass
 from .models.core import Status
 from .models.mineral import HierarchyView
 from .models.mineral import Mineral
+from .models.mineral import MineralInheritance
 from .models.mineral import MineralRelation
 from .models.mineral import MineralStructure
 from .pagination import CustomCursorPagination
@@ -50,8 +50,9 @@ from .serializers.mineral import MineralAnalyticalDataSerializer
 from .serializers.mineral import MineralListSecondarySerializer
 from .serializers.mineral import MineralListSerializer
 from .serializers.mineral import MineralRelationsSerializer
+from .serializers.mineral import MineralRelationTreeSerializer
+from .serializers.mineral import MineralSmallSerializer
 from .serializers.mineral import RetrieveController
-from .utils import add_label
 
 
 class MineralSearch(autocomplete.Select2QuerySetView):
@@ -444,7 +445,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
 
         if instance.is_grouping:
             queryset = HierarchyView.objects.all()
-            queryset = queryset.filter(relation__statuses__group=group, relation__direct_relations__direct_status=True)
+            queryset = queryset.filter(relation__statuses__group=group, relation__mineral_statuses__direct_status=True)
         else:
             queryset = MineralRelation.objects.all()
             queryset = queryset.filter(status__direct_status=False, status__status__group=group)
@@ -464,7 +465,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         _filter = {}
 
         if status:
-            _filter.update({"relation__statuses": status, "relation__direct_relations__direct_status": True})
+            _filter.update({"relation__statuses": status, "relation__mineral_statuses__direct_status": True})
 
         queryset = HierarchyView.objects.filter(mineral=instance, **_filter)
         queryset = queryset.distinct("relation__name")
@@ -503,7 +504,7 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         queryset = self._get_grouping_objects(instance, _status)
 
         if instance.is_grouping:
-            _filter = {"relation__direct_relations__direct_status": True}
+            _filter = {"relation__mineral_statuses__direct_status": True}
             if _crystal_system:
                 queryset = queryset.filter(relation__crystallography__crystal_system=_crystal_system, **_filter)
             if _discovery_country:
@@ -531,46 +532,138 @@ class MineralViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         queryset = serializer_cls.setup_eager_loading(queryset=queryset, request=request)
         return Response(serializer_cls(queryset, many=True).data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=["get"], url_path="analytical-data")
-    def analytical_data(self, request, *args, **options):
+    @action(detail=True, methods=["get"])
+    def structures(self, request, *args, **options):
         instance = self.get_object()
-        queryset = MineralStructure.objects.filter(mineral=instance)
-        serializer_cls = self.get_serializer_class()
+        _relations = instance.horizontal_relations
 
-        _aggregations = {}
-        _fields = ["a", "b", "c", "alpha", "beta", "gamma", "volume"]
-        for _field in _fields:
-            _aggregations.update(
-                {f"min_{_field}": Min(_field), f"max_{_field}": Max(_field), f"avg_{_field}": Round(Avg(_field), 4)}
+        _relations = MineralInheritance.get_redirect_ids(_relations, INHERIT_CRYSTAL_SYSTEM)
+        return Response(MineralStructure.aggregate_by_system(_relations), status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"])
+    def elements(self, request, *args, **options):
+        instance = self.get_object()
+        _relations = instance.horizontal_relations
+
+        _relations = MineralInheritance.get_redirect_ids(_relations, INHERIT_FORMULA)
+        return Response(MineralStructure.aggregate_by_element(_relations), status=status.HTTP_200_OK)
+
+
+class RelationViewSet(RetrieveModelMixin, GenericViewSet):
+    http_method_names = [
+        "get",
+        "options",
+        "head",
+    ]
+
+    queryset = Mineral.objects.all()
+    serializer_class = MineralRelationTreeSerializer
+
+    lookup_field = "slug"
+    lookup_url_kwarg = "slug"
+
+    renderer_classes = [
+        JSONRenderer,
+        BrowsableAPIRenderer,
+    ]
+    permission_classes = [HasAPIKey | IsAuthenticated]
+    authentication_classes = [
+        SessionAuthentication,
+        JWTAuthentication,
+    ]
+
+    pagination_class = LimitOffsetPagination
+
+    filter_backends = [
+        filters.OrderingFilter,
+    ]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        serializer_class = self.get_serializer_class()
+        if hasattr(serializer_class, "setup_eager_loading"):
+            queryset = serializer_class.setup_eager_loading(queryset=queryset, request=self.request)
+
+        return queryset
+
+    # TODO: not used for now, but keeping it for future reference
+    def _build_branch(self, id, relations, current_branch):
+        for _relation in relations:
+            __mineral = _relation.get("mineral")
+            __relation = _relation.get("relation")
+            if __relation == id:
+                current_branch += [__mineral]
+                self._build_branch(__mineral, relations, current_branch)
+
+    @staticmethod
+    def _get_relations(ids, filter_arg={}):
+        _queryset = list(
+            MineralRelation.objects.filter(
+                status__direct_status=True,
+                status__status__group__in=[2, 3, 4, 5, 7, 10],
+                relation__in=ids,
             )
-        _summary_queryset = queryset.aggregate(**_aggregations)
+            .distinct("mineral", "relation")
+            .values_list("id", flat=True)
+        )
 
-        _summary = {}
-        for _field in ["a", "b", "c", "alpha", "beta", "gamma", "volume"]:
-            _label = "Å"
-            if _field in ["alpha", "beta", "gamma"]:
-                _label = "°"
-            elif _field == "volume":
-                _label = "Å³"
-            _summary[_field] = {
-                "min": add_label(_summary_queryset[f"min_{_field}"], label=_label),
-                "max": add_label(_summary_queryset[f"max_{_field}"], label=_label),
-                "avg": add_label(_summary_queryset[f"avg_{_field}"], label=_label),
-            }
+        return (
+            MineralRelation.objects.filter(id__in=_queryset, **filter_arg)
+            .only("mineral", "relation")
+            .order_by("status__status__group")
+        )
 
-        _count = queryset.count()
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            data = self.get_serializer(page, many=True).data
-            response = self.get_paginated_response(data)
-            response.data["count"] = _count
-            response.data["summary"] = _summary
-            response.data.move_to_end("count", last=False)
-            return response
+        q = request.query_params.get("q", None)
 
-        data = serializer_cls(queryset, many=True).data
-        data["summary"] = _summary
-        data["count"] = _count
-        data.move_to_end("count", last=False)
+        _filter = {}
+        _related_filter = {}
+        if q and len(q) > 2:
+            _filter.update({"name__icontains": q})
+            _related_filter.update({"mineral__name__icontains": q})
+
+        _mineral_scope = []
+
+        if instance.max_status in [1, 11]:
+            inherit_ids = list(
+                MineralInheritance.objects.filter(inherit_from=instance)
+                .distinct("mineral")
+                .values_list("mineral", flat=True)
+            )
+        else:
+            _parents = list(MineralInheritance.objects.filter(mineral=instance).values_list("inherit_from", flat=True))
+            _children = list(
+                MineralInheritance.objects.filter(inherit_from__in=_parents).values_list("mineral", flat=True)
+            )
+            inherit_ids = list(set(_parents + _children))
+
+        _mineral_scope += [instance.id]
+        _mineral_scope += inherit_ids
+        queryset = self._get_relations([*inherit_ids, instance.id], _related_filter)
+
+        serializer_cls = self.get_serializer_class()
+        relations = serializer_cls(queryset, many=True).data
+
+        for _relation in relations:
+            _mineral_scope += [_relation.get("mineral")]
+            _mineral_scope += [_relation.get("relation")]
+
+        _mineral_scope = list(set(_mineral_scope))
+
+        if len(_mineral_scope) == 1 and instance.id in _mineral_scope:
+            return Response({}, status=status.HTTP_200_OK)
+
+        match_qs = _annotate__statuses_array(Mineral.objects.filter(id__in=_mineral_scope)).order_by("_statuses")
+
+        for _match in match_qs:
+            _match.is_main = not any(True for _relation in relations if _relation.get("mineral") == _match.id)
+            _match.is_current = _match.id == instance.id and not _match.is_main
+
+        data = {
+            "minerals": MineralSmallSerializer(match_qs, many=True, context={"request": request}).data,
+            "relations": relations,
+        }
         return Response(data, status=status.HTTP_200_OK)

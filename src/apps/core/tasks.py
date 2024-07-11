@@ -18,8 +18,9 @@ STATUS_MIXTURE = [8.0]
 STATUS_APPROVED = [0.0]
 
 
-def calculate_inherited_props(chunk_size=1000):
+def generate_inheritance_chain(chunk_size=1000):
     # 0. Truncate inheritance table and restart sequence.
+    # TODO: move this to end and keep in a transaction
     with connection.cursor() as cursor:
         print("Truncating table {}".format(MineralInheritance._meta.db_table))
         cursor.execute("TRUNCATE TABLE {} RESTART IDENTITY CASCADE;".format(MineralInheritance._meta.db_table))

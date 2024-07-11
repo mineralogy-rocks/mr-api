@@ -2,7 +2,7 @@
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 
-from ...tasks import calculate_inherited_props
+from ...tasks import generate_inheritance_chain
 
 CHUNK_SIZE = 1000
 
@@ -21,6 +21,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            calculate_inherited_props(chunk_size=CHUNK_SIZE)
+            generate_inheritance_chain(chunk_size=CHUNK_SIZE)
         except Exception as e:
             raise CommandError(e)

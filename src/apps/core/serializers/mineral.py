@@ -1,8 +1,11 @@
 # -*- coding: UTF-8 -*-
+from itertools import chain
+
 from django.contrib.humanize.templatetags.humanize import naturalday
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import connection
 from django.db import models
+from django.db.models import F
 from django.db.models import Prefetch
 from rest_framework import serializers
 
@@ -15,7 +18,7 @@ from ..models.mineral import MineralCrystallography
 from ..models.mineral import MineralFormula
 from ..models.mineral import MineralHistory
 from ..models.mineral import MineralInheritance
-from ..models.mineral import MineralStatus
+from ..models.mineral import MineralRelation
 from ..models.mineral import MineralStructure
 from ..queries import GET_DATA_CONTEXTS_QUERY
 from ..serializers.core import StatusListSerializer
@@ -152,7 +155,9 @@ class RetrieveController(serializers.Serializer):
     def setup_eager_loading(**kwargs):
         queryset, is_grouping = kwargs.get("queryset"), kwargs.get("is_grouping")
 
-        select_related = []
+        select_related = [
+            "history",
+        ]
         prefetch_related = [
             models.Prefetch(
                 "statuses", Status.objects.select_related("group").extra(where=["mineral_status.direct_status = TRUE"])
@@ -191,13 +196,24 @@ class RetrieveController(serializers.Serializer):
         return queryset
 
 
-class BaseRetrieveSerializer(serializers.ModelSerializer):
-    is_grouping = serializers.BooleanField()
-    statuses = StatusListSerializer(many=True)
-    formulas = FormulaSerializer(many=True)
+class MineralRelationTreeSerializer(serializers.ModelSerializer):
+    mineral = serializers.PrimaryKeyRelatedField(read_only=True)
+    relation = serializers.PrimaryKeyRelatedField(read_only=True)
 
-    structures = serializers.SerializerMethodField()
-    elements = serializers.SerializerMethodField()
+    class Meta:
+        model = MineralRelation
+        fields = [
+            "mineral",
+            "relation",
+        ]
+
+
+class MineralSmallSerializer(serializers.ModelSerializer):
+    description = serializers.SerializerMethodField()
+    statuses = serializers.JSONField(source="_statuses")
+    url = serializers.HyperlinkedIdentityField(lookup_field="slug", view_name="core:mineral-detail")
+    is_main = serializers.BooleanField(default=False)
+    is_current = serializers.BooleanField(default=False)
 
     class Meta:
         model = Mineral
@@ -205,46 +221,23 @@ class BaseRetrieveSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "slug",
-            "is_grouping",
             "description",
-            "mindat_id",
             "statuses",
-            "description",
-            "seen",
-            "formulas",
-            "structures",
-            "elements",
-            "contexts",
-            "created_at",
-            "updated_at",
+            "url",
+            "is_main",
+            "is_current",
         ]
 
-    @property
-    def _relations(self):
-        """
-        This property should be set in the `to_representation` method of the serializer.
-        """
-        return getattr(self.instance, "_relations", None)
-
-    def get_structures(self, instance):
-        ids = self._relations
-        if ids:
-            return MineralStructure.aggregate_by_system(ids)
-        return None
-
-    def get_elements(self, instance):
-        ids = self._relations
-        if ids:
-            return MineralStructure.aggregate_by_element(ids)
-        return None
+    @staticmethod
+    def get_description(instance):
+        return instance.short_description(500)
 
 
-class GroupMemberSerializer(serializers.ModelSerializer):
-    history = MineralHistorySerializer()
+class MemberSerializer(serializers.ModelSerializer):
     statuses = serializers.JSONField(source="_statuses")
-    crystal_system = serializers.IntegerField()
-    description = serializers.SerializerMethodField()
+    crystal_system = serializers.IntegerField(allow_null=True)
     url = serializers.HyperlinkedIdentityField(lookup_field="slug", view_name="core:mineral-detail")
+    history = MineralHistorySerializer()
 
     class Meta:
         model = Mineral
@@ -255,114 +248,114 @@ class GroupMemberSerializer(serializers.ModelSerializer):
             "statuses",
             "crystal_system",
             "history",
-            "description",
             "url",
         ]
 
-    @staticmethod
-    def get_description(instance):
-        return instance.short_description(100)
 
-
-class GroupingRetrieveSerializer(BaseRetrieveSerializer):
-    members = serializers.SerializerMethodField()
-    contexts = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Mineral
-        fields = BaseRetrieveSerializer.Meta.fields + [
-            "members",
-        ]
-
-    def get_members(self, instance):
-        _members = instance.members
-        _select_related = [
-            "history",
-        ]
-        _prefetch_related = []
-        _only = [
-            "id",
-            "name",
-            "slug",
-            "description",
-        ]
-
-        _minerals = (
-            Mineral.objects.filter(id__in=_members)
-            .annotate(
-                crystal_system=models.Case(
-                    models.When(
-                        inheritance_chain__prop=INHERIT_CRYSTAL_SYSTEM,
-                        then=models.F("inheritance_chain__inherit_from__crystallography__crystal_system"),
-                    ),
-                    models.When(crystallography__isnull=False, then=models.F("crystallography__crystal_system")),
-                    default=None,
-                    output_field=models.IntegerField(),
-                )
-            )
-            .select_related(*_select_related)
-            .prefetch_related(*_prefetch_related)
-            .only(*_only)
-        )
-        _minerals = _annotate__statuses_array(_minerals)
-        data = GroupMemberSerializer(_minerals, many=True, context=self.context).data
-        return data
-
-    @staticmethod
-    def get_contexts(instance):
-        _contexts = []
-        with connection.cursor() as cursor:
-            cursor.execute(GET_DATA_CONTEXTS_QUERY, [tuple(instance._relations)])
-            _contexts = cursor.fetchall()
-            _contexts = [x for y in _contexts for x in y]
-        return _contexts
-
-    def get_structures(self, instance):
-        ids = self._relations
-        if ids:
-            # if item inherits crystal system, we substitute the ids with the inherited ones if present.
-            # If it's not present, we just keep the original id.
-            _inheritance_chain = MineralInheritance.get_redirect_ids(ids, INHERIT_CRYSTAL_SYSTEM)
-            _inheritance_ids = [x["mineral"] for x in _inheritance_chain]
-            ids = [
-                x if x not in _inheritance_ids else _inheritance_chain[_inheritance_ids.index(x)]["inherit_from"]
-                for x in ids
-            ]
-            return MineralStructure.aggregate_by_system(ids)
-        return None
-
-    def to_representation(self, instance):
-        _members = instance.members
-        _members_synonyms = MineralStatus.get_synonyms(_members)
-        instance._relations = [instance.id, *(instance.synonyms + _members + _members_synonyms)]
-        return super().to_representation(instance)
-
-
-class MineralSmallSerializer(serializers.ModelSerializer):
-    depth = serializers.IntegerField()
-    statuses = serializers.JSONField(source="_statuses")
+class BaseRetrieveSerializer(serializers.ModelSerializer):
+    is_grouping = serializers.BooleanField()
+    statuses = StatusListSerializer(many=True)
     formulas = FormulaSerializer(many=True)
-    crystallography = CrystallographySerializer()
-    contexts = MineralContextSerializer(many=True)
+    history = MineralHistorySerializer()
+
+    members = serializers.SerializerMethodField()
+
+    structures = serializers.SerializerMethodField()
+    elements = serializers.SerializerMethodField()
 
     class Meta:
         model = Mineral
         fields = [
             "id",
-            "mindat_id",
             "name",
             "slug",
-            "depth",
+            "description",
+            "is_grouping",
+            "description",
+            "history",
+            "mindat_id",
             "statuses",
             "formulas",
-            "crystallography",
+            "seen",
+            "members",
+            "structures",
+            "elements",
             "contexts",
+            "created_at",
+            "updated_at",
         ]
+
+    @staticmethod
+    def get_structures(instance):
+        _relations = instance.horizontal_relations
+        if _relations:
+            return MineralStructure.aggregate_by_system(_relations)
+        return None
+
+    @staticmethod
+    def get_elements(instance):
+        _relations = instance.horizontal_relations
+        if _relations:
+            return MineralStructure.aggregate_by_element(_relations)
+        return None
+
+    def get_members(self, instance):
+        # TODO: improve later, minerals can also have "members" in same group
+        if not instance.is_grouping:
+            return []
+
+        queryset = Mineral.objects.select_related("history")
+        queryset = _annotate__statuses_array(queryset)
+
+        _only = [
+            "id",
+            "name",
+            "slug",
+        ]
+
+        _inherit_ids = list(
+            MineralInheritance.objects.filter(mineral__in=instance.members, prop=INHERIT_CRYSTAL_SYSTEM).values_list(
+                "mineral", flat=True
+            )
+        )
+        _inherit_qs = (
+            queryset.filter(id__in=_inherit_ids)
+            .annotate(crystal_system=F("inheritance_chain__inherit_from__crystallography__crystal_system"))
+            .order_by()
+            .only(*_only)
+        )
+        _qs = (
+            queryset.filter(id__in=list(set(instance.members) - set(_inherit_ids)))
+            .annotate(crystal_system=F("crystallography__crystal_system"))
+            .order_by()
+            .only(*_only)
+        )
+        _union = sorted(
+            chain(_qs, _inherit_qs),
+            key=lambda instance: instance.name,
+        )
+        return MemberSerializer(_union, many=True, context=self.context).data
+
+
+class GroupingRetrieveSerializer(BaseRetrieveSerializer):
+    contexts = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Mineral
+        fields = BaseRetrieveSerializer.Meta.fields
+
+    @staticmethod
+    def get_contexts(instance):
+        _contexts = []
+        with connection.cursor() as cursor:
+            cursor.execute(GET_DATA_CONTEXTS_QUERY, [instance.horizontal_relations])
+            _contexts = cursor.fetchall()
+            _contexts = [x for y in _contexts for x in y]
+        return _contexts
 
 
 class MineralRetrieveSerializer(BaseRetrieveSerializer):
     crystallography = CrystallographySerializer()
-    history = MineralHistorySerializer()
     contexts = MineralContextSerializer(many=True)
     inheritance_chain = MineralRetrieveInheritanceSerializer(many=True)
 
@@ -371,13 +364,8 @@ class MineralRetrieveSerializer(BaseRetrieveSerializer):
         fields = BaseRetrieveSerializer.Meta.fields + [
             "crystallography",
             "ns_index",
-            "history",
             "inheritance_chain",
         ]
-
-    def to_representation(self, instance):
-        instance._relations = [instance.id, *instance.synonyms]
-        return super().to_representation(instance)
 
 
 class MineralListSerializer(serializers.ModelSerializer):

@@ -45,6 +45,17 @@ class StatusListSerializer(serializers.ModelSerializer):
         return queryset
 
 
+class StatusSmallSerializer(serializers.ModelSerializer):
+    group = serializers.PrimaryKeyRelatedField(queryset=StatusGroup.objects.all())
+
+    class Meta:
+        model = Status
+        fields = [
+            "status_id",
+            "group",
+        ]
+
+
 class CountryListSerializer(serializers.ModelSerializer):
     iso_code = serializers.CharField(source="alpha_2")
 

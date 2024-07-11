@@ -57,8 +57,6 @@ class Mineral(Nameable, Creatable, Updatable):
     ns_class = models.ForeignKey(
         NsClass,
         models.CASCADE,
-        db_column="ns_class",
-        to_field="id",
         blank=True,
         null=True,
         related_name="minerals",
@@ -66,8 +64,6 @@ class Mineral(Nameable, Creatable, Updatable):
     ns_subclass = models.ForeignKey(
         NsSubclass,
         models.CASCADE,
-        db_column="ns_subclass",
-        to_field="id",
         blank=True,
         null=True,
         related_name="minerals",
@@ -75,8 +71,6 @@ class Mineral(Nameable, Creatable, Updatable):
     ns_family = models.ForeignKey(
         NsFamily,
         models.CASCADE,
-        db_column="ns_family",
-        to_field="id",
         blank=True,
         null=True,
         related_name="minerals",
@@ -120,13 +114,23 @@ class Mineral(Nameable, Creatable, Updatable):
         return self.name
 
     @cached_property
+    def max_status(self):
+        return self.statuses.aggregate(max_status=Max("group"))["max_status"]
+
+    @cached_property
+    def parents(self):
+        return list(
+            MineralRelation.objects.filter(mineral=self, status__direct_status=True).values_list("relation", flat=True)
+        )
+
+    @cached_property
     def members(self):
         queryset = HierarchyView.objects.filter(
             mineral=self,
             is_parent=True,
             # comment out, and calculate stats for ANY member
             # relation__statuses__group__in=[3, 4, 11],
-            relation__direct_relations__direct_status=True,
+            relation__mineral_statuses__direct_status=True,
         )
         return list(queryset.values_list("relation", flat=True))
 
@@ -136,19 +140,24 @@ class Mineral(Nameable, Creatable, Updatable):
 
     @property
     def synonyms(self):
-        return list(
+        return (
             self.relations.annotate(status_group=Max("statuses__group"))
             .filter(status_group=2)
             .extra(where=["mineral_status.direct_status = TRUE"])
             .distinct()
             .order_by()
-            .values_list("id", flat=True)
         )
 
-    @property
-    def inherited_formulas(self):
-        _chain = self.inheritance_chain.filter(prop=2)
-        return self.formulas.filter(mineral__in=_chain.values("inherit_from"))
+    @cached_property
+    def horizontal_relations(self):
+        # All horizontal + below for grouping terms
+        _synonyms = list(self.synonyms.values_list("id", flat=True))
+        _relations = [self.id, *_synonyms]
+        if self.is_grouping:
+            _members = self.members
+            _members_synonyms = MineralStatus.get_synonyms(_members)
+            _relations += [*(_members + _members_synonyms)]
+        return list(set(_relations))
 
     def get_absolute_url(self):
         return reverse("core:mineral-detail", kwargs={"slug": self.slug})
@@ -190,11 +199,10 @@ class Mineral(Nameable, Creatable, Updatable):
 
 
 class MineralStatus(BaseModel, Creatable, Updatable):
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="direct_relations")
+    mineral = models.ForeignKey(Mineral, models.CASCADE, related_name="mineral_statuses")
     status = models.ForeignKey(
         Status,
         models.CASCADE,
-        db_column="status_id",
         related_name="minerals",
         help_text="A classification status of species.",
     )
@@ -207,7 +215,6 @@ class MineralStatus(BaseModel, Creatable, Updatable):
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
-        db_column="author_id",
         null=True,
         help_text="Author of the last update.",
     )
@@ -216,15 +223,6 @@ class MineralStatus(BaseModel, Creatable, Updatable):
         null=False,
         help_text="If checked, means the current species is a synonym/variety/polytype of related species.\n"
         "Otherwise, means the related species are synonyms/varieties/polytypes of current species.",
-    )
-
-    relations = models.ManyToManyField(
-        Mineral,
-        through="MineralRelation",
-        through_fields=(
-            "status",
-            "relation",
-        ),
     )
 
     class Meta:
@@ -240,7 +238,7 @@ class MineralStatus(BaseModel, Creatable, Updatable):
     @classmethod
     def get_synonyms(cls, ids):
         queryset = cls.objects.filter(mineral__in=ids, direct_status=False, status__group=2)
-        return list(queryset.values_list("mineral_status__relation", flat=True))
+        return list(queryset.values_list("relations__relation", flat=True))
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
@@ -250,7 +248,7 @@ class MineralStatus(BaseModel, Creatable, Updatable):
 
 
 class MineralIMAStatus(BaseModel, Creatable):
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="ima_statuses")
+    mineral = models.ForeignKey(Mineral, models.CASCADE, related_name="ima_statuses")
     status = models.PositiveSmallIntegerField(choices=IMA_STATUS_CHOICES, db_column="ima_status_id", default=None)
 
     class Meta:
@@ -264,7 +262,7 @@ class MineralIMAStatus(BaseModel, Creatable):
 
 
 class MineralIMANote(BaseModel, Creatable):
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="ima_notes")
+    mineral = models.ForeignKey(Mineral, models.CASCADE, related_name="ima_notes")
     note = models.PositiveSmallIntegerField(choices=IMA_NOTE_CHOICES, db_column="ima_note_id", default=None)
 
     class Meta:
@@ -278,30 +276,33 @@ class MineralIMANote(BaseModel, Creatable):
 
 
 class MineralContext(BaseModel, Creatable):
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="contexts")
+    mineral = models.ForeignKey(Mineral, models.CASCADE, related_name="contexts")
     context = models.PositiveSmallIntegerField(choices=CONTEXT_CHOICES, db_column="context_id", default=None)
     data = models.JSONField(blank=True, null=True)
 
     class Meta:
         db_table = "mineral_context"
+        indexes = [
+            models.Index(fields=["mineral"]),
+        ]
 
         verbose_name = "Data Context"
         verbose_name_plural = "Data Contexts"
 
 
 class MineralRelation(BaseModel):
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id")
+
+    mineral = models.ForeignKey(Mineral, models.CASCADE, related_name="direct_relations")
     status = models.ForeignKey(
         MineralStatus,
         models.CASCADE,
         null=True,
         db_column="mineral_status_id",
-        related_name="mineral_status",
+        related_name="relations",
     )
     relation = models.ForeignKey(
         Mineral,
         models.CASCADE,
-        db_column="relation_id",
         related_name="inverse_relations",
     )
     note = models.TextField(
@@ -312,14 +313,9 @@ class MineralRelation(BaseModel):
 
     class Meta:
         db_table = "mineral_relation"
-        unique_together = (
-            "mineral",
-            "status",
-            "relation",
-        )
 
         verbose_name = "Relation"
-        verbose_name_plural = "Relations"
+        verbose_name_plural = "RelationTree"
 
     def __str__(self):
         return self.relation.name
@@ -368,18 +364,15 @@ class MineralRelationSuggestion(BaseModel):
     mineral = models.ForeignKey(
         Mineral,
         models.CASCADE,
-        db_column="mineral_id",
         related_name="suggested_relations",
     )
     relation = models.ForeignKey(
         Mineral,
         models.CASCADE,
-        db_column="relation_id",
         related_name="suggested_inverse_relations",
     )
     relation_type = models.IntegerField(
         null=True,
-        db_column="relation_type_id",
         help_text="Relation type according to mindat.",
     )
     is_processed = models.BooleanField(null=False, default=False, help_text="Is the suggestion processed?")
@@ -400,7 +393,7 @@ class MineralRelationSuggestion(BaseModel):
 
 
 class MineralFormula(BaseModel, Creatable):
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="formulas")
+    mineral = models.ForeignKey(Mineral, models.CASCADE, related_name="formulas")
     formula = models.CharField(
         max_length=1000,
         null=True,
@@ -408,7 +401,7 @@ class MineralFormula(BaseModel, Creatable):
         help_text="Mineral formula in different formats.",
     )
     note = models.TextField(null=True, blank=True)
-    source = models.ForeignKey(FormulaSource, models.CASCADE, db_column="source_id", related_name="minerals")
+    source = models.ForeignKey(FormulaSource, models.CASCADE, related_name="minerals")
     show_on_site = models.BooleanField(
         default=False,
         help_text="Whether a specific formula has a priority over the others and thefore should be shown on site.",
@@ -429,9 +422,9 @@ class MineralFormula(BaseModel, Creatable):
 
 
 class MineralInheritance(BaseModel, Creatable):
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="inheritance_chain")
-    prop = models.PositiveSmallIntegerField(choices=INHERIT_CHOICES, db_column="prop_id")
-    inherit_from = models.ForeignKey(Mineral, models.CASCADE, db_column="inherit_from_id", related_name="descendants")
+    mineral = models.ForeignKey(Mineral, models.CASCADE, related_name="inheritance_chain")
+    prop = models.PositiveSmallIntegerField(choices=INHERIT_CHOICES)
+    inherit_from = models.ForeignKey(Mineral, models.CASCADE, related_name="descendants")
 
     class Meta:
         db_table = "mineral_inheritance"
@@ -450,21 +443,30 @@ class MineralInheritance(BaseModel, Creatable):
     @classmethod
     def get_redirect_ids(cls, ids, prop):
         queryset = cls.objects.filter(mineral__in=ids, prop=prop)
-        return list(queryset.values("mineral", "inherit_from"))
+        _inheritance_chain = list(queryset.values("mineral", "inherit_from"))
+        _inheritance_ids = [x["mineral"] for x in _inheritance_chain]
+
+        for _relation in ids:
+            if _relation in _inheritance_ids:
+                _index = _inheritance_ids.index(_relation)
+                _inherit_from = _inheritance_chain[_index].get("inherit_from")
+                ids[ids.index(_relation)] = _inherit_from
+            else:
+                pass
+        return set(ids)
 
 
 class MineralStructure(BaseModel, Creatable, Updatable):
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="structures")
-    cod = models.IntegerField(null=True, blank=True, db_column="cod_id", help_text="Open Crystallography Database id")
+    mineral = models.ForeignKey(Mineral, models.CASCADE, related_name="structures")
+    cod = models.IntegerField(null=True, blank=True, help_text="Open Crystallography Database id")
     amcsd = models.CharField(
         max_length=50,
         null=True,
         blank=True,
-        db_column="amcsd_id",
         help_text="American Mineralogist Crystal Structure Database id",
     )
 
-    source = models.ForeignKey(FormulaSource, models.CASCADE, db_column="source_id", related_name="structures")
+    source = models.ForeignKey(FormulaSource, models.CASCADE, related_name="structures")
 
     a = models.FloatField(null=True, blank=True, help_text="a parameter of the structure.")
     a_sigma = models.FloatField(null=True, blank=True, help_text="a parameter sigma of the structure.")
@@ -555,8 +557,8 @@ class MineralStructure(BaseModel, Creatable, Updatable):
 
 
 class MineralImpurity(BaseModel):
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id")
-    ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id")
+    mineral = models.ForeignKey(Mineral, models.CASCADE)
+    ion = models.ForeignKey(Ion, models.CASCADE)
     ion_quantity = models.CharField(max_length=30, null=True, blank=True)
     rich_poor = models.BooleanField(null=True, blank=True)
 
@@ -571,8 +573,8 @@ class MineralImpurity(BaseModel):
 
 
 class MineralIonTheoretical(BaseModel):
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id", related_name="ions_theoretical")
-    ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id", related_name="minerals_theoretical")
+    mineral = models.ForeignKey(Mineral, models.CASCADE, related_name="ions_theoretical")
+    ion = models.ForeignKey(Ion, models.CASCADE, related_name="minerals_theoretical")
 
     class Meta:
         db_table = "mineral_ion_theoretical"
@@ -586,13 +588,10 @@ class MineralIonTheoretical(BaseModel):
 
 
 class MineralCrystallography(BaseModel, Updatable):
-    mineral = models.OneToOneField(
-        Mineral, models.SET_NULL, db_column="mineral_id", related_name="crystallography", null=True
-    )
+    mineral = models.OneToOneField(Mineral, models.SET_NULL, related_name="crystallography", null=True)
     crystal_system = models.ForeignKey(
         CrystalSystem,
         models.CASCADE,
-        db_column="crystal_system_id",
         related_name="minerals",
         null=True,
         default=None,
@@ -605,12 +604,11 @@ class MineralCrystallography(BaseModel, Updatable):
     crystal_class = models.ForeignKey(
         CrystalClass,
         models.CASCADE,
-        db_column="crystal_class_id",
         null=True,
         default=None,
     )
 
-    space_group = models.ForeignKey(SpaceGroup, models.CASCADE, db_column="space_group_id", null=True, default=None)
+    space_group = models.ForeignKey(SpaceGroup, models.CASCADE, null=True, default=None)
     a = models.FloatField(blank=True, null=True, default=None)
     b = models.FloatField(blank=True, null=True, default=None)
     c = models.FloatField(blank=True, null=True, default=None)
@@ -629,8 +627,8 @@ class MineralCrystallography(BaseModel, Updatable):
 
 
 class MineralCountry(BaseModel):
-    mineral = models.ForeignKey(Mineral, models.CASCADE, db_column="mineral_id")
-    country = models.ForeignKey(Country, models.CASCADE, db_column="country_id", related_name="minerals", default=None)
+    mineral = models.ForeignKey(Mineral, models.CASCADE)
+    country = models.ForeignKey(Country, models.CASCADE, related_name="minerals", default=None)
 
     note = models.TextField(db_column="note", blank=True, null=True)
 
@@ -647,7 +645,7 @@ class MineralCountry(BaseModel):
 
 
 class MineralHistory(BaseModel):
-    mineral = models.OneToOneField(Mineral, models.CASCADE, db_column="mineral_id", related_name="history")
+    mineral = models.OneToOneField(Mineral, models.CASCADE, related_name="history")
     discovery_year_min = models.IntegerField(blank=True, null=True, help_text="Discovery year min ")
     discovery_year_max = models.IntegerField(
         blank=True, null=True, help_text="Discovery year max (leave empty if not known)"
@@ -706,8 +704,8 @@ class MineralHierarchy(BaseModel):
 
 
 class HierarchyView(BaseModel):
-    mineral = models.ForeignKey(Mineral, models.DO_NOTHING, db_column="mineral_id", related_name="hierarchy")
-    relation = models.ForeignKey(Mineral, models.DO_NOTHING, db_column="relation_id", related_name="inverse_hierarchy")
+    mineral = models.ForeignKey(Mineral, models.DO_NOTHING, related_name="hierarchy")
+    relation = models.ForeignKey(Mineral, models.DO_NOTHING)
     is_parent = models.BooleanField()
 
     class Meta:
@@ -733,16 +731,16 @@ class MineralIonPosition(BaseModel):
     mineral = models.ForeignKey(
         Mineral,
         models.CASCADE,
-        db_column="mineral_id",
-        to_field="id",
         related_name="ions",
     )
-    position = models.ForeignKey(IonPosition, models.CASCADE, db_column="ion_position_id", to_field="id")
+    position = models.ForeignKey(
+        IonPosition,
+        models.CASCADE,
+    )
     ion = models.ForeignKey(
         Ion,
         models.CASCADE,
         db_column="ion_id",
-        to_field="id",
         related_name="mineral_positions",
     )
     quantity = models.TextField(blank=True, null=True, db_column="ion_quantity")
