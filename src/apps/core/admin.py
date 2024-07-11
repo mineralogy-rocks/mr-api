@@ -240,7 +240,7 @@ class StatusListFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value():
-            return queryset.filter(statuses__id=self.value(), direct_relations__direct_status=True)
+            return queryset.filter(statuses__id=self.value(), mineral_statuses__direct_status=True)
         return queryset
 
 
@@ -417,7 +417,7 @@ class MineralAdmin(NestedModelAdmin):
         ]
         prefetch_related = [
             Prefetch(
-                "direct_relations",
+                "mineral_statuses",
                 queryset=MineralStatus.objects.filter(direct_status=True).select_related("status"),
                 to_attr="direct_statuses",
             )

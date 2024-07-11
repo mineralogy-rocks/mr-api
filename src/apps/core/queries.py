@@ -144,7 +144,7 @@ LIST_VIEW_QUERY = """
                             )
                         FROM mineral_log ml_
                         INNER JOIN mineral_status ms ON ms.mineral_id = ml_.id
-                        WHERE ms.status_id = 1 AND NOT ms.needs_revision AND ml_.ns_family = main_table.ns_family AND ml_.id <> main_table.id
+                        WHERE ms.status_id = 1 AND NOT ms.needs_revision AND ml_.ns_family_id = main_table.ns_family_id AND ml_.id <> main_table.id
                         HAVING count(ml_.id) > 0
                         UNION
                         SELECT count(ml.id), JSONB_BUILD_OBJECT(

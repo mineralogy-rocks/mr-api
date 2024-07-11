@@ -13,6 +13,7 @@ router = DefaultRouter()
 
 router.register(r"nickel-strunz", views.NickelStrunzViewSet, basename="nickel-strunz")
 router.register(r"mineral", views.MineralViewSet, basename="mineral")
+router.register(r"relation", views.RelationViewSet, basename="relation")
 router.register(r"status", views.StatusViewSet, basename="status")
 
 urlpatterns = [
