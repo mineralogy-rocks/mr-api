@@ -14,7 +14,7 @@ def get_or_create_relation(mineral, relation, status, status_group_id, direct_st
 
     # If mineral status with a status group exists, check if relation exists,
     # create relation with status="uncertain .." if not
-    if not _status_exists or (_status_exists and not _match_status.filter(relations=relation).exists()):
+    if not _status_exists or (_status_exists and not _match_status.filter(relations__relation=relation).exists()):
         _status, _ = MineralStatus.objects.get_or_create(
             status=status,
             mineral=mineral,
