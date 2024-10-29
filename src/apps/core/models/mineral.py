@@ -194,7 +194,7 @@ class Mineral(Nameable, Creatable, Updatable):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            unique_slugify(self, getattr(self, "name"))
+            unique_slugify(self, self.name)
         super().save(*args, **kwargs)
 
 
@@ -291,7 +291,6 @@ class MineralContext(BaseModel, Creatable):
 
 
 class MineralRelation(BaseModel):
-
     mineral = models.ForeignKey(Mineral, models.CASCADE, related_name="direct_relations")
     status = models.ForeignKey(
         MineralStatus,

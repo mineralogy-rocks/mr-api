@@ -40,7 +40,7 @@ def generate_inheritance_chain(chunk_size=1000):
             cursor.execute(GET_INHERITANCE_PROPS_QUERY, [tuple(_objects)])
             _related_objects = cursor.fetchall()
             _fields = [x[0] for x in cursor.description]
-            _related_objects = pd.DataFrame([dict(zip(_fields, x)) for x in _related_objects])
+            _related_objects = pd.DataFrame([dict(zip(_fields, x, strict=False)) for x in _related_objects])
         inheritance_chain = pd.concat([inheritance_chain, _related_objects])
 
     inheritance_chain = inheritance_chain.reset_index(drop=True)
@@ -58,7 +58,9 @@ def generate_inheritance_chain(chunk_size=1000):
     _populate_crystal_systems(inheritance_chain)
 
 
-def _populate_props(chain: pd.DataFrame, prop_id, prohibited_statuses: list = []):
+def _populate_props(chain: pd.DataFrame, prop_id, prohibited_statuses=None):
+    if prohibited_statuses is None:
+        prohibited_statuses = []
     if chain.empty:
         return
 
