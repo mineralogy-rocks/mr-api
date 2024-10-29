@@ -7,7 +7,6 @@ from ...utils import unique_slugify
 
 
 class Command(BaseCommand):
-
     def _slugify(self, cls, field):
         for obj in cls.objects.all():
             unique_slugify(obj, getattr(obj, field))

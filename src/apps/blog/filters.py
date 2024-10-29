@@ -5,7 +5,6 @@ from .models import Post
 
 
 class PostFilter(filters.FilterSet):
-
     category = filters.CharFilter(
         field_name="category__slug",
         lookup_expr="exact",

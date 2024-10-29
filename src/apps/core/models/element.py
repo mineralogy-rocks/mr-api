@@ -50,7 +50,6 @@ class ChemicalGroup(BaseModel, Nameable):
 
 
 class Element(BaseModel):
-
     element = models.CharField(max_length=2, null=False)
     name = models.CharField(max_length=20, null=False)
     atomic_number = models.IntegerField(null=False)
