@@ -16,7 +16,6 @@ STATIC_PAGES_MAP = {
 
 
 class PageSitemap(SitemapMixin, Sitemap):
-
     def items(self):
         return [key for key, value in STATIC_PAGES_MAP.items()]
 
@@ -28,7 +27,6 @@ class PageSitemap(SitemapMixin, Sitemap):
 
 
 class MineralSitemap(SitemapMixin, Sitemap):
-
     changefreq = "daily"
     priority = 0.5
     limit = 3000

@@ -53,7 +53,6 @@ class MineralFormulaForm(ModelForm):
 
 
 class MineralRelationSuggestionForm(ModelForm):
-
     status = ModelChoiceField(
         queryset=None,
         label="Status",
@@ -89,7 +88,6 @@ class MineralRelationSuggestionForm(ModelForm):
         self.fields["status"].choices = list(statuses)
 
     def save(self, commit=True):
-
         if self.has_changed():
             status = self.cleaned_data.pop("status")
 
@@ -152,7 +150,6 @@ class MineralRelationForm(ModelForm):
 
 
 class MineralStatusForm(ModelForm):
-
     status = ModelChoiceField(queryset=Status.objects.all(), initial=Status.objects.filter(status_id=0))
 
     class Meta:
@@ -184,15 +181,12 @@ class MineralStatusForm(ModelForm):
 
 
 class MineralRelationFormset(BaseInlineFormSet):
-
     model = MineralRelation
 
 
 class MineralRelationSuggestionFormset(BaseInlineFormSet):
-
     model = MineralRelationSuggestion
 
 
 class MineralStatusFormset(BaseInlineFormSet):
-
     model = MineralStatus

@@ -36,7 +36,6 @@ from .models.mineral import MineralStatus
 
 @admin.register(StatusGroup)
 class StatusGroupAdmin(admin.ModelAdmin):
-
     list_display = [
         "id",
         "name",
@@ -79,7 +78,6 @@ class FormulaSourceAdmin(admin.ModelAdmin):
 
 @admin.register(NsClass)
 class NsClassAdmin(admin.ModelAdmin):
-
     list_display = [
         "id",
         "description",
@@ -92,7 +90,6 @@ class NsClassAdmin(admin.ModelAdmin):
 
 @admin.register(NsSubclass)
 class NsSubclassAdmin(admin.ModelAdmin):
-
     list_display = [
         "ns_subclass",
         "description",
@@ -109,7 +106,6 @@ class NsSubclassAdmin(admin.ModelAdmin):
 
 @admin.register(NsFamily)
 class NsFamilyAdmin(admin.ModelAdmin):
-
     list_display = [
         "ns_family",
         "description",
@@ -126,7 +122,6 @@ class NsFamilyAdmin(admin.ModelAdmin):
 
 @admin.register(MindatSync)
 class MindatSyncAdmin(admin.ModelAdmin):
-
     date_hierarchy = "created_at"
 
     change_form_template = "admin/core/mindatsync/sync-detail.html"
@@ -228,7 +223,6 @@ class StatusFilter(admin.SimpleListFilter):
 
 
 class StatusListFilter(admin.SimpleListFilter):
-
     title = _("Status")
     parameter_name = "statuses__status__id"
 
@@ -246,7 +240,6 @@ class StatusListFilter(admin.SimpleListFilter):
 
 @admin.register(Mineral)
 class MineralAdmin(NestedModelAdmin):
-
     actions = [
         "approve",
         "request_revision",

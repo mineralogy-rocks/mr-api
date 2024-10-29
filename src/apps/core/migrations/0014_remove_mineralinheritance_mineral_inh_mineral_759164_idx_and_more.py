@@ -7,7 +7,6 @@ from django.db import models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("core", "0013_alter_mineralcontext_context_delete_datacontext"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

@@ -8,7 +8,6 @@ from django.db import models
 
 
 class Tag(BaseModel, Nameable):
-
     class Meta:
         ordering = ["id"]
 
@@ -20,7 +19,6 @@ class Tag(BaseModel, Nameable):
 
 
 class Category(BaseModel, Nameable):
-
     slug = models.SlugField(max_length=200, unique=True, null=True, blank=True)
 
     class Meta:
@@ -34,7 +32,6 @@ class Category(BaseModel, Nameable):
 
 
 class Post(BaseModel, Nameable, Creatable, Updatable):
-
     slug = models.SlugField(max_length=100, unique=True, null=True, blank=True)
     description = models.CharField(max_length=200)
     content = models.TextField()
