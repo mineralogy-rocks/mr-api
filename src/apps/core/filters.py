@@ -13,7 +13,6 @@ from .models.mineral import Mineral
 
 
 class StatusFilter(filters.FilterSet):
-
     group = filters.ModelMultipleChoiceFilter(
         label="Status Groups",
         field_name="group",
@@ -29,7 +28,6 @@ class StatusFilter(filters.FilterSet):
 
 
 class NickelStrunzFilter(filters.FilterSet):
-
     ns_class = filters.NumberFilter(field_name="id")
     ns_subclass = filters.ModelChoiceFilter(
         label="Nickel-Strunz Subclass",
@@ -54,7 +52,6 @@ class NickelStrunzFilter(filters.FilterSet):
 
 
 class MineralFilter(filters.FilterSet):
-
     ima_only = filters.BooleanFilter(
         field_name="", method="filter_ima_only", widget=widgets.BooleanWidget, label="Subset to IMA-Approved minerals"
     )
@@ -108,7 +105,6 @@ class MineralFilter(filters.FilterSet):
         return queryset
 
     def filter_group_members_(self, queryset, name, value):
-
         discovery_countries = self.data.get("discovery_countries", None)
 
         if value:

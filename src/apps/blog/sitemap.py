@@ -5,7 +5,6 @@ from .models import Post
 
 
 class BlogSitemap(SitemapMixin, Sitemap):
-
     changefreq = "daily"
     priority = 0.5
 

@@ -20,21 +20,18 @@ class PostCountMixin(object):
 
 @admin.register(Category)
 class CategoryAdmin(PostCountMixin, admin.ModelAdmin):
-
     list_display = ["id", "name", "slug", "_posts"]
     search_fields = ["name"]
 
 
 @admin.register(Tag)
 class TagAdmin(PostCountMixin, admin.ModelAdmin):
-
     list_display = ["id", "name", "_posts"]
     search_fields = ["name"]
 
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-
     date_hierarchy = "created_at"
 
     list_display = [
