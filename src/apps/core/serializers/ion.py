@@ -24,7 +24,6 @@ class IonPrimitiveSerializer(serializers.ModelSerializer):
 
 
 class MineralIonPositionSerializer(serializers.ModelSerializer):
-
     ion = IonPrimitiveSerializer()
     position = IonPositionSerializer()
 

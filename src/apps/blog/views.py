@@ -25,7 +25,6 @@ from .serializers import TagListSerializer
 
 
 class TagViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
-
     queryset = Tag.objects.all()
     serializer_class = TagListSerializer
     permission_classes = [HasAPIKey | IsAuthenticated]
@@ -47,7 +46,6 @@ class TagViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
 
 class CategoryViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
-
     queryset = Category.objects.all()
     serializer_class = CategoryListSerializer
     permission_classes = [HasAPIKey | IsAuthenticated]
@@ -69,7 +67,6 @@ class CategoryViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
 
 class PostViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
-
     queryset = Post.objects.filter(is_published=True)
     serializer_class = PostListSerializer
     permission_classes = [HasAPIKey | IsAuthenticated]

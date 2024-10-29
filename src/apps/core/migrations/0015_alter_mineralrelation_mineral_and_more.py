@@ -6,7 +6,6 @@ from django.db import models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("core", "0014_remove_mineralinheritance_mineral_inh_mineral_759164_idx_and_more"),
     ]

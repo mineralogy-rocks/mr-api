@@ -303,7 +303,6 @@ class MineralReverseRelationSuggestionInline(NestedTabularInline):
 
 
 class MineralStatusInline(NestedTabularInline):
-
     model = MineralStatus
     fk_name = "mineral"
     form = MineralStatusForm

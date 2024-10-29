@@ -63,7 +63,6 @@ class IonType(BaseModel, Nameable):
 
 
 class IonPosition(BaseModel, Nameable):
-
     ions = models.ManyToManyField("core.Ion", through="core.MineralIonPosition")
 
     class Meta:
@@ -80,7 +79,6 @@ class IonPosition(BaseModel, Nameable):
 
 
 class Ion(BaseModel, Nameable):
-
     formula = models.CharField(max_length=100, null=False)
     formula_with_oxidation = models.CharField(max_length=100, null=True)
     overall_charge = models.CharField(max_length=100, null=True)
@@ -172,7 +170,6 @@ class Ion(BaseModel, Nameable):
 
 
 class IonElement(BaseModel):
-
     ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id", to_field="id", default=None)
     element = models.ForeignKey(
         Element,
@@ -195,7 +192,6 @@ class IonElement(BaseModel):
 
 
 class IonSubunit(BaseModel):
-
     ion = models.ForeignKey(Ion, models.CASCADE, db_column="ion_id", to_field="id", default=None)
     subunit = models.ForeignKey(
         Ion, models.CASCADE, db_column="subunit_id", to_field="id", related_name="ions", default=None

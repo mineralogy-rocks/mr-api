@@ -7,7 +7,6 @@ from .models import Tag
 
 
 class TagListSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Tag
         fields = [
@@ -17,7 +16,6 @@ class TagListSerializer(serializers.ModelSerializer):
 
 
 class CategoryListSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Category
         fields = [
@@ -28,7 +26,6 @@ class CategoryListSerializer(serializers.ModelSerializer):
 
 
 class PostListSerializer(serializers.ModelSerializer):
-
     tags = TagListSerializer(many=True)
     category = CategoryListSerializer()
     url = serializers.HyperlinkedIdentityField(view_name="blog:post-detail", lookup_field="slug")
@@ -64,7 +61,6 @@ class PostListSerializer(serializers.ModelSerializer):
 
 
 class PostDetailSerializer(serializers.ModelSerializer):
-
     tags = TagListSerializer(many=True)
     category = CategoryListSerializer()
 

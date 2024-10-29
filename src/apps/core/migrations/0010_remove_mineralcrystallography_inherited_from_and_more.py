@@ -6,7 +6,6 @@ from django.db import models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("core", "0009_mineralcrystallography_updated_at"),
     ]

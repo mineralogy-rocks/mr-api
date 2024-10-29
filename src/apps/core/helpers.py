@@ -4,7 +4,6 @@ from .models.mineral import MineralStatus
 
 
 def get_or_create_relation(mineral, relation, status, status_group_id, direct_status=True):
-
     _match_status = MineralStatus.objects.filter(
         status__group=status_group_id,
         mineral=mineral,
